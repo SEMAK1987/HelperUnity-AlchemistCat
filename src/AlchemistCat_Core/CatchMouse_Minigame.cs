@@ -62,12 +62,14 @@ public class CatchMouse_Minigame : MonoBehaviour
     public RectTransform roadTrack;             // Road_Track
     public RectTransform miceRunningLayer;      // Mice_Running_Layer
 
-    [Header("3D-Перспектива и Наклон Дорожки (Полубоком)")]
+    [Header("3D-Перспектива и Настройка Дорожки (Road_Track)")]
     public bool autoApplyRoadPerspective = true;
     [Range(0f, 60f)]
-    public float roadPerspectiveTiltAngle = 35f; // Угол наклона дорожки в 3D (по оси X)
-    public float roadYOffset = -60f;             // Смещение дорожки по высоте
-    public float mouseRunYOffset = -45f;          // Высота бега мышек по дорожке
+    public float roadPerspectiveTiltAngle = 0f; // Угол наклона (0 = прямой, 25-35 = 3D перспектива)
+    public float roadYOffset = -138f;            // Смещение дорожки по высоте (скриншот 6: Pos Y = -138)
+    public float roadWidth = 1050f;              // Ширина растяжения дорожки
+    public float roadHeight = 120f;              // Высота дорожки
+    public float mouseRunYOffset = 0f;           // Тонкая подстройка высоты бега мышек по дорожке
 
     [Header("Окно Победы и Награды")]
     public GameObject rewardPopupPanel;         // Reward_Popup_Panel
@@ -139,19 +141,44 @@ public class CatchMouse_Minigame : MonoBehaviour
     }
 
     /// <summary>
-    /// Автоматическая настройка 3D-перспективы дорожки (полубоком / под углом как пол)
+    /// Автоматическая настройка дорожки (растяжение текстуры, сброс PreserveAspect, юстировка высоты и норок)
     /// </summary>
     public void SetupRoadPerspective()
     {
-        if (!autoApplyRoadPerspective || roadTrack == null) return;
+        if (!autoApplyRoadPerspective) return;
 
-        // Применяем 3D-наклон плоскости дорожки по оси X
-        roadTrack.localEulerAngles = new Vector3(roadPerspectiveTiltAngle, 0f, 0f);
+        // 1. Настройка дорожки Road_Track
+        if (roadTrack != null)
+        {
+            // Отключаем PreserveAspect на компоненте Image, чтобы текстура заполнила всю ширину 1050px!
+            Image roadImg = roadTrack.GetComponent<Image>();
+            if (roadImg != null)
+            {
+                roadImg.preserveAspect = false;
+                roadImg.type = Image.Type.Simple;
+            }
 
-        // Юстировка высоты дорожки прямо под норками
-        Vector2 pos = roadTrack.anchoredPosition;
-        pos.y = roadYOffset;
-        roadTrack.anchoredPosition = pos;
+            roadTrack.anchorMin = new Vector2(0.5f, 0.5f);
+            roadTrack.anchorMax = new Vector2(0.5f, 0.5f);
+            roadTrack.pivot = new Vector2(0.5f, 0.5f);
+            roadTrack.sizeDelta = new Vector2(roadWidth, roadHeight);
+            roadTrack.anchoredPosition = new Vector2(0f, roadYOffset);
+            roadTrack.localEulerAngles = new Vector3(roadPerspectiveTiltAngle, 0f, 0f);
+        }
+
+        // 2. Проверка контейнера норок Holes_Container
+        if (holes != null && holes.Length > 0 && holes[0] != null && holes[0].parent != null)
+        {
+            RectTransform holesContainer = holes[0].parent.GetComponent<RectTransform>();
+            if (holesContainer != null && holesContainer.name.Contains("Holes_Container"))
+            {
+                holesContainer.anchorMin = new Vector2(0.5f, 0.5f);
+                holesContainer.anchorMax = new Vector2(0.5f, 0.5f);
+                holesContainer.pivot = new Vector2(0.5f, 0.5f);
+                holesContainer.anchoredPosition = new Vector2(0f, -65f);
+                holesContainer.sizeDelta = new Vector2(1000f, 150f);
+            }
+        }
     }
 
     private void OnDisable()
@@ -332,13 +359,29 @@ public class CatchMouse_Minigame : MonoBehaviour
     private float GetSpawnInterval()
     {
         float baseDelay = 1.2f;
-        if (currentPhase == 2) baseDelay = 0.95f;
-        if (currentPhase == 3) baseDelay = 0.7f; // В 3 фазе бегают чаще!
 
-        if (selectedDifficulty == DifficultyLevel.Hard) baseDelay *= 0.75f;
-        if (selectedDifficulty == DifficultyLevel.Easy) baseDelay *= 1.25f;
+        switch (selectedDifficulty)
+        {
+            case DifficultyLevel.Easy:
+                baseDelay = 1.8f;
+                if (currentPhase == 2) baseDelay = 1.5f;
+                if (currentPhase == 3) baseDelay = 1.3f;
+                break;
 
-        return Random.Range(baseDelay * 0.75f, baseDelay * 1.25f);
+            case DifficultyLevel.Normal:
+                baseDelay = 1.2f;
+                if (currentPhase == 2) baseDelay = 1.0f;
+                if (currentPhase == 3) baseDelay = 0.85f;
+                break;
+
+            case DifficultyLevel.Hard:
+                baseDelay = 0.9f;
+                if (currentPhase == 2) baseDelay = 0.75f;
+                if (currentPhase == 3) baseDelay = 0.55f;
+                break;
+        }
+
+        return Random.Range(baseDelay * 0.85f, baseDelay * 1.15f);
     }
 
     /// <summary>
@@ -426,15 +469,34 @@ public class CatchMouse_Minigame : MonoBehaviour
 
     private float GetRunDuration(MouseType type)
     {
-        float speed = 2.2f;
-        if (type == MouseType.Golden) speed = 2.4f;
-        if (type == MouseType.Silver) speed = 1.9f;
-        if (type == MouseType.Black) speed = 1.3f; // Теневая черная — самая быстрая!
+        // Длительность перебежки мышки (в секундах). Чем больше длительность — тем медленнее и плавнее бежит мышка!
+        float baseDuration = 3.2f;
 
-        if (selectedDifficulty == DifficultyLevel.Hard) speed *= 0.75f;
-        if (selectedDifficulty == DifficultyLevel.Easy) speed *= 1.25f;
+        switch (selectedDifficulty)
+        {
+            case DifficultyLevel.Easy:
+                // Легкий уровень: Мышки бегут очень медленно и вальяжно (4.0 - 5.5 сек), чтобы любой игрок гарантированно поймал!
+                if (type == MouseType.Golden) baseDuration = 5.2f;
+                else if (type == MouseType.Silver) baseDuration = 4.6f;
+                else if (type == MouseType.Black) baseDuration = 3.8f;
+                break;
 
-        return Random.Range(speed * 0.85f, speed * 1.15f);
+            case DifficultyLevel.Normal:
+                // Средний уровень: Чуть быстрее, комфортный ритм (2.5 - 3.5 сек)
+                if (type == MouseType.Golden) baseDuration = 3.4f;
+                else if (type == MouseType.Silver) baseDuration = 2.9f;
+                else if (type == MouseType.Black) baseDuration = 2.3f;
+                break;
+
+            case DifficultyLevel.Hard:
+                // Сложный уровень: Быстрые и вертлявые мышки (1.0 - 2.0 сек)
+                if (type == MouseType.Golden) baseDuration = 2.0f;
+                else if (type == MouseType.Silver) baseDuration = 1.6f;
+                else if (type == MouseType.Black) baseDuration = 1.15f;
+                break;
+        }
+
+        return Random.Range(baseDuration * 0.9f, baseDuration * 1.1f);
     }
 
     private IEnumerator AnimateSpriteFrames(GameObject mouseObj, Image img, Sprite[] frames)
@@ -681,6 +743,19 @@ public class CatchMouse_Minigame : MonoBehaviour
             {
                 // Смещаем кнопку вниз, чтобы она не перекрывала список наград
                 btnRt.anchoredPosition = new Vector2(0f, -190f);
+            }
+
+            TextMeshProUGUI btnText = claimRewardButton.GetComponentInChildren<TextMeshProUGUI>();
+            if (btnText != null)
+            {
+                int lang = PlayerPrefs.GetInt("SelectedLanguage", 0);
+                string claimLabel = (lang == 1) ? "Claim" : ((lang == 2) ? "Al" : "Забрать");
+                btnText.text = claimLabel;
+                btnText.enableAutoSizing = true;
+                btnText.fontSizeMin = 14f;
+                btnText.fontSizeMax = 24f;
+                btnText.alignment = TextAlignmentOptions.Center;
+                btnText.color = new Color(1f, 0.95f, 0.69f, 1f); // #FFF3B0 Яркий золотистый
             }
         }
     }
