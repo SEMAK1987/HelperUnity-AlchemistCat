@@ -291,11 +291,16 @@ public class Avatar_Manager : MonoBehaviour
         PlayerPrefs.DeleteKey("Player_Mastery_Rank");
         PlayerPrefs.DeleteKey("Player_Mastery_Exp");
         PlayerPrefs.DeleteKey("Mastery_Flask_Consumed");
+        PlayerPrefs.DeleteKey("Tutorial_Avatar_Chosen");
+        PlayerPrefs.DeleteKey("Selected_Avatar_Id");
+        PlayerPrefs.DeleteKey("Selected_Frame_Id");
         PlayerPrefs.Save();
 
         currentLevel = 1;
         currentExp = 0;
         maxExp = 10;
+        selectedAvatarId = 0;
+        selectedFrameId = 0;
         currentMasteryRankIndex = 0;
         currentMasteryExp = 0;
         maxMasteryExp = 100;
@@ -576,6 +581,7 @@ public class Avatar_Manager : MonoBehaviour
             if (closeButton != null)
             {
                 closeButton.interactable = isAvatarChosen;
+                closeButton.gameObject.SetActive(isAvatarChosen);
             }
 
             if (autoAdaptResolution)
@@ -1062,6 +1068,7 @@ public class Avatar_Manager : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.interactable = true;
+            closeButton.gameObject.SetActive(true);
         }
 
         if (selectSound != null && SettingsManager.Instance != null)

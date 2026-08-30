@@ -278,6 +278,11 @@ public class DialogueSystem_Manager : MonoBehaviour
             });
 
         // Старт Фазы 1
+        if (PlayerPrefs.GetInt("Tutorial_Full_Flow_Done", 0) == 0)
+        {
+            ResetAllManagersAndGameState();
+        }
+
         currentPhase = DialoguePhase.IntroAndCalendar;
         BuildIntroScenario();
         DisplayStep(0);
@@ -1340,9 +1345,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Кот рассказывает, что в башне есть мини-игры, но забыл как играть, спрашивает согласен ли игрок помочь
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=108%>Поздравляю! Ты изучил великие таинства алхимии и ранги мастеров!\n\nЗнаешь, в нашей башне есть ещё <b><color=#FFE57F>волшебные мини-игры</color></b>, но я совсем позабыл, как в них играть... Поможешь мне вспомнить их правила?</size>",
-            textEN = "<size=108%>Congratulations! You have studied the great alchemy mysteries!\n\nOur tower also holds <b><color=#FFE57F>magical mini-games</color></b>, but I forgot how to play them... Will you help me recall the rules?</size>",
-            textTR = "<size=108%>Tebrikler! Simyanin buyuk gizemlerini ogrendin!\n\nKulemizde <b><color=#FFE57F>mini oyunlar</color></b> var ama nasil oynandigini unuttum... Bana kurallari hatirlatmamda yardim eder misin?</size>",
+            textRU = "<size=90%>Поздравляю! Ты изучил великие таинства алхимии и ранги мастеров!\n\nЗнаешь, в нашей башне есть ещё <b><color=#FFE57F>волшебные мини-игры</color></b>, но я совсем позабыл, как в них играть... Поможешь мне вспомнить их правила?</size>",
+            textEN = "<size=90%>Congratulations! You have studied the great alchemy mysteries!\n\nOur tower also holds <b><color=#FFE57F>magical mini-games</color></b>, but I forgot how to play them... Will you help me recall the rules?</size>",
+            textTR = "<size=90%>Tebrikler! Simyanin buyuk gizemlerini ogrendin!\n\nKulemizde <b><color=#FFE57F>mini oyunlar</color></b> var ama nasil oynandigini unuttum... Bana kurallari hatirlatmamda yardim eder misin?</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1356,9 +1361,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 2. Игрок соглашается, кот представляет первую игру «Поймай мышку» и открывает колесо
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=105%>Мурр! Замечательно! Вверху открылось наше <b><color=#FFE57F>Колесо Мини-Игр</color></b>!\n\nПервая игра, которую мы вспомним — <b><color=#80FFDB>«Поймай мышку»</color></b>!\n\nНажми кнопку ниже, чтобы взглянуть на Колесо Игр!</size>",
-            textEN = "<size=105%>Purr! Wonderful! Our <b><color=#FFE57F>Mini-Games Wheel</color></b> has unlocked above!\n\nThe very first game to recall is <b><color=#80FFDB>«Catch the Mouse»</color></b>!\n\nTap below to open the Games Wheel!</size>",
-            textTR = "<size=105%>Miyav! Harika! Yukarida <b><color=#FFE57F>Mini Oyun Carki</color></b> acildi!\n\nHatirlayacagimiz ilk oyun <b><color=#80FFDB>«Fareyi Yakala»</color></b>!\n\nCarki gormek icin asagidaki butona bas!</size>",
+            textRU = "<size=90%>Мурр! Замечательно! Вверху открылось наше <b><color=#FFE57F>Колесо Мини-Игр</color></b>!\n\nПервая игра, которую мы вспомним — <b><color=#80FFDB>«Поймай мышку»</color></b>!\n\nНажми кнопку ниже, чтобы взглянуть на Колесо Игр!</size>",
+            textEN = "<size=90%>Purr! Wonderful! Our <b><color=#FFE57F>Mini-Games Wheel</color></b> has unlocked above!\n\nThe very first game to recall is <b><color=#80FFDB>«Catch the Mouse»</color></b>!\n\nTap below to open the Games Wheel!</size>",
+            textTR = "<size=90%>Miyav! Harika! Yukarida <b><color=#FFE57F>Mini Oyun Carki</color></b> acildi!\n\nHatirlayacagimiz ilk oyun <b><color=#80FFDB>«Fareyi Yakala»</color></b>!\n\nCarki gormek icin asagidaki butona bas!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1626,13 +1631,60 @@ public class DialogueSystem_Manager : MonoBehaviour
     [ContextMenu("Полный Сброс Всех Данных Игры (Full Master Reset)")]
     public void FullMasterGameReset()
     {
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
+        ResetAllManagersAndGameState();
         currentStepIndex = 0;
         if (dialoguePanel != null) dialoguePanel.SetActive(true);
         currentPhase = DialoguePhase.IntroAndCalendar;
         BuildIntroScenario();
         DisplayStep(0);
-        Debug.Log("[DialogueSystem_Manager] Полный сброс PlayerPrefs выполнен успешно!");
+        Debug.Log("[DialogueSystem_Manager] Полный сброс PlayerPrefs и всех менеджеров выполнен успешно!");
+    }
+
+    public void ResetAllManagersAndGameState()
+    {
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+
+        currentGold = 0;
+        currentStones = 0;
+        currentScrolls = 0;
+        currentCrystals = 0;
+        playerName = "Путник";
+        starterRewardClaimed = false;
+        isCraftingInProgress = false;
+        calendarOpenedOnce = false;
+        avatarPanelOpenedOnce = false;
+
+        UpdateResourceTextsInstant();
+
+        if (Calendar_Manager.Instance != null)
+            Calendar_Manager.Instance.ResetCalendarProgress();
+
+        if (Avatar_Manager.Instance != null)
+            Avatar_Manager.Instance.ResetProfileAndMasteryProgress();
+
+        if (RecipeCrafting_Manager.Instance != null)
+            RecipeCrafting_Manager.Instance.ResetCraftingAndChestProgress();
+
+        if (Knowledge_Manager.Instance != null)
+            Knowledge_Manager.Instance.ResetKnowledgeProgress();
+
+        if (topPanel != null) topPanel.SetActive(false);
+        if (slotGold != null) slotGold.SetActive(false);
+        if (slotStones != null) slotStones.SetActive(false);
+        if (slotScrolls != null) slotScrolls.SetActive(false);
+        if (slotCrystals != null) slotCrystals.SetActive(false);
+        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(false);
+        if (calendarIconButton != null) calendarIconButton.SetActive(false);
+        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(false);
+        if (chestIconButton != null) chestIconButton.SetActive(false);
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false);
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(false);
+        if (minigamesPanel != null) minigamesPanel.SetActive(false);
+        if (calendarPanel != null) calendarPanel.SetActive(false);
+        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false);
+        if (cauldronButton != null) cauldronButton.SetActive(false);
+        if (roomCatObject != null) roomCatObject.SetActive(false);
+        if (inventoryPanel != null) inventoryPanel.SetActive(false);
     }
 }

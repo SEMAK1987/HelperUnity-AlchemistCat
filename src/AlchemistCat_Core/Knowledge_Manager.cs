@@ -18,6 +18,7 @@ public class Knowledge_Manager : MonoBehaviour
 
     [Header("UI Панель Знаний и Рангов")]
     public GameObject knowledgePanel;
+    public TextMeshProUGUI titleText;           // Заголовок панели (Ранги Алхимии)
     public Button knowledgeCloseButton;
     public ScrollRect knowledgeScrollView;
     public Transform knowledgeContent;
@@ -274,6 +275,34 @@ public class Knowledge_Manager : MonoBehaviour
     private void SetupKnowledgePanelLayout()
     {
         if (knowledgePanel == null) return;
+
+        // Поиск и форматирование заголовка "Ранги Алхимии" по центру
+        if (titleText == null)
+        {
+            TextMeshProUGUI[] tmps = knowledgePanel.GetComponentsInChildren<TextMeshProUGUI>(true);
+            foreach (var t in tmps)
+            {
+                if (t.name.ToLower().Contains("title") || t.text.Contains("Знания") || t.text.Contains("Ранги"))
+                {
+                    titleText = t;
+                    break;
+                }
+            }
+        }
+
+        if (titleText != null)
+        {
+            titleText.text = "Ранги Алхимии";
+            titleText.alignment = TextAlignmentOptions.Center;
+            RectTransform trt = titleText.GetComponent<RectTransform>();
+            if (trt != null)
+            {
+                trt.anchorMin = new Vector2(0.5f, trt.anchorMin.y);
+                trt.anchorMax = new Vector2(0.5f, trt.anchorMax.y);
+                trt.pivot = new Vector2(0.5f, trt.pivot.y);
+                trt.anchoredPosition = new Vector2(0f, trt.anchoredPosition.y);
+            }
+        }
 
         RectTransform panelRect = knowledgePanel.GetComponent<RectTransform>();
         if (panelRect != null)
@@ -532,6 +561,24 @@ public class Knowledge_Manager : MonoBehaviour
         if (DialogueSystem_Manager.Instance != null)
         {
             DialogueSystem_Manager.Instance.StartMinigamesIntroductionDialogue();
+        }
+    }
+
+    [ContextMenu("Сбросить Прогресс Окна Знаний (Reset Knowledge Progress)")]
+    public void ResetKnowledgeProgress()
+    {
+        isKnowledgeCompleted = false;
+        if (knowledgeCloseButton != null)
+        {
+            knowledgeCloseButton.interactable = false;
+        }
+        if (knowledgePanel != null)
+        {
+            knowledgePanel.SetActive(false);
+        }
+        if (knowledgeIconButton != null)
+        {
+            knowledgeIconButton.SetActive(false);
         }
     }
 }

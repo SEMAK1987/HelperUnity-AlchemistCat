@@ -317,6 +317,11 @@ public class CatchMouse_Minigame : MonoBehaviour
 
     /// <summary>
     /// Создание бегущей мышки с поддержкой покадровой анимации
+    /// <summary>
+    /// Создание бегущей мышки с реалистичной 3D-траекторией:
+    /// 1. Выбегание из глубины норки (масштаб 0.55 -> 1.0)
+    /// 2. Бег по дорожке с пружинящим шагом
+    /// 3. Забегание в целевую норку (масштаб 1.0 -> 0.55) и растворение
     /// </summary>
     private void SpawnMouseRunner(MouseType type, int startIdx, int endIdx)
     {
@@ -332,19 +337,21 @@ public class CatchMouse_Minigame : MonoBehaviour
         img.sprite = GetMouseSprite(type);
         img.preserveAspect = true;
 
+        CanvasGroup cg = mouseObj.AddComponent<CanvasGroup>();
+
         Button btn = mouseObj.AddComponent<Button>();
         btn.transition = Selectable.Transition.None;
 
-        Vector2 startPos = holes[startIdx].anchoredPosition;
-        Vector2 endPos = holes[endIdx].anchoredPosition;
+        Vector2 startHolePos = holes[startIdx].anchoredPosition;
+        Vector2 endHolePos = holes[endIdx].anchoredPosition;
 
         float roadY = roadTrack != null ? roadTrack.anchoredPosition.y : -50f;
-        startPos.y = roadY;
-        endPos.y = roadY;
 
-        bool runRight = endPos.x > startPos.x;
-        rt.localScale = new Vector3(runRight ? 1f : -1f, 1f, 1f);
-        rt.anchoredPosition = startPos;
+        bool runRight = endHolePos.x > startHolePos.x;
+        float baseScaleX = runRight ? 1f : -1f;
+
+        rt.anchoredPosition = startHolePos;
+        rt.localScale = new Vector3(baseScaleX * 0.55f, 0.55f, 1f);
 
         btn.onClick.AddListener(() => OnMouseClicked(mouseObj, type));
 
@@ -359,7 +366,7 @@ public class CatchMouse_Minigame : MonoBehaviour
 
         // Длительность перебежки (Черные мыши бегают быстрее всех!)
         float runDuration = GetRunDuration(type);
-        StartCoroutine(AnimateMouseRunning(mouseObj, rt, startPos, endPos, runDuration));
+        StartCoroutine(AnimateMouse3DTrajectory(mouseObj, rt, cg, startHolePos, endHolePos, roadY, baseScaleX, runDuration));
     }
 
     private float GetRunDuration(MouseType type)
@@ -388,16 +395,64 @@ public class CatchMouse_Minigame : MonoBehaviour
         }
     }
 
-    private IEnumerator AnimateMouseRunning(GameObject mouseObj, RectTransform rt, Vector2 start, Vector2 end, float duration)
+    /// <summary>
+    /// 3D-анимация появления из арки норки, движения по дорожке и забегания в целевую норку
+    /// </summary>
+    private IEnumerator AnimateMouse3DTrajectory(GameObject mouseObj, RectTransform rt, CanvasGroup cg, Vector2 startHole, Vector2 endHole, float roadY, float baseScaleX, float duration)
     {
         float elapsed = 0f;
 
         while (elapsed < duration && mouseObj != null)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            float jumpOffset = Mathf.Sin(t * Mathf.PI * 6f) * 6f;
-            rt.anchoredPosition = Vector2.Lerp(start, end, t) + new Vector2(0f, jumpOffset);
+            float t = Mathf.Clamp01(elapsed / duration);
+
+            Vector2 currentPos;
+            float currentScale;
+            float currentAlpha;
+
+            if (t < 0.22f)
+            {
+                // ЭТАП 1: Выход из норки на дорожку (по диагонали вниз, приближение к камере)
+                float exitT = t / 0.22f;
+                float easeOut = Mathf.Sin(exitT * Mathf.PI * 0.5f);
+
+                currentPos = Vector2.Lerp(startHole, new Vector2(startHole.x, roadY), easeOut);
+                currentScale = Mathf.Lerp(0.55f, 1.0f, easeOut);
+                currentAlpha = Mathf.Lerp(0.3f, 1.0f, easeOut);
+            }
+            else if (t < 0.78f)
+            {
+                // ЭТАП 2: Основной бег по дорожке слева направо / справа налево
+                float roadT = (t - 0.22f) / (0.78f - 0.22f);
+                float jumpOffset = Mathf.Abs(Mathf.Sin(roadT * Mathf.PI * 8f)) * 7f; // Реалистичный пружинящий бег
+
+                currentPos = new Vector2(Mathf.Lerp(startHole.x, endHole.x, roadT), roadY + jumpOffset);
+                currentScale = 1.0f;
+                currentAlpha = 1.0f;
+            }
+            else
+            {
+                // ЭТАП 3: Забегание в целевую норку (вверх, отдаление вглубь 3D и исчезновение)
+                float enterT = (t - 0.78f) / (1.0f - 0.78f);
+                float easeIn = enterT * enterT;
+
+                currentPos = Vector2.Lerp(new Vector2(endHole.x, roadY), endHole, easeIn);
+                currentScale = Mathf.Lerp(1.0f, 0.55f, easeIn);
+                currentAlpha = Mathf.Lerp(1.0f, 0.0f, easeIn);
+            }
+
+            if (rt != null)
+            {
+                rt.anchoredPosition = currentPos;
+                rt.localScale = new Vector3(baseScaleX * currentScale, currentScale, 1f);
+            }
+
+            if (cg != null)
+            {
+                cg.alpha = currentAlpha;
+            }
+
             yield return null;
         }
 
@@ -551,12 +606,27 @@ public class CatchMouse_Minigame : MonoBehaviour
 
         if (rewardDescriptionText != null)
         {
-            rewardDescriptionText.text = $"Уровень сложности: <b><color=#FFD166>{diffName}</color></b>\n\n" +
-                                         $"<b><color=#FFD166>+{finalGold:N0} Золота</color></b>\n" +
-                                         $"<b><color=#A0C4FF>+{finalStones} Камней</color></b>\n" +
-                                         $"<b><color=#CDB4DB>+{finalScrolls} Свитка</color></b>\n" +
+            rewardDescriptionText.text = $"Уровень: <b><color=#FFD166>{diffName}</color></b>\n" +
+                                         $"<b><color=#FFD166>+{finalGold:N0} Золота</color></b> | <b><color=#A0C4FF>+{finalStones} Камней</color></b> | <b><color=#CDB4DB>+{finalScrolls} Свитка</color></b>\n" +
                                          $"<b><color=#80FFDB>+{finalXP} Опыта Игрока</color></b>\n" +
                                          $"<b><color=#F72585>+1 Особое Зелье Мастерства</color></b>";
+
+            RectTransform txtRt = rewardDescriptionText.GetComponent<RectTransform>();
+            if (txtRt != null)
+            {
+                // Размещаем текст компактно над кнопкой
+                txtRt.anchoredPosition = new Vector2(0f, -40f);
+            }
+        }
+
+        if (claimRewardButton != null)
+        {
+            RectTransform btnRt = claimRewardButton.GetComponent<RectTransform>();
+            if (btnRt != null)
+            {
+                // Смещаем кнопку вниз, чтобы она не перекрывала список наград
+                btnRt.anchoredPosition = new Vector2(0f, -190f);
+            }
         }
     }
 

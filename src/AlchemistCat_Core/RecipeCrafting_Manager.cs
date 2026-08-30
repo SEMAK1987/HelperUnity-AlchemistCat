@@ -549,13 +549,11 @@ public class RecipeCrafting_Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// Шаг 4: Нажатие 'Забрать' -> скрытие котла и маленького кота, вылет "+10 XP" вверх со светлением, начисление XP
+    /// Шаг 4: Нажатие 'Забрать' -> скрытие кнопки, плавный вылет кружка опыта (+10 XP) вверх, затем скрытие котла и начисление XP
     /// </summary>
     public void OnClaimPotionClicked()
     {
         if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false);
-        if (tableCauldronObject != null) tableCauldronObject.SetActive(false);
-        if (tableMiniCatObject != null) tableMiniCatObject.SetActive(false);
         if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false);
 
         StartCoroutine(FlyFloatingXPAndProceed(firstRecipeRewardXP));
@@ -563,52 +561,143 @@ public class RecipeCrafting_Manager : MonoBehaviour
 
     private IEnumerator FlyFloatingXPAndProceed(int xpAmount)
     {
-        if (floatingXPPrefab != null)
-        {
-            floatingXPPrefab.SetActive(true);
+        GameObject activeFloatingXP = floatingXPPrefab;
+        bool isDynamic = false;
 
-            // Назначаем готовый спрайт опыта (5..1000 XP)
-            if (floatingXPImage != null)
+        // Если префаб/объект не привязан в инспекторе, создаем красивый динамический кружок опыта
+        if (activeFloatingXP == null)
+        {
+            Transform parentCanvas = transform;
+            Canvas rootCanvas = GetComponentInParent<Canvas>();
+            if (rootCanvas != null) parentCanvas = rootCanvas.transform;
+
+            activeFloatingXP = new GameObject("Dynamic_Floating_XP", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
+            activeFloatingXP.transform.SetParent(parentCanvas, false);
+            isDynamic = true;
+
+            RectTransform drt = activeFloatingXP.GetComponent<RectTransform>();
+            drt.sizeDelta = new Vector2(76f, 76f);
+            drt.anchorMin = new Vector2(0.5f, 0.5f);
+            drt.anchorMax = new Vector2(0.5f, 0.5f);
+            drt.pivot = new Vector2(0.5f, 0.5f);
+
+            Vector2 spawn = Vector2.zero;
+            if (floatingXPSpawnPoint != null)
+                spawn = floatingXPSpawnPoint.anchoredPosition;
+            else if (tableCauldronObject != null)
             {
-                Sprite chosenSprite = GetSpriteForXp(xpAmount);
-                if (chosenSprite != null) floatingXPImage.sprite = chosenSprite;
+                RectTransform crt = tableCauldronObject.GetComponent<RectTransform>();
+                if (crt != null) spawn = crt.anchoredPosition + new Vector2(0f, 60f);
+            }
+            drt.anchoredPosition = spawn;
+
+            Image dImg = activeFloatingXP.GetComponent<Image>();
+            Sprite s = GetSpriteForXp(xpAmount);
+            if (s != null)
+            {
+                dImg.sprite = s;
+            }
+            else
+            {
+                dImg.color = new Color(0.2f, 0.85f, 0.4f, 1f);
             }
 
-            RectTransform rt = floatingXPPrefab.GetComponent<RectTransform>();
-            Vector2 startPos = floatingXPSpawnPoint != null ? floatingXPSpawnPoint.anchoredPosition : (rt != null ? rt.anchoredPosition : Vector2.zero);
+            // Добавляем красивый текст внутри
+            GameObject textObj = new GameObject("XP_Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            textObj.transform.SetParent(activeFloatingXP.transform, false);
+            RectTransform trt = textObj.GetComponent<RectTransform>();
+            trt.anchorMin = Vector2.zero;
+            trt.anchorMax = Vector2.one;
+            trt.offsetMin = Vector2.zero;
+            trt.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI txt = textObj.GetComponent<TextMeshProUGUI>();
+            txt.text = $"+{xpAmount} XP";
+            txt.alignment = TextAlignmentOptions.Center;
+            txt.fontSize = 20f;
+            txt.color = Color.white;
+            txt.fontStyle = FontStyles.Bold;
+        }
+
+        if (activeFloatingXP != null)
+        {
+            activeFloatingXP.SetActive(true);
+
+            Image targetImg = floatingXPImage;
+            if (targetImg == null)
+            {
+                targetImg = activeFloatingXP.GetComponent<Image>();
+                if (targetImg == null) targetImg = activeFloatingXP.GetComponentInChildren<Image>(true);
+            }
+
+            if (targetImg != null)
+            {
+                targetImg.preserveAspect = true;
+                if (floatingXPImage != null)
+                {
+                    Sprite chosenSprite = GetSpriteForXp(xpAmount);
+                    if (chosenSprite != null) targetImg.sprite = chosenSprite;
+                }
+            }
+
+            RectTransform rt = activeFloatingXP.GetComponent<RectTransform>();
+            if (rt != null)
+            {
+                // Сохраняем исходные размеры объекта, настроенные пользователем в Inspector
+                rt.localScale = Vector3.one;
+            }
+
+            CanvasGroup cg = activeFloatingXP.GetComponent<CanvasGroup>();
+            if (cg == null) cg = activeFloatingXP.AddComponent<CanvasGroup>();
+
+            Vector2 startPos = rt != null ? rt.anchoredPosition : Vector2.zero;
+            if (floatingXPSpawnPoint != null) startPos = floatingXPSpawnPoint.anchoredPosition;
             if (rt != null) rt.anchoredPosition = startPos;
 
-            float duration = 1.8f;
+            float duration = 1.6f;
             float elapsed = 0f;
 
             while (elapsed < duration)
             {
                 elapsed += Time.deltaTime;
-                float t = elapsed / duration;
+                float t = Mathf.Clamp01(elapsed / duration);
 
-                // Летит вверх на 140 пикселей
+                // Плавный взлет вверх с замедлением к концу
+                float easeOut = Mathf.Sin(t * Mathf.PI * 0.5f);
                 if (rt != null)
                 {
-                    rt.anchoredPosition = startPos + new Vector2(0f, Mathf.Lerp(0f, 140f, t));
+                    rt.anchoredPosition = startPos + new Vector2(0f, easeOut * 150f);
+                    float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.2f;
+                    rt.localScale = new Vector3(scale, scale, 1f);
                 }
 
-                // Становится светлее и плавно растворяется
-                if (floatingXPCanvasGroup != null)
+                if (cg != null)
                 {
-                    floatingXPCanvasGroup.alpha = Mathf.Lerp(1f, 0f, t * t);
+                    cg.alpha = (t > 0.6f) ? Mathf.Lerp(1f, 0f, (t - 0.6f) / 0.4f) : 1f;
                 }
 
                 yield return null;
             }
 
-            floatingXPPrefab.SetActive(false);
-            if (floatingXPCanvasGroup != null) floatingXPCanvasGroup.alpha = 1f;
-            if (rt != null) rt.anchoredPosition = startPos;
+            if (isDynamic)
+            {
+                Destroy(activeFloatingXP);
+            }
+            else
+            {
+                activeFloatingXP.SetActive(false);
+                if (cg != null) cg.alpha = 1f;
+                if (rt != null) rt.anchoredPosition = startPos;
+            }
         }
         else
         {
             yield return new WaitForSeconds(0.4f);
         }
+
+        // Скрываем котел и помощника только после завершения полета кружка опыта
+        if (tableCauldronObject != null) tableCauldronObject.SetActive(false);
+        if (tableMiniCatObject != null) tableMiniCatObject.SetActive(false);
 
         // Начисление опыта в профиль (10/10 XP -> повышает уровень до 2 Ур. 0/20 XP)
         if (Avatar_Manager.Instance != null)

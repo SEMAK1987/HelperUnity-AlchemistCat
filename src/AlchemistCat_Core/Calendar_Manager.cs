@@ -645,6 +645,7 @@ public class Calendar_Manager : MonoBehaviour
             if (closeButton != null)
             {
                 closeButton.interactable = true;
+                closeButton.gameObject.SetActive(true);
             }
 
             string rewardDesc = ClaimReward(month, day);
