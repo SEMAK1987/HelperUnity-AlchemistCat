@@ -1,0 +1,133 @@
+{
+  "project": "Fate Continent",
+  "project_name": "Fate Continent",
+  "project_path": "",
+  "system_instruction": "You are Zenith Quantum Divine Assistant, guiding the Fate Continent world development and Unity/Blender workflows.",
+  "version": "18.12.45",
+  "modules": [
+    {
+      "name": "Localization & Fonts",
+      "scripts": ["Translator.cs", "Transtable_Text.cs", "Transtable_Dropdown.cs"],
+      "features": ["9 languages", "Triple Font Bridge (v18.5.6)", "UI & Language Sync (v18.6.8)", "Cyrillic & European Original Font Restorer (v18.6.8)", "CS1061 Alias Fix"]
+    },
+    {
+      "name": "Audio & Settings Integration",
+      "scripts": ["SettingsManager.cs"],
+      "features": [
+        "Centralized Audio Control",
+        "MasterMixer Logarithmic Scaling",
+        "Resolution Duplicate Cleanup (v18.6.7)",
+        "Language Dropdown Direct Quality Link (v18.6.8)",
+        "UI Hover Sound clips & Loop playlists system",
+        "40+ specialized Audio Prompts for AI generators (Suno, Udio, Stable Audio)",
+        "Suno/Udio Song Extension & Seamless Loop Guidelines (v18.7.1)",
+        "Pixabay CC0 Search Guidelines & Dedicated UI/Game Event Prompts (v18.7.2)",
+        "Unity AudioMixer Button Connection with Mixer Group Routing (v18.7.2)",
+        "Zenith Audio Synergy v18.7.3: Deep Pixabay sound navigation guides, expansive custom prompt dictionaries (clinging clicks, inventories, gear, monsters, map selections, combat starts), and robust UIButtonSfxBinder / SettingsManager scripting.",
+        "Zenith Audio Calibration v18.7.4: Eliminated AudioMixer parameter existence warnings by using silent direct SetFloat writes, customized UIButtonSfxBinder to trigger only on full button Clicks, and added explicit back/escape button name checking (back/exit/close/return/cancel/назад/arrow) to play a custom backClickSound clip.",
+        "Zenith Audio Autonomy v18.7.5: Fully autonomous standalone fallback sound system in UIButtonSelectionHover.cs that creates local temporary AudioSources as fallbacks in the Editor if SettingsManager/UIButtonSfxBinder singletons are not in the active scene. Resolved CharacterSelectionController CS0155 catch type error using universal system exception safety blocks.",
+        "Zenith Safe Transition v18.7.6: Zero Editor/Canvas leak on Scene reload, separated the UI Panels and SettingsManager standalone lifecycle to guarantee there are no Canvas duplicates or overlaps upon loading scenes back-and-forth.",
+        "Zenith Canvas Lifecycle Mastery v18.7.7: Resolves active UI panels duplicating or failing back-to-menu navigation states on reload through automatic reference recycling in Menu_Game.",
+        "Alchemist Cat Audio Slider Swap & Manual Inspector Alignment Hotfix v18.12.12: Swapped localization keys/values for sound and music labels (upper slider is Sounds/SFX, lower slider is Music) to match visual layout of sliders without restructuring logic connections. Removed automatic AudioMixer routing to prevent 'Exposed name does not exist' console errors when specific parameters are not pre-exposed, routing strictly via clean direct AudioSource volume parameters.",
+        "Alchemist Cat Loading Panel Responsive Scaling & Kitten Progress Opacity v18.12.13: Configured responsive stretching for the Loading_Panel canvas to dynamically adapt to desktop and mobile aspect ratios. Programmed the kittenSilhouette image opacity to fade in proportionally as the progress bar increments from 0% to 100%.",
+        "Zenith Universal Input Safety v18.7.8: Resolves runtime InvalidOperationException when calling UnityEngine.Input in projects with Active Input System set to New Input System. Incorporates automatic try-catch checks and reflection-based modern Input System fallbacks for Escape (GamePause_Manager.cs) and Space (PhaseCombatSystem.cs) keys.",
+        "Zenith Self-Healing UI v18.7.9: Automatically heals and reassigns misconfigured TextMeshProUGUI references (e.g., Pause Title vs Confirm Exit Prompts) at scene load. Intelligently scans panel object sub-trees (PausePanel vs ConfirmPanel), deactivates extra stray warning texts inside active gameplay panels, and binds correct localized components.",
+        "Zenith Audio Autonomy & Standalone Routing v18.8.0: Resolves disabled AudioSource exceptions during inside-game menu pause. Isolated UIButtonPauseHover audio execution by targeting stable active Scene hosts (such as GamePause_Manager or SettingsManager singletons) instead of button components themselves. Excludes pause scenes from UIButtonSfxBinder automatic scan to completely bypass auto-scanning/auto-binding, allowing clean custom bindings and preventing duplicate sound triggers.",
+        "Zenith Dialogue Master System v18.9.0: Lays out complete modular DialogueSystem_Manager.cs. Handles runtime Canvas-overlay dialogue overlays, companion character portrait alignment on the left (Aelyssa), selected player-class portrait rendering on the right (Warrior/Archer/Mage dependent on SaveGameSystem characterClass info), and responsive branching/multi-option choices navigated via pointer clicks. Stores robust high-density prompt templates in CHARACTER_PROMPTS.md.",
+        "Zenith Map Master System v18.10.0: Introduces automated neon HDR auto-calibration in FactionMapMarker.cs. Intelligently checks for unconfigured or resetting inspector color values (A < 0.05, black, clear) and injects perfect bloom-glowing HDR colors (Sapphire-cyan #0A6CB2 with intensity +0.5 multiplier 1.41f, Lion Golden-yellow #B2830A, Druid Green #0AB23D, Xandria Amethyst #6F0AB2 with +2.0 intensity hover flash of 4.0f multiplier) matching name keywords and dial indices. Integrates seamless navigation coordinates and UI hover/click metal sound triggering.",
+        "Zenith Map & Dialogue Blueprint Sync v18.11.0: Integrates precise Inspector guidelines into the project core database. Synchronizes FateMapManager (glowing landmarks, customized hover/click soundscapes, and auto-HDR neon calibration mapped to bloom material M_Neon_Glow) and DialogueSystem_Manager (dual-avatar dialogue views sync, custom companion vocals magic chime, automatic anchoring, and offset limits to protect visual layout).",
+        "Zenith Independent Scale & Positioning Sync v18.11.1: Separates ring/marker scaling entirely from parent map scale compensation inside both FateMapManager.cs and FactionMapMarker.cs. Recalculates baseScale and targetScale dynamically every frame at runtime to facilitate real-time, non-stale inspector slider updates (Map Scale vs Ring Scale).",
+        "Zenith Compiler Compatibility & Multi-Signature Overloads v18.11.2: Resolves compilation errors CS1061 and CS1501 inside Unity by introducing resilient multi-signature overloads. Added custom OnMapMarkerClicked(arg1, arg2, arg3) with automatic dynamic item extraction to DialogueSystem_Manager, along with PlaySfx(string sfxName) and PlaySfx(AudioClip) overloads inside SettingsManager to bridge diverse asset trigger variants without manual editing.",
+        "Zenith Compiler Integration & FactionMapMarker localScaleOverride Sync v18.11.3: Resolves Unity error CS1061 where FateMapManager tried to access non-existent localScaleOverride field inside FactionMapMarker. Incorporated the localScaleOverride field in FactionMapMarker.cs and utilized it in real-time scale calculations.",
+        "Zenith Coordinates & Selection Sync v18.11.4: Resolves dual-coordinate feedback loop positioning by restricting scene-to-inspector sync specifically to active Scene dragging via Selection.activeGameObject == ringObj. Fixes missing 4th choice highlight (Zenith Sanctuary / Святилище Зенита) under Step 3 choice selectors in DialogueSystem_Manager by correctly omitting the 5th confirm button (index 4) instead of the 4th choice button (index 3).",
+        "Zenith Single Ring Coordinates & Faction Marker Sync v18.11.7 (v18.11.5 - v18.11.7): Restricts active ring visibility to single highlighted landing spot, preserving manual inspector values. Keeps map & companion coordinates fully in sync on dialogue start and end, dismissing overlay map textures, rings, and companion markers on dialogue completion 'Завершить диалог' or non-interactive steps. Completely removes flat circular redundant faction references from the layout views.",
+        "Zenith Landing Auto-Sync & Anchor Persistence v18.11.8: Implements full 4-zone automated selection, initializing four distinct landing points and automatically linking corresponding spawn anchors ('Wastes_SpawnPoint', 'Peak_SpawnPoint', 'Ruins_SpawnPoint', 'Crags_SpawnPoint') using hierarchy scans. Completely preserves physical spawn coordinates across sessions and editor runs with secure PlayerPrefs caching, hiding the 3D continent and characters during introductory dialogue panels to achieve ultimate scene purity.",
+        "Zenith Input & Camera Calibration v18.11.9: Resolves New Input System 999+ Exception errors in StrategicCameraController.cs using smart preprocessor compilation flags. Rebalances camera minHeight/maxHeight limits and relocates the landing point cameraOffset from 15.0f to a pristine 2.5f to solve 'too high' camera elevation over the continent.",
+        "Zenith 4-Zone Spawn Match & Map Sync v18.11.10: Formulates indices and Names of the 4 zones (matching Кровавые Пустоши -> Oasis_SpawnPoint, Ледяной Пик -> Outpost_SpawnPoint, Древние Руины -> Shore_SpawnPoint, Святилище Зенита -> Citadel_SpawnPoint) in LandingPositionManager.cs to sync correctly with customized terrain categories. Guarantees interactive Ring objects local Z render depth at -2.0f and companions/heroes at -2.05f to bypass overlapping or clipping behind any 3D continent elements.",
+        "Zenith Camera Bounds & Ocean Backdrop v18.11.11: Implements real-time strict clamping of camera values to prevent moving out of bounds. Automatically calibrates the map boundaries to the active bounds of New_Kontinent's mesh components with custom padding and real-time refresh. Integrates mouse Edge Scrolling and auto-generates a Fate_Ocean_Plane underneath the continent with pre-configured 40x40 UV tiling for seamless 8K ocean textures.",
+        "Zenith Dynamic Ocean Occlusion v18.11.12: Automates hiding the ocean backdrop plane during dialogue sequences in Start() and shows it dynamically on DispatchLanding() for scene aesthetics. Solves pink rendering in Universal Render Pipeline and adapts water metallic and gloss parameters based on PlayerPrefs graphics quality levels.",
+        "Zenith Ground-Focused Camera Clamping v18.11.13: Refactors camera clamping limits in StrategicCameraController.cs to restrict the projected ground focal center (Y=0) instead of raw camera coords, eliminating locks and enabling smooth panning.",
+        "Zenith Post-Landing Castle Progression v18.11.14: Implements persistent world map scale, multi-stage post-landing camera cinematic lock at DialogStep 8 through 12, spawns 3D neon castles for factions, and adds Castle details management (income, recruitment, and shop).",
+        "Zenith RPG Skills & Turn-Based Castle Morph v18.11.15: Fully integrates Warrior, Archer, and Mage baseline stats with select starting free point pools, blocks reducing attributes below class baselines, automates auto-allocation toggle, showcases a premium class skills grid inside the GUI stats panel, and handles turn-based castle gold ticking with majestic castle level morph loaders.",
+        "Zenith GPU Anti-Overheat Protection & Resolution Universal Sync v18.11.16: Guards computer hardware performance during testing by capping target frame rate (30 FPS/60 FPS/120 FPS capped) according to chosen graphics level, dampening post-process volumes down to 15% on low settings, and fully synchronizes and restores screen resolution/fullscreen choices across all scene loading cycles.",
+        "Zenith Dynamic Army Units & Textures Sync v18.11.18: Completely polished FateCastleManager.cs UI panels by resolving misaligned closing brackets, duplicated columns and dangling structures. Details 14 diverse cohort types with unique traits, active/passive limits, and connects customizable Texture2D fields for seamless cohort avatar inspection in the editor.",
+        "Zenith Dialogue Choice Positioning & Clean High-Density Layout Integration v18.11.19: Solved overlapping of dialogue choice buttons with portraits and dialogue text by lowering the layout positions to hang beautifully below the dialogue panel, adjusting margins, and scaling size parameters to provide a pristine visual hierarchy during point selection and normal steps.",
+        "Zenith Fullscreen Character Panel & Advanced Inventory Grid v18.11.20: Implemented fullscreen 3-column Zenith Hero Control Panel in FateCastleManager.cs. Integrates local-persistent 36-slot inventory grid and dynamic 8-slot equipment mannequin with attributes calculation, larger passive/ultimate skill cards, and connects forge slot selections and potion merchants directly to the player inventory database.",
+        "Zenith Skill Detail & Video Sync v18.11.21: Resolves CS0103 compile errors by defining ShowSkillDetailPopup in FateCastleManager.cs to match multi-class skills configuration, and registers the latest high-definition YouTube video guides inside the master knowledge index.",
+        "Zenith Memory Optimization, Skip Day Lock & Hover Skills Detail v18.11.22: Replaces dynamic GUIStyle allocations inside the OnGUI rendering loop with lazy-cached class fields to optimize system memory. Locks the 'Skip Day' button when the Hero Character panel is active. Converts skills cards to unclickable boxes that show responsive hover tooltips. Implements horizontal scrolling for inventory tabs and compresses potion labels to resolve text wrapping and clipping.",
+        "Zenith Potion Mechanics Rework & Forge & Barracks UI Stabilization v18.11.23: Restructures Potion Shop item rendering with level-based color rarity names, details of temporary buffs, Castle level requirements, and a clean cost button. Expands Barracks passive skills width to prevent wrapping and squishing. Upscales the XP cheat-code reward to +100 XP per click, and lifts the active/passive skills layout slightly upwards to prevent overlapping.",
+        "Zenith Multilingual Expansion & Disaster Recovery v18.11.24: Updates all dynamic town subpanels, barracks, academy, training elements, and potion items tooltip and description logic to support English, Russian, German, French, Spanish, Portuguese, Japanese, Korean, and Simplified Chinese languages utilizing the comprehensive GetText9 translation helper. Created a centralized AI Assistant disaster recovery guide detailing mockups and configurations.",
+        "Zenith Tactical Landing Level Synchronization v18.11.25: Implemented automatic default levels configuration for all regional castles across all 4 drop zones (Crimson Wastes, Ice-Bound Peak, Ancient Ruins, Storm Ridges) inside FateCastleManager.cs dynamically aligning tactical level configurations.",
+        "Zenith Tactical Spy Report High-Density Grids v18.11.26: Re-engineered DrawSpyReportPopup to utilize highly polished visual grids of squares for equipment slots, inventory slots, and troop cohorts for all scouted castles, keeping the previous spy report when exploring a new castle and disposing of older ones cleanly.",
+        "Zenith Tactical Landing Coordinates & Camera Focus Synchronization v18.11.27: Fully calibrated and synchronized the landing camera focal points and physical player spawn anchors to match the user-specified coordinates from screenshots for all 4 landing zones: Кровавые Пустоши (Region_03: -8.5, 0.4, 2.0), Ледяной Пик (Region_06: -2.1, 0.5, -5.23), Древние Руины (Region_11: -7.7, 1.6, -12.21), and Грозовые Кряжи (Region_08: 8.51, 0.5, -10.2). Enforced default 0f player height offset to align players exactly on top of cells and castles.",
+        "Zenith Battle Grid Unification & Automatic Zero Baked Colors System v18.12.06: Solved baked tile coloring visual noise by implementing 'unifyGridMaterials' in TacticalBattleGrid.cs, overriding baked red/blue/green models with a standard neutral gray material from a reference cell. Fully built 'ToggleDeploymentZones(bool show)' to dynamically toggle red/blue overlays off at battle start, while keeping hover gold highlights crisp and functional.",
+        "Zenith Core Knowledge Base & YouTube Integration v18.12.07: Added high-fidelity video tutorials covering Mixamo-to-Unity workflow, character setup, and dynamic blend configs. Synchronized version metadata and documentation across entire repository.",
+        "Zenith 3D Models & Blender Integration Workflow Sync v18.12.08: Paused local Ollama integration and pivoted fully to 3D models development. Updated and synchronized core knowledge, connectors, and master documentation for seamless asset pipelines.",
+        "Zenith Alchemist Cat Loading Screen & Kitten Silhouette Integration v18.12.09: Integrated step-by-step visual configuration instructions for the Loading_Panel interface in the Unity 6 main menu. Documented the precise procedures to configure the dark purple menu theme background and align the glowing Alchemist Cat silhouette watermark sprite centrally with optimal aspect ratio clamping.",
+        "Zenith Advanced Dropdown Calibration & Text Wrapping Fixes v18.12.10: Re-engineered dynamic drop-down layouts to prevent word wrapping in Russian and Turkish languages, suppressed obsolete warning CS0618 in SettingsManager.cs by migrating enableWordWrapping to textWrappingMode, and fixed template pivot/offset misalignment to keep drop-downs perfectly visible.",
+        "Alchemist Cat Calendar Auto-Open & RectOffset Exception Prevention v18.12.16: Resolved 36 UnityException 'set_left can only be called from the main thread' errors by migrating MonthLayoutConfig from RectOffset field initializers to pure serializable integers (padLeft, padRight, padTop, padBottom). Enhanced DialogueSystem_Manager.OpenCalendarUI() to support direct inspector references, search inactive objects via FindObjectsInactive.Include, and automatically generate and activate the 12 seasonal months seamlessly upon opening.",
+        "Alchemist Cat Avatar Ring Display Binding, Recipe Scroll UI Isolation & Interactive Table Cat v18.12.41: Fixed profile avatar sprite rendering in Avatar_Manager.cs to ensure currentAvatarDisplayImage is enabled and correctly colored white. Scaled dialogue text sizes in DialogueSystem_Manager.cs (from 68-72% to 84-86%) for comfortable reading without clipping. Implemented UI isolation when opening the Recipe Scroll (auto-hiding background resources, calendar icon, and avatar ring, restoring them cleanly on exit). Connected the table Mini Cat click interaction in RecipeCrafting_Manager.cs so clicking the small cat toggles his dialogue bubble hint, and ensured Floating_XP_Badge is cleanly hidden until the potion is claimed.",
+        "Alchemist Cat Inventory 16-Slot Hex Grid Setup, Small Scroll TopPanel Binding & Table Mini-Cat Hint Interaction v18.12.42: Configured 16 inventory hex slots inside Inventory_Panel with Inventory_Frame_Bg (900x900) and Inventory_Slot_Hex (135x145 Cell Size, Spacing 20x15). Linked Small_Scroll_Button inside TopPanel via HorizontalLayoutGroup hierarchy ordering and bound it in _GameSystems under DialogueSystem_Manager.cs. Connected interactive table cat hints with miniCatBubblePanel and sanitized Floating_XP_Badge state transitions in RecipeCrafting_Manager.cs.",
+        "Alchemist Cat 100-Slot Scrollable Hex Grid, Mastery Potion +100 XP & Dual Experience Bar v18.12.43: Expanded the Inventory to a full 100-slot scrollable hex grid, integrated the Mastery Potion granting +100 XP, and established a dual experience bar for both Player Level and Alchemy Mastery.",
+        "Alchemist Cat Knowledge Tree Scroll-To-Bottom Unlock, Minigames Wheel Top-UI Icon Integration & Catch The Mouse Narrative Phase v18.12.44: Implemented 21-rank hierarchical Knowledge Tree with bottom-scroll condition unlock requirement. Connected Minigames Wheel button to TopPanel with automatic alignment and integrated the 'Catch the Mouse' narrative phase in DialogueSystem_Manager.cs.",
+        "Alchemist Cat Catch Mouse Minigame Full UI & 3-Phase Difficulty Calibration, Spritesheet Runner & Audio Inspector Binding v18.12.45: Configured full UI hierarchy for CatchMouse_Game_Panel, including Difficulty_Selection_Panel (Easy x1.0, Normal x1.5, Hard x2.5), 3-phase progression notice Central_Phase_Notice_Panel, dynamic horizontal flip for running mice (localScale.x = -1/+1), and connected full AudioClips suite in Inspector."
+      ]
+    },
+    {
+      "name": "Character & Weapon Fabrication",
+      "features": ["T-Pose RPG Prototyping", "Separate Weapon Export Workflow (GLB/XDM Stable)", "Meshy/Hunyuan 8k Synthesis"],
+      "prompts": ["Heroic Warrior", "Grand Mage", "Elven Archer", "Legendary Weapons"]
+    },
+    {
+      "name": "Tutorial Knowledge Sync",
+      "platform": "YouTube",
+      "playlist": "PLtCyldnITT2PCvJSOMBfUlQvPZDvr_nsb",
+      "videos": [
+        "https://www.youtube.com/watch?v=RXmW8aVcR-U",
+        "https://www.youtube.com/watch?v=uj1xzzCOhNU",
+        "https://www.youtube.com/watch?v=aO68GKBbaw0",
+        "https://www.youtube.com/watch?v=9vuyis_Y-LY",
+        "https://www.youtube.com/watch?v=UKZp67dY1_w",
+        "https://www.youtube.com/watch?v=-hvxjyzcSkI",
+        "https://www.youtube.com/watch?v=4YEB_Q8EOD8",
+        "https://www.youtube.com/watch?v=JBszeE_NgmA",
+        "https://www.youtube.com/watch?v=7PrHjnBl-Dw",
+        "https://www.youtube.com/watch?v=IJgAUkjsomA",
+        "https://www.youtube.com/watch?v=hmzlNvqziVI",
+        "https://www.youtube.com/watch?v=JgmIM7qhGh8",
+        "https://www.youtube.com/watch?v=AKKpPmxx07w",
+        "https://www.youtube.com/watch?v=juSKjpD3G7o",
+        "https://www.youtube.com/watch?v=NpfgeQZKmcU",
+        "https://www.youtube.com/watch?v=SDV54QaEHBs",
+        "https://www.youtube.com/watch?v=TxyBoDqE6Zo",
+        "https://www.youtube.com/watch?v=_aJzFbuLi1M"
+      ],
+      "topics": ["Unity Physics", "Blender Geometry Nodes", "Shader Graph", "Advanced Rigging", "ML-Agents"]
+    },
+    {
+      "name": "Visual & HDR",
+      "scripts": ["SimpleFloatAnimation.cs"],
+      "techniques": ["HDR Glow (Cyan 0,255,255)", "Post-Processing: Bloom", "Shader: TMPro Distance Field"]
+    },
+    {
+      "name": "Project Workflow",
+      "mode": "Input System Package (New)",
+      "optimization": "Batch-start (.bat) for bypassing region-locked updates",
+      "stability": ["fetchWithRetry for resilience", "Port 3000 strict lock"]
+    },
+    {
+      "name": "Game Menu System",
+      "scripts": ["Menu_Game.cs", "Translator.cs", "SaveGameSystem.cs"],
+      "features": ["New Game Confirmation Panel", "Language-aware fonts", "3 PlayerPrefs-backed Core Save slots (SaveGameSystem)", "Language-adaptive save metadata level prefixes (Ур/Lvl/레벨/等级)"]
+    },
+    {
+      "name": "Pixabay Sound & AudioMixer Integration Help DB",
+      "features": [
+        "Step-by-step guideline on downloading audios from Pixabay.com",
+        "List of English search prompts for game sounds (UI, Inventory, Battle, Movement, Map, Interface, Monster noises)",
+        "Unity Button event binding methods to trigger SettingsManager sound clips connected to the corresponding AudioMixer group",
+        "Comparison breakdown of music/SFX AI engines (Suno, Udio, Stable Audio, ElevenLabs)"
+      ]
+    }
+  ]
+}

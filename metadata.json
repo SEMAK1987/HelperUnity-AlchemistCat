@@ -1,0 +1,8 @@
+{
+  "name": "Alchemist Cat: Studio & Game Assistant",
+  "description": "Студия разработки Алхимического Кота: Поймай Мышь, Рецепты, Смена Дня/Ночи, Ежедневные Награды, Календарь и 21 C# скрипт.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
