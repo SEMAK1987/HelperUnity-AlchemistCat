@@ -214,6 +214,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (calendarIconButton != null) calendarIconButton.SetActive(false);
         if (smallScrollIconButton != null) smallScrollIconButton.SetActive(false);
         if (chestIconButton != null) chestIconButton.SetActive(false);
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false);
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(false);
+        if (minigamesPanel != null) minigamesPanel.SetActive(false);
 
         if (calendarPanel != null) calendarPanel.SetActive(false);
         if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false);
@@ -1379,11 +1382,14 @@ public class DialogueSystem_Manager : MonoBehaviour
             recipeScrollPanel.SetActive(false);
         }
 
-        // При выходе из свитка рецептов восстанавливаем видимость ресурсов, аватарки, календаря и свитка
-        if (topPanel != null) topPanel.SetActive(true);
-        if (calendarIconButton != null) calendarIconButton.SetActive(true);
-        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(true);
-        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(true);
+        // Если варка еще не началась, то восстанавливаем видимость элементов
+        if (!isCraftingInProgress)
+        {
+            if (topPanel != null) topPanel.SetActive(true);
+            if (calendarIconButton != null) calendarIconButton.SetActive(true);
+            if (playerAvatarContainer != null) playerAvatarContainer.SetActive(true);
+            if (smallScrollIconButton != null) smallScrollIconButton.SetActive(true);
+        }
 
         if (!isCraftingInProgress)
         {

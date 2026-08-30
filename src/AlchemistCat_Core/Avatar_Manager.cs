@@ -58,7 +58,7 @@ public class Avatar_Manager : MonoBehaviour
     public TextMeshProUGUI masteryRankTitleText;   // "Новичок" / "Новичок-травник"
     public Image masteryExpProgressBar;            // Вторая полоска опыта мастерства
     public TextMeshProUGUI masteryExpProgressText; // Текст "0/100 XP"
-    public Vector2 masteryBarPosition = new Vector2(-74, -28); // Сдвиг второй полоски чуть ниже
+    public Vector2 masteryBarPosition = new Vector2(130, -32); // Сдвиг второй полоски чуть ниже
     public Vector2 masteryBarScale = new Vector2(1f, 0.85f);
     public Color noviceTextColor = Color.white;
     public Color herbalistTextColor = new Color(0.32f, 0.75f, 0.50f, 1f); // #52B788 Более темный травянисто-зеленый
@@ -120,10 +120,10 @@ public class Avatar_Manager : MonoBehaviour
 
     [Header("Позиции и Масштаб Элементов Профиля (Ручная и Автоматическая Калибровка)")]
     public bool autoAlignProfileOffsets = true;
-    public Vector2 avatarRingPosition = new Vector2(40, -40); // Позиция кольца аватара
+    public Vector2 avatarRingPosition = new Vector2(50, -50); // Позиция кольца аватара
     public Vector2 avatarRingScale = new Vector2(1.2f, 1.2f); // Размер кольца аватара
-    public Vector2 levelBadgePosition = new Vector2(90, 14);  // Сдвинуто ближе к кольцу
-    public Vector2 expBarPosition = new Vector2(-74, 0);      // Сдвинуто ровно на -74 Pos X вплотную к кольцу аватара
+    public Vector2 levelBadgePosition = new Vector2(130, 18);  // Сдвинуто ближе к кольцу
+    public Vector2 expBarPosition = new Vector2(130, -4);      // Сдвинуто ровно на -74 Pos X вплотную к кольцу аватара
     public Vector2 expBarScale = new Vector2(1f, 1f);         // Масштаб шкалы опыта
     public float levelTextFontSize = 24f;                     // Размер шрифта "Ур. 1"
 

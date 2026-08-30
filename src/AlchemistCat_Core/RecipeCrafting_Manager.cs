@@ -227,8 +227,21 @@ public class RecipeCrafting_Manager : MonoBehaviour
             Avatar_Manager.Instance.SetAvatarButtonInteractable(false);
         }
 
-        // Появляется котел и маленький кот на столе
-        if (tableCauldronObject != null) tableCauldronObject.SetActive(true);
+        // Появляется котел и маленький кот на столе (включая родительскую группу Table_Cauldron_Group при наличии)
+        if (tableCauldronObject != null) 
+        {
+            tableCauldronObject.SetActive(true);
+            if (tableCauldronObject.transform.parent != null && tableCauldronObject.transform.parent.name.Contains("Table_Cauldron"))
+            {
+                tableCauldronObject.transform.parent.gameObject.SetActive(true);
+            }
+        }
+        else
+        {
+            GameObject foundTable = GameObject.Find("Table_Cauldron_Group");
+            if (foundTable != null) foundTable.SetActive(true);
+        }
+
         if (tableMiniCatObject != null)
         {
             tableMiniCatObject.SetActive(true);
