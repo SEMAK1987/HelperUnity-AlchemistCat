@@ -18,7 +18,45 @@ using TMPro;
 /// </summary>
 public class RecipeCrafting_Manager : MonoBehaviour
 {
-    public static RecipeCrafting_Manager Instance { get; private set; }
+    private static RecipeCrafting_Manager _instance;
+    public static RecipeCrafting_Manager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+#if UNITY_2023_1_OR_NEWER
+                _instance = FindFirstObjectByType<RecipeCrafting_Manager>();
+#else
+                _instance = FindObjectOfType<RecipeCrafting_Manager>();
+#endif
+                if (_instance == null)
+                {
+                    RecipeCrafting_Manager[] all = Resources.FindObjectsOfTypeAll<RecipeCrafting_Manager>();
+                    foreach (var m in all)
+                    {
+                        if (m != null && m.gameObject != null && m.gameObject.scene.isLoaded)
+                        {
+                            _instance = m;
+                            if (!_instance.gameObject.activeSelf)
+                            {
+                                _instance.gameObject.SetActive(true);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+            return _instance;
+        }
+        private set
+        {
+            _instance = value;
+        }
+    }
+
+    [Header("0. Главная группа Стола и Котла")]
+    public GameObject tableCauldronGroup;      // Родительская группа Table_Cauldron_Group
 
     [Header("1. Большой Свиток Рецепта")]
     public GameObject recipeScrollPanel;
@@ -93,6 +131,8 @@ public class RecipeCrafting_Manager : MonoBehaviour
     {
         Instance = this;
 
+        AutoFindAndBindTableElements();
+
         if (startCraftButton != null)
         {
             startCraftButton.onClick.RemoveAllListeners();
@@ -151,6 +191,106 @@ public class RecipeCrafting_Manager : MonoBehaviour
         if (floatingXPPrefab != null) floatingXPPrefab.SetActive(false);
         if (chestIconButton != null) chestIconButton.SetActive(false);
         if (inventoryPanel != null) inventoryPanel.SetActive(false);
+    }
+
+    private void Start()
+    {
+        AutoFindAndBindTableElements();
+    }
+
+    public void AutoFindAndBindTableElements()
+    {
+        if (tableCauldronGroup == null)
+        {
+            // Ищем Table_Cauldron_Group среди всех Canvas и всех объектов сцены (включая неактивные)
+#if UNITY_2023_1_OR_NEWER
+            Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+#else
+            Canvas[] allCanvases = FindObjectsOfType<Canvas>(true);
+#endif
+            foreach (var canvas in allCanvases)
+            {
+                Transform[] children = canvas.GetComponentsInChildren<Transform>(true);
+                foreach (var child in children)
+                {
+                    if (child.name == "Table_Cauldron_Group" || child.name == "Table_Group" || child.name == "Table")
+                    {
+                        tableCauldronGroup = child.gameObject;
+                        break;
+                    }
+                }
+                if (tableCauldronGroup != null) break;
+            }
+        }
+
+        if (tableCauldronGroup != null)
+        {
+            Transform[] children = tableCauldronGroup.GetComponentsInChildren<Transform>(true);
+            foreach (var child in children)
+            {
+                if (tableCauldronObject == null && (child.name == "Cauldron_Button" || child.name == "Table_Cauldron" || child.name.Contains("Cauldron")))
+                {
+                    tableCauldronObject = child.gameObject;
+                    if (cauldronClickButton == null) cauldronClickButton = child.GetComponent<Button>();
+                }
+                if (tableMiniCatObject == null && (child.name == "Mini_Cat_Image" || child.name == "Mini_Cat" || child.name == "Table_Mini_Cat"))
+                {
+                    tableMiniCatObject = child.gameObject;
+                    if (miniCatClickButton == null) miniCatClickButton = child.GetComponent<Button>();
+                }
+                if (miniCatBubblePanel == null && (child.name == "Mini_Cat_Bubble" || child.name.Contains("Bubble")))
+                {
+                    miniCatBubblePanel = child.gameObject;
+                    if (miniCatBubbleText == null) miniCatBubbleText = child.GetComponentInChildren<TextMeshProUGUI>(true);
+                }
+                if (makeBadgeButtonObject == null && (child.name == "Make_Badge_Button" || child.name.Contains("Make_Badge")))
+                {
+                    makeBadgeButtonObject = child.gameObject;
+                    if (makeBadgeButton == null) makeBadgeButton = child.GetComponent<Button>();
+                }
+                if (craftingProgressBarContainer == null && (child.name == "Crafting_Progress_Bar" || child.name.Contains("Crafting_Progress")))
+                {
+                    craftingProgressBarContainer = child.gameObject;
+                    if (craftingProgressFill == null)
+                    {
+                        Image[] imgs = child.GetComponentsInChildren<Image>(true);
+                        foreach (var img in imgs)
+                        {
+                            if (img.type == Image.Type.Filled || img.name.Contains("Fill") || img.name.Contains("Bar"))
+                            {
+                                craftingProgressFill = img;
+                                break;
+                            }
+                        }
+                    }
+                    if (craftingTimerText == null) craftingTimerText = child.GetComponentInChildren<TextMeshProUGUI>(true);
+                }
+                if (claimPotionButtonObject == null && (child.name == "Claim_Potion_Button" || child.name.Contains("Claim_Potion")))
+                {
+                    claimPotionButtonObject = child.gameObject;
+                    if (claimPotionButton == null) claimPotionButton = child.GetComponent<Button>();
+                }
+                if (floatingXPPrefab == null && (child.name == "Floating_XP_Badge" || child.name.Contains("Floating_XP")))
+                {
+                    floatingXPPrefab = child.gameObject;
+                    if (floatingXPSpawnPoint == null) floatingXPSpawnPoint = child.GetComponent<RectTransform>();
+                    if (floatingXPCanvasGroup == null) floatingXPCanvasGroup = child.GetComponent<CanvasGroup>();
+                    if (floatingXPImage == null) floatingXPImage = child.GetComponentInChildren<Image>(true);
+                }
+            }
+        }
+
+        // Автоматическая привязка кнопки выпивания Колбы Опыта Мастерства
+        if (masteryPotionButton == null && masteryPotionItemObject != null)
+        {
+            masteryPotionButton = masteryPotionItemObject.GetComponent<Button>();
+            if (masteryPotionButton == null)
+            {
+                masteryPotionButton = masteryPotionItemObject.AddComponent<Button>();
+            }
+            masteryPotionButton.onClick.RemoveAllListeners();
+            masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked);
+        }
     }
 
     private Coroutine miniCatBubbleHideCoroutine;
@@ -225,6 +365,14 @@ public class RecipeCrafting_Manager : MonoBehaviour
         if (Avatar_Manager.Instance != null)
         {
             Avatar_Manager.Instance.SetAvatarButtonInteractable(false);
+        }
+
+        // Автоматически находим и привязываем всю группу стола и котла
+        AutoFindAndBindTableElements();
+
+        if (tableCauldronGroup != null)
+        {
+            tableCauldronGroup.SetActive(true);
         }
 
         // Появляется котел и маленький кот на столе (включая родительскую группу Table_Cauldron_Group при наличии)
@@ -551,13 +699,23 @@ public class RecipeCrafting_Manager : MonoBehaviour
             grid.constraintCount = columnsCount;
         }
 
-        // Если в инвентаре уже есть дочерние слоты и их меньше 100, дополняем при наличии префаба
+        // Если в инвентаре уже есть дочерние слоты и их меньше 100, дополняем при наличии префаба или клонируя первый слот
         if (inventorySlotPrefab != null)
         {
             int currentChildCount = inventorySlotsContent.childCount;
             for (int i = currentChildCount; i < totalSlots; i++)
             {
                 GameObject newSlot = Instantiate(inventorySlotPrefab, inventorySlotsContent);
+                newSlot.name = $"Inventory_Slot_Hex_{i + 1}";
+            }
+        }
+        else if (inventorySlotsContent.childCount > 0 && inventorySlotsContent.childCount < totalSlots)
+        {
+            GameObject template = inventorySlotsContent.GetChild(0).gameObject;
+            int currentChildCount = inventorySlotsContent.childCount;
+            for (int i = currentChildCount; i < totalSlots; i++)
+            {
+                GameObject newSlot = Instantiate(template, inventorySlotsContent);
                 newSlot.name = $"Inventory_Slot_Hex_{i + 1}";
             }
         }

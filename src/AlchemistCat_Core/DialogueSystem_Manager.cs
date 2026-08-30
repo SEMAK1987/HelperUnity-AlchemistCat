@@ -71,6 +71,7 @@ public class DialogueSystem_Manager : MonoBehaviour
     public GameObject recipeScrollPanel;
     public Button recipeScrollCloseButton;
     public AudioClip scrollOpenSound;
+    public RecipeCrafting_Manager recipeCraftingManager;
 
     [Header("Объекты игрового мира")]
     public GameObject cauldronButton;
@@ -194,6 +195,11 @@ public class DialogueSystem_Manager : MonoBehaviour
 
     private void Start()
     {
+        if (recipeCraftingManager == null)
+        {
+            recipeCraftingManager = RecipeCrafting_Manager.Instance;
+        }
+
         StartBackgroundMusic();
 
         if (dialogueBodyText != null)
@@ -759,7 +765,9 @@ public class DialogueSystem_Manager : MonoBehaviour
     public bool CanInteractWithAvatarIcon()
     {
         if (isCraftingInProgress) return false;
-        return (dialoguePanel == null || !dialoguePanel.activeSelf);
+        if (dialoguePanel != null && dialoguePanel.activeSelf) return false;
+        if (avatarManager != null && avatarManager.avatarPanel != null && avatarManager.avatarPanel.activeSelf) return false;
+        return true;
     }
 
     public void SetCalendarButtonInteractable(bool interactable)

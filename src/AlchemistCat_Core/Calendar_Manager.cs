@@ -115,6 +115,16 @@ public class Calendar_Manager : MonoBehaviour
             closeButton.onClick.AddListener(CloseCalendar);
         }
 
+        UpdateCurrentDate();
+        string todayKey = $"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}";
+        bool isTodayClaimed = PlayerPrefs.GetInt(todayKey, 0) == 1;
+        bool isTutorialDone = PlayerPrefs.GetInt("Tutorial_Calendar_Claim_Done", 0) == 1;
+
+        if (closeButton != null)
+        {
+            closeButton.interactable = (isTodayClaimed || isTutorialDone);
+        }
+
         if (rewardPopupCloseBtn != null)
         {
             rewardPopupCloseBtn.onClick.RemoveAllListeners();
@@ -142,6 +152,13 @@ public class Calendar_Manager : MonoBehaviour
         }
 
         UpdateCurrentDate();
+        string todayKey = $"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}";
+        bool isTodayClaimed = PlayerPrefs.GetInt(todayKey, 0) == 1;
+        bool isTutorialDone = PlayerPrefs.GetInt("Tutorial_Calendar_Claim_Done", 0) == 1;
+        if (closeButton != null)
+        {
+            closeButton.interactable = (isTodayClaimed || isTutorialDone);
+        }
 
         // Всегда синхронизируем и применяем свежие координаты ячеек при открытии
         if (monthsContainer != null && monthsContainer.childCount == 0)
@@ -600,7 +617,13 @@ public class Calendar_Manager : MonoBehaviour
 
             // Забираем награду
             PlayerPrefs.SetInt(saveKey, 1);
+            PlayerPrefs.SetInt("Tutorial_Calendar_Claim_Done", 1);
             PlayerPrefs.Save();
+
+            if (closeButton != null)
+            {
+                closeButton.interactable = true;
+            }
 
             string rewardDesc = ClaimReward(month, day);
             ShowPopup("Награда получена!", $"Поздравляем! Вы получили награду за {day} {monthNamesRu[month - 1]}:\n\n<b>{rewardDesc}</b>");

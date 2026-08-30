@@ -287,12 +287,28 @@ public class Avatar_Manager : MonoBehaviour
         if (autoAlignProfileOffsets && masteryContainer != null)
         {
             RectTransform masteryRect = masteryContainer.GetComponent<RectTransform>();
+            RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
+                ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
+                : null;
+
             if (masteryRect != null)
             {
-                Vector2 targetPos = masteryBarPosition;
-                if (targetPos.x <= 0f) targetPos.x = 130f;
-                masteryRect.anchoredPosition = targetPos;
-                masteryRect.localScale = new Vector3(masteryBarScale.x, masteryBarScale.y, 1f);
+                if (expBgRect != null)
+                {
+                    masteryRect.anchorMin = expBgRect.anchorMin;
+                    masteryRect.anchorMax = expBgRect.anchorMax;
+                    masteryRect.pivot = expBgRect.pivot;
+                    masteryRect.sizeDelta = expBgRect.sizeDelta;
+                    masteryRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 28f);
+                    masteryRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+                }
+                else
+                {
+                    Vector2 targetPos = masteryBarPosition;
+                    if (targetPos.x <= 0f) targetPos.x = 130f;
+                    masteryRect.anchoredPosition = targetPos;
+                    masteryRect.localScale = new Vector3(masteryBarScale.x, masteryBarScale.y, 1f);
+                }
             }
         }
 
@@ -345,27 +361,42 @@ public class Avatar_Manager : MonoBehaviour
                 }
             }
 
-            if (levelBadgeText != null)
-            {
-                RectTransform lvlRect = levelBadgeText.GetComponent<RectTransform>();
-                if (lvlRect != null)
-                {
-                    Vector2 targetLvlPos = levelBadgePosition;
-                    if (targetLvlPos.x <= 0f) targetLvlPos.x = 130f;
-                    lvlRect.anchoredPosition = targetLvlPos;
-                }
-                levelBadgeText.fontSize = levelTextFontSize;
-            }
+            RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
+                ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
+                : null;
 
-            if (expProgressBar != null && expProgressBar.transform.parent != null)
+            if (expBgRect != null)
             {
-                RectTransform expBgRect = expProgressBar.transform.parent.GetComponent<RectTransform>();
-                if (expBgRect != null)
+                Vector2 targetExpPos = expBarPosition;
+                if (targetExpPos.x <= 0f) targetExpPos.x = 130f;
+                expBgRect.anchoredPosition = targetExpPos;
+                expBgRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+
+                if (levelBadgeText != null)
                 {
-                    Vector2 targetExpPos = expBarPosition;
-                    if (targetExpPos.x <= 0f) targetExpPos.x = 130f;
-                    expBgRect.anchoredPosition = targetExpPos;
-                    expBgRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+                    RectTransform lvlRect = levelBadgeText.GetComponent<RectTransform>();
+                    if (lvlRect != null)
+                    {
+                        lvlRect.anchorMin = expBgRect.anchorMin;
+                        lvlRect.anchorMax = expBgRect.anchorMax;
+                        lvlRect.pivot = expBgRect.pivot;
+                        lvlRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y + 22f);
+                    }
+                    levelBadgeText.fontSize = levelTextFontSize;
+                }
+
+                if (masteryContainer != null)
+                {
+                    RectTransform masteryRect = masteryContainer.GetComponent<RectTransform>();
+                    if (masteryRect != null)
+                    {
+                        masteryRect.anchorMin = expBgRect.anchorMin;
+                        masteryRect.anchorMax = expBgRect.anchorMax;
+                        masteryRect.pivot = expBgRect.pivot;
+                        masteryRect.sizeDelta = expBgRect.sizeDelta;
+                        masteryRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 28f);
+                        masteryRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+                    }
                 }
             }
         }
@@ -448,6 +479,11 @@ public class Avatar_Manager : MonoBehaviour
 
     public void OnAvatarIconClicked()
     {
+        if (avatarPanel != null && avatarPanel.activeSelf)
+        {
+            return;
+        }
+
         if (DialogueSystem_Manager.Instance != null && !DialogueSystem_Manager.Instance.CanInteractWithAvatarIcon())
         {
             return;
@@ -460,6 +496,12 @@ public class Avatar_Manager : MonoBehaviour
         if (avatarPanel != null)
         {
             avatarPanel.SetActive(true);
+
+            bool isAvatarChosen = PlayerPrefs.GetInt("Tutorial_Avatar_Chosen", 0) == 1;
+            if (closeButton != null)
+            {
+                closeButton.interactable = isAvatarChosen;
+            }
 
             if (autoAdaptResolution)
             {
@@ -500,6 +542,13 @@ public class Avatar_Manager : MonoBehaviour
 
     public void CloseAvatarPanel()
     {
+        bool isAvatarChosen = PlayerPrefs.GetInt("Tutorial_Avatar_Chosen", 0) == 1;
+        if (!isAvatarChosen)
+        {
+            if (closeButton != null) closeButton.interactable = false;
+            return;
+        }
+
         if (avatarPanel != null)
         {
             avatarPanel.SetActive(false);
@@ -932,7 +981,13 @@ public class Avatar_Manager : MonoBehaviour
 
         selectedAvatarId = data.id;
         PlayerPrefs.SetInt("Selected_Avatar_Id", selectedAvatarId);
+        PlayerPrefs.SetInt("Tutorial_Avatar_Chosen", 1);
         PlayerPrefs.Save();
+
+        if (closeButton != null)
+        {
+            closeButton.interactable = true;
+        }
 
         if (selectSound != null && SettingsManager.Instance != null)
             SettingsManager.Instance.PlaySoundEffect(selectSound);
