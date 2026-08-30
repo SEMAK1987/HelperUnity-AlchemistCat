@@ -62,6 +62,13 @@ public class CatchMouse_Minigame : MonoBehaviour
     public RectTransform roadTrack;             // Road_Track
     public RectTransform miceRunningLayer;      // Mice_Running_Layer
 
+    [Header("3D-Перспектива и Наклон Дорожки (Полубоком)")]
+    public bool autoApplyRoadPerspective = true;
+    [Range(0f, 60f)]
+    public float roadPerspectiveTiltAngle = 35f; // Угол наклона дорожки в 3D (по оси X)
+    public float roadYOffset = -60f;             // Смещение дорожки по высоте
+    public float mouseRunYOffset = -45f;          // Высота бега мышек по дорожке
+
     [Header("Окно Победы и Награды")]
     public GameObject rewardPopupPanel;         // Reward_Popup_Panel
     public Image potionRewardIcon;              // Potion_Icon
@@ -101,6 +108,8 @@ public class CatchMouse_Minigame : MonoBehaviour
 
     private void Start()
     {
+        SetupRoadPerspective();
+
         if (closeButton != null)
             closeButton.onClick.AddListener(CloseMinigame);
 
@@ -125,7 +134,24 @@ public class CatchMouse_Minigame : MonoBehaviour
 
     private void OnEnable()
     {
+        SetupRoadPerspective();
         ShowDifficultySelection();
+    }
+
+    /// <summary>
+    /// Автоматическая настройка 3D-перспективы дорожки (полубоком / под углом как пол)
+    /// </summary>
+    public void SetupRoadPerspective()
+    {
+        if (!autoApplyRoadPerspective || roadTrack == null) return;
+
+        // Применяем 3D-наклон плоскости дорожки по оси X
+        roadTrack.localEulerAngles = new Vector3(roadPerspectiveTiltAngle, 0f, 0f);
+
+        // Юстировка высоты дорожки прямо под норками
+        Vector2 pos = roadTrack.anchoredPosition;
+        pos.y = roadYOffset;
+        roadTrack.anchoredPosition = pos;
     }
 
     private void OnDisable()
@@ -325,7 +351,7 @@ public class CatchMouse_Minigame : MonoBehaviour
     /// </summary>
     private void SpawnMouseRunner(MouseType type, int startIdx, int endIdx)
     {
-        if (miceRunningLayer == null || holes == null) return;
+        if (miceRunningLayer == null || holes == null || holes.Length == 0) return;
 
         GameObject mouseObj = new GameObject($"Mouse_{type}");
         mouseObj.transform.SetParent(miceRunningLayer, false);
@@ -342,10 +368,39 @@ public class CatchMouse_Minigame : MonoBehaviour
         Button btn = mouseObj.AddComponent<Button>();
         btn.transition = Selectable.Transition.None;
 
-        Vector2 startHolePos = holes[startIdx].anchoredPosition;
-        Vector2 endHolePos = holes[endIdx].anchoredPosition;
+        // Вычисляем точные координаты норки относительно слоя бега мышек (Mice_Running_Layer)
+        Vector2 startHolePos;
+        Vector2 endHolePos;
 
-        float roadY = roadTrack != null ? roadTrack.anchoredPosition.y : -50f;
+        if (startIdx < holes.Length && holes[startIdx] != null)
+        {
+            startHolePos = miceRunningLayer.InverseTransformPoint(holes[startIdx].position);
+        }
+        else
+        {
+            startHolePos = new Vector2(-250f + (startIdx * 125f), 30f);
+        }
+
+        if (endIdx < holes.Length && holes[endIdx] != null)
+        {
+            endHolePos = miceRunningLayer.InverseTransformPoint(holes[endIdx].position);
+        }
+        else
+        {
+            endHolePos = new Vector2(-250f + (endIdx * 125f), 30f);
+        }
+
+        // Вычисляем высоту дорожки относительно слоя бега
+        float roadY;
+        if (roadTrack != null)
+        {
+            Vector2 roadInMice = miceRunningLayer.InverseTransformPoint(roadTrack.position);
+            roadY = roadInMice.y + mouseRunYOffset;
+        }
+        else
+        {
+            roadY = startHolePos.y - 70f + mouseRunYOffset;
+        }
 
         bool runRight = endHolePos.x > startHolePos.x;
         float baseScaleX = runRight ? 1f : -1f;

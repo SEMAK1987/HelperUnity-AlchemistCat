@@ -120,12 +120,20 @@ public class Avatar_Manager : MonoBehaviour
 
     [Header("Позиции и Масштаб Элементов Профиля (Ручная и Автоматическая Калибровка)")]
     public bool autoAlignProfileOffsets = true;
-    public Vector2 avatarRingPosition = new Vector2(50, -50); // Позиция кольца аватара
-    public Vector2 avatarRingScale = new Vector2(1.2f, 1.2f); // Размер кольца аватара
-    public Vector2 levelBadgePosition = new Vector2(130, 18);  // Сдвинуто ближе к кольцу
-    public Vector2 expBarPosition = new Vector2(130, -4);      // Сдвинуто ровно на -74 Pos X вплотную к кольцу аватара
+    public Vector2 avatarRingPosition = new Vector2(50, -50); // Позиция кольца аватара на ПК
+    public Vector2 avatarRingScale = new Vector2(1.15f, 1.15f); // Размер кольца аватара на ПК
+    public Vector2 levelBadgePosition = new Vector2(128, 18);  // Сдвинуто ближе к кольцу
+    public Vector2 expBarPosition = new Vector2(128, -4);      // Полоска опыта кота
     public Vector2 expBarScale = new Vector2(1f, 1f);         // Масштаб шкалы опыта
-    public float levelTextFontSize = 24f;                     // Размер шрифта "Ур. 1"
+    public float levelTextFontSize = 22f;                     // Размер шрифта "Ур. 1"
+
+    [Header("Адаптивные настройки для Экранов Телефонов (Mobile Portrait)")]
+    public bool enableMobileAdaptation = true;
+    public Vector2 mobileAvatarRingPos = new Vector2(38, -38);
+    public Vector2 mobileAvatarRingScale = new Vector2(0.95f, 0.95f);
+    public Vector2 mobileExpBarPos = new Vector2(104, -6);
+    public Vector2 mobileExpBarScale = new Vector2(0.85f, 0.85f);
+    public float mobileLevelFontSize = 16f;
 
     [Header("Коллекция Аватарок (До 100 Уровня)")]
     public List<AvatarData> allAvatars = new List<AvatarData>();
@@ -353,13 +361,19 @@ public class Avatar_Manager : MonoBehaviour
     /// </summary>
     private void AutoSanitizeMasteryBarLayout()
     {
+        bool isMobile = enableMobileAdaptation && ((float)Screen.width / Mathf.Max(1, Screen.height) < 1.05f);
+
         RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
             ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
             : null;
 
-        float baseX = expBgRect != null ? expBgRect.anchoredPosition.x : 127f;
-        float baseY = expBgRect != null ? expBgRect.anchoredPosition.y : -24f;
-        Vector2 baseSize = expBgRect != null ? expBgRect.sizeDelta : new Vector2(130f, 18f);
+        float defaultBaseX = isMobile ? mobileExpBarPos.x : 127f;
+        float defaultBaseY = isMobile ? mobileExpBarPos.y - 20f : -24f;
+        Vector2 defaultBaseSize = isMobile ? new Vector2(105f, 15f) : new Vector2(130f, 18f);
+
+        float baseX = expBgRect != null ? expBgRect.anchoredPosition.x : defaultBaseX;
+        float baseY = expBgRect != null ? expBgRect.anchoredPosition.y : defaultBaseY;
+        Vector2 baseSize = expBgRect != null ? expBgRect.sizeDelta : defaultBaseSize;
 
         // 1. Контейнер / Фон шкалы мастерства (Mastery_Exp_Bar_Background)
         Transform masteryBarTransform = masteryExpProgressBar != null ? masteryExpProgressBar.transform.parent : null;
@@ -374,8 +388,8 @@ public class Avatar_Manager : MonoBehaviour
                 masteryBarBg.anchorMax = new Vector2(0.5f, 0.5f);
                 masteryBarBg.pivot = new Vector2(0.5f, 0.5f);
                 masteryBarBg.sizeDelta = baseSize;
-                masteryBarBg.anchoredPosition = new Vector2(baseX, baseY - 30f); // Располагается прямо под первой полоской
-                masteryBarBg.localScale = Vector3.one;
+                masteryBarBg.anchoredPosition = new Vector2(baseX, baseY - (isMobile ? 22f : 30f)); // Располагается прямо под первой полоской
+                masteryBarBg.localScale = isMobile ? Vector3.one * 0.9f : Vector3.one;
             }
         }
 
@@ -408,6 +422,10 @@ public class Avatar_Manager : MonoBehaviour
                 textRect.localScale = Vector3.one;
             }
             masteryExpProgressText.alignment = TextAlignmentOptions.Center;
+            if (isMobile)
+            {
+                masteryExpProgressText.fontSize = 11f;
+            }
         }
 
         // 4. Текст названия ранга ("Новичок" / "Новичок-травник")
@@ -416,40 +434,53 @@ public class Avatar_Manager : MonoBehaviour
             RectTransform titleRect = masteryRankTitleText.GetComponent<RectTransform>();
             if (titleRect != null)
             {
+                Vector2 titleSize = isMobile ? new Vector2(130f, 18f) : new Vector2(180f, 22f);
                 if (masteryBarBg != null && titleRect.IsChildOf(masteryBarBg))
                 {
                     titleRect.anchorMin = new Vector2(0.5f, 0.5f);
                     titleRect.anchorMax = new Vector2(0.5f, 0.5f);
                     titleRect.pivot = new Vector2(0.5f, 0.5f);
-                    titleRect.anchoredPosition = new Vector2(0f, 18f); // Прямо над второй полоской
-                    titleRect.sizeDelta = new Vector2(180f, 22f);
+                    titleRect.anchoredPosition = new Vector2(0f, isMobile ? 14f : 18f); // Прямо над второй полоской
+                    titleRect.sizeDelta = titleSize;
                 }
                 else
                 {
                     titleRect.anchorMin = new Vector2(0.5f, 0.5f);
                     titleRect.anchorMax = new Vector2(0.5f, 0.5f);
                     titleRect.pivot = new Vector2(0.5f, 0.5f);
-                    titleRect.anchoredPosition = new Vector2(baseX, baseY - 15f);
-                    titleRect.sizeDelta = new Vector2(180f, 22f);
+                    titleRect.anchoredPosition = new Vector2(baseX, baseY - (isMobile ? 11f : 15f));
+                    titleRect.sizeDelta = titleSize;
                 }
                 titleRect.localScale = Vector3.one;
             }
             masteryRankTitleText.alignment = TextAlignmentOptions.Center;
+            if (isMobile)
+            {
+                masteryRankTitleText.fontSize = 12.5f;
+            }
         }
     }
 
     public void UpdateProfileUI()
     {
-        // Автоматическое позиционирование кольца аватара, уровня и шкалы опыта
+        // Автоматическое позиционирование кольца аватара, уровня и шкалы опыта с поддержкой мобильных экранов
         if (autoAlignProfileOffsets)
         {
+            bool isMobile = enableMobileAdaptation && ((float)Screen.width / Mathf.Max(1, Screen.height) < 1.05f);
+
+            Vector2 curRingPos = isMobile ? mobileAvatarRingPos : avatarRingPosition;
+            Vector2 curRingScale = isMobile ? mobileAvatarRingScale : avatarRingScale;
+            Vector2 curExpPos = isMobile ? mobileExpBarPos : expBarPosition;
+            Vector2 curExpScale = isMobile ? mobileExpBarScale : expBarScale;
+            float curLvlFontSize = isMobile ? mobileLevelFontSize : levelTextFontSize;
+
             if (avatarIconButton != null)
             {
                 RectTransform ringRect = avatarIconButton.GetComponent<RectTransform>();
                 if (ringRect != null)
                 {
-                    ringRect.anchoredPosition = avatarRingPosition;
-                    ringRect.localScale = new Vector3(avatarRingScale.x, avatarRingScale.y, 1f);
+                    ringRect.anchoredPosition = curRingPos;
+                    ringRect.localScale = new Vector3(curRingScale.x, curRingScale.y, 1f);
                 }
             }
 
@@ -459,10 +490,10 @@ public class Avatar_Manager : MonoBehaviour
 
             if (expBgRect != null)
             {
-                Vector2 targetExpPos = expBarPosition;
-                if (targetExpPos.x <= 0f) targetExpPos.x = 130f;
+                Vector2 targetExpPos = curExpPos;
+                if (targetExpPos.x <= 0f) targetExpPos.x = isMobile ? 104f : 128f;
                 expBgRect.anchoredPosition = targetExpPos;
-                expBgRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+                expBgRect.localScale = new Vector3(curExpScale.x, curExpScale.y, 1f);
 
                 if (levelBadgeText != null)
                 {
@@ -472,9 +503,9 @@ public class Avatar_Manager : MonoBehaviour
                         lvlRect.anchorMin = expBgRect.anchorMin;
                         lvlRect.anchorMax = expBgRect.anchorMax;
                         lvlRect.pivot = expBgRect.pivot;
-                        lvlRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y + 22f);
+                        lvlRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y + (isMobile ? 18f : 22f));
                     }
-                    levelBadgeText.fontSize = levelTextFontSize;
+                    levelBadgeText.fontSize = curLvlFontSize;
                 }
             }
 

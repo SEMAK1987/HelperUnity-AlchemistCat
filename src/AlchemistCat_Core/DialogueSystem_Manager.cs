@@ -802,6 +802,10 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (!autoAlignSmallScrollToCalendar) return;
         if (smallScrollIconButton != null && calendarIconButton != null)
         {
+            bool isMobile = (float)Screen.width / Mathf.Max(1, Screen.height) < 1.05f;
+            Vector2 offset = isMobile ? new Vector2(-75f, 0f) : smallScrollOffsetFromCalendar;
+            Vector3 targetScale = isMobile ? new Vector3(0.85f, 0.85f, 1f) : Vector3.one;
+
             RectTransform calRect = calendarIconButton.GetComponent<RectTransform>();
             RectTransform scrollRect = smallScrollIconButton.GetComponent<RectTransform>();
             if (calRect != null && scrollRect != null)
@@ -813,8 +817,9 @@ public class DialogueSystem_Manager : MonoBehaviour
                 scrollRect.anchorMin = calRect.anchorMin;
                 scrollRect.anchorMax = calRect.anchorMax;
                 scrollRect.pivot = calRect.pivot;
-                scrollRect.anchoredPosition = calRect.anchoredPosition + smallScrollOffsetFromCalendar;
+                scrollRect.anchoredPosition = calRect.anchoredPosition + offset;
                 scrollRect.sizeDelta = calRect.sizeDelta;
+                scrollRect.localScale = targetScale;
             }
 
             // Очищаем стандартный текст кнопки, если он присутствует
@@ -843,6 +848,10 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (!autoAlignChestToScroll) return;
         if (chestIconButton != null)
         {
+            bool isMobile = (float)Screen.width / Mathf.Max(1, Screen.height) < 1.05f;
+            Vector2 offset = isMobile ? new Vector2(-75f, 0f) : chestOffsetFromScroll;
+            Vector3 targetScale = isMobile ? new Vector3(0.85f, 0.85f, 1f) : Vector3.one;
+
             // Базовый референс для родителя и размера
             GameObject refObj = smallScrollIconButton != null ? smallScrollIconButton : calendarIconButton;
             if (refObj != null)
@@ -863,16 +872,17 @@ public class DialogueSystem_Manager : MonoBehaviour
 
                     // Размер сундука точно такой же, как у свитка и календаря
                     chestRect.sizeDelta = refRect.sizeDelta;
+                    chestRect.localScale = targetScale;
 
                     if (smallScrollIconButton != null)
                     {
                         RectTransform scrollRect = smallScrollIconButton.GetComponent<RectTransform>();
-                        chestRect.anchoredPosition = scrollRect.anchoredPosition + chestOffsetFromScroll;
+                        chestRect.anchoredPosition = scrollRect.anchoredPosition + offset;
                     }
                     else if (calendarIconButton != null)
                     {
                         RectTransform calRect = calendarIconButton.GetComponent<RectTransform>();
-                        chestRect.anchoredPosition = calRect.anchoredPosition + (smallScrollOffsetFromCalendar * 2f);
+                        chestRect.anchoredPosition = calRect.anchoredPosition + (offset * 2f);
                     }
                 }
             }
@@ -903,6 +913,11 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (!autoAlignKnowledgeToChest) return;
         if (knowledgeIconButton != null)
         {
+            bool isMobile = (float)Screen.width / Mathf.Max(1, Screen.height) < 1.05f;
+            Vector2 offset = isMobile ? new Vector2(-75f, 0f) : knowledgeOffsetFromChest;
+            if (!isMobile && offset.x > -125f) offset.x = -135f;
+            Vector3 targetScale = isMobile ? new Vector3(0.85f, 0.85f, 1f) : Vector3.one;
+
             GameObject refObj = chestIconButton != null ? chestIconButton : (smallScrollIconButton != null ? smallScrollIconButton : calendarIconButton);
             if (refObj != null)
             {
@@ -919,18 +934,16 @@ public class DialogueSystem_Manager : MonoBehaviour
                     knowRect.anchorMax = refRect.anchorMax;
                     knowRect.pivot = refRect.pivot;
                     knowRect.sizeDelta = refRect.sizeDelta;
-
-                    Vector2 actualOffset = knowledgeOffsetFromChest;
-                    if (actualOffset.x > -125f) actualOffset.x = -135f;
+                    knowRect.localScale = targetScale;
 
                     if (chestIconButton != null)
                     {
                         RectTransform chestRect = chestIconButton.GetComponent<RectTransform>();
-                        knowRect.anchoredPosition = chestRect.anchoredPosition + actualOffset;
+                        knowRect.anchoredPosition = chestRect.anchoredPosition + offset;
                     }
                     else
                     {
-                        knowRect.anchoredPosition = refRect.anchoredPosition + actualOffset;
+                        knowRect.anchoredPosition = refRect.anchoredPosition + offset;
                     }
                 }
             }
@@ -989,6 +1002,10 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (!autoAlignMinigamesToKnowledge) return;
         if (minigamesWheelIconButton != null)
         {
+            bool isMobile = (float)Screen.width / Mathf.Max(1, Screen.height) < 1.05f;
+            Vector2 offset = isMobile ? new Vector2(-75f, 0f) : minigamesOffsetFromKnowledge;
+            Vector3 targetScale = isMobile ? new Vector3(0.85f, 0.85f, 1f) : Vector3.one;
+
             GameObject refObj = knowledgeIconButton != null ? knowledgeIconButton : (chestIconButton != null ? chestIconButton : smallScrollIconButton);
             if (refObj != null)
             {
@@ -1005,15 +1022,16 @@ public class DialogueSystem_Manager : MonoBehaviour
                     wheelRect.anchorMax = refRect.anchorMax;
                     wheelRect.pivot = refRect.pivot;
                     wheelRect.sizeDelta = refRect.sizeDelta;
+                    wheelRect.localScale = targetScale;
 
                     if (knowledgeIconButton != null)
                     {
                         RectTransform knowRect = knowledgeIconButton.GetComponent<RectTransform>();
-                        wheelRect.anchoredPosition = knowRect.anchoredPosition + minigamesOffsetFromKnowledge;
+                        wheelRect.anchoredPosition = knowRect.anchoredPosition + offset;
                     }
                     else
                     {
-                        wheelRect.anchoredPosition = refRect.anchoredPosition + minigamesOffsetFromKnowledge;
+                        wheelRect.anchoredPosition = refRect.anchoredPosition + offset;
                     }
                 }
             }
