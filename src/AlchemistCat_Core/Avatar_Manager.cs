@@ -282,35 +282,32 @@ public class Avatar_Manager : MonoBehaviour
         UpdateMasteryUI();
     }
 
+    [ContextMenu("Сбросить Прогресс Профиля и Мастерства (Reset Profile & Mastery)")]
+    public void ResetProfileAndMasteryProgress()
+    {
+        PlayerPrefs.DeleteKey("Player_Level");
+        PlayerPrefs.DeleteKey("Player_Exp");
+        PlayerPrefs.DeleteKey("Player_MaxExp");
+        PlayerPrefs.DeleteKey("Player_Mastery_Rank");
+        PlayerPrefs.DeleteKey("Player_Mastery_Exp");
+        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed");
+        PlayerPrefs.Save();
+
+        currentLevel = 1;
+        currentExp = 0;
+        maxExp = 10;
+        currentMasteryRankIndex = 0;
+        currentMasteryExp = 0;
+        maxMasteryExp = 100;
+
+        UpdateProfileUI();
+        UpdateMasteryUI();
+        Debug.Log("[Avatar_Manager] Профиль и мастерство успешно сброшены к начальному состоянию!");
+    }
+
     public void UpdateMasteryUI()
     {
-        if (autoAlignProfileOffsets && masteryContainer != null)
-        {
-            RectTransform masteryRect = masteryContainer.GetComponent<RectTransform>();
-            RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
-                ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
-                : null;
-
-            if (masteryRect != null)
-            {
-                if (expBgRect != null)
-                {
-                    masteryRect.anchorMin = expBgRect.anchorMin;
-                    masteryRect.anchorMax = expBgRect.anchorMax;
-                    masteryRect.pivot = expBgRect.pivot;
-                    masteryRect.sizeDelta = expBgRect.sizeDelta;
-                    masteryRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 28f);
-                    masteryRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
-                }
-                else
-                {
-                    Vector2 targetPos = masteryBarPosition;
-                    if (targetPos.x <= 0f) targetPos.x = 130f;
-                    masteryRect.anchoredPosition = targetPos;
-                    masteryRect.localScale = new Vector3(masteryBarScale.x, masteryBarScale.y, 1f);
-                }
-            }
-        }
+        AutoSanitizeMasteryBarLayout();
 
         string rankTitle = currentMasteryRankIndex < MasteryRankNamesRU.Length ? MasteryRankNamesRU[currentMasteryRankIndex] : "Новичок";
         if (masteryRankTitleText != null)
@@ -322,7 +319,7 @@ public class Avatar_Manager : MonoBehaviour
             }
             else
             {
-                masteryRankTitleText.color = herbalistTextColor; // Более темный насыщенный травянисто-зеленый #52B788
+                masteryRankTitleText.color = herbalistTextColor; // Травянисто-зеленый #52B788
             }
         }
 
@@ -343,6 +340,96 @@ public class Avatar_Manager : MonoBehaviour
                 masteryExpProgressBar.color = new Color(0.3f, 0.9f, 0.6f, 1f); // Травянисто-зеленый
             else
                 masteryExpProgressBar.color = new Color(0.15f, 0.75f, 0.85f, 1f); // Бирюзово-магический
+        }
+    }
+
+    /// <summary>
+    /// Автоматическая юстировка шкалы мастерства и ее дочерних элементов (текст, заливка, название ранга)
+    /// </summary>
+    private void AutoSanitizeMasteryBarLayout()
+    {
+        RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
+            ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
+            : null;
+
+        float baseX = expBgRect != null ? expBgRect.anchoredPosition.x : 127f;
+        float baseY = expBgRect != null ? expBgRect.anchoredPosition.y : -24f;
+        Vector2 baseSize = expBgRect != null ? expBgRect.sizeDelta : new Vector2(130f, 18f);
+
+        // 1. Контейнер / Фон шкалы мастерства (Mastery_Exp_Bar_Background)
+        Transform masteryBarTransform = masteryExpProgressBar != null ? masteryExpProgressBar.transform.parent : null;
+        if (masteryBarTransform == null && masteryContainer != null) masteryBarTransform = masteryContainer.transform;
+
+        RectTransform masteryBarBg = masteryBarTransform != null ? masteryBarTransform.GetComponent<RectTransform>() : null;
+        if (masteryBarBg != null)
+        {
+            if (masteryBarBg.parent != null && (masteryBarBg.parent.name.Contains("Container") || masteryBarBg.parent.name.Contains("Avatar")))
+            {
+                masteryBarBg.anchorMin = new Vector2(0.5f, 0.5f);
+                masteryBarBg.anchorMax = new Vector2(0.5f, 0.5f);
+                masteryBarBg.pivot = new Vector2(0.5f, 0.5f);
+                masteryBarBg.sizeDelta = baseSize;
+                masteryBarBg.anchoredPosition = new Vector2(baseX, baseY - 30f); // Располагается прямо под первой полоской
+                masteryBarBg.localScale = Vector3.one;
+            }
+        }
+
+        // 2. Заливка шкалы мастерства (Mastery_Exp_Fill)
+        if (masteryExpProgressBar != null)
+        {
+            RectTransform fillRect = masteryExpProgressBar.GetComponent<RectTransform>();
+            if (fillRect != null)
+            {
+                fillRect.anchorMin = Vector2.zero;
+                fillRect.anchorMax = Vector2.one;
+                fillRect.offsetMin = Vector2.zero;
+                fillRect.offsetMax = Vector2.zero;
+                fillRect.pivot = new Vector2(0.5f, 0.5f);
+                fillRect.localScale = Vector3.one;
+            }
+        }
+
+        // 3. Текст опыта ("0/100 XP" / "0/300 XP")
+        if (masteryExpProgressText != null)
+        {
+            RectTransform textRect = masteryExpProgressText.GetComponent<RectTransform>();
+            if (textRect != null)
+            {
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = Vector2.zero;
+                textRect.offsetMax = Vector2.zero;
+                textRect.anchoredPosition = Vector2.zero;
+                textRect.localScale = Vector3.one;
+            }
+            masteryExpProgressText.alignment = TextAlignmentOptions.Center;
+        }
+
+        // 4. Текст названия ранга ("Новичок" / "Новичок-травник")
+        if (masteryRankTitleText != null)
+        {
+            RectTransform titleRect = masteryRankTitleText.GetComponent<RectTransform>();
+            if (titleRect != null)
+            {
+                if (masteryBarBg != null && titleRect.IsChildOf(masteryBarBg))
+                {
+                    titleRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    titleRect.pivot = new Vector2(0.5f, 0.5f);
+                    titleRect.anchoredPosition = new Vector2(0f, 18f); // Прямо над второй полоской
+                    titleRect.sizeDelta = new Vector2(180f, 22f);
+                }
+                else
+                {
+                    titleRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    titleRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    titleRect.pivot = new Vector2(0.5f, 0.5f);
+                    titleRect.anchoredPosition = new Vector2(baseX, baseY - 15f);
+                    titleRect.sizeDelta = new Vector2(180f, 22f);
+                }
+                titleRect.localScale = Vector3.one;
+            }
+            masteryRankTitleText.alignment = TextAlignmentOptions.Center;
         }
     }
 
@@ -384,51 +471,9 @@ public class Avatar_Manager : MonoBehaviour
                     }
                     levelBadgeText.fontSize = levelTextFontSize;
                 }
-
-                if (masteryContainer != null)
-                {
-                    RectTransform masteryRect = masteryContainer.GetComponent<RectTransform>();
-                    if (masteryRect != null)
-                    {
-                        masteryRect.anchorMin = expBgRect.anchorMin;
-                        masteryRect.anchorMax = expBgRect.anchorMax;
-                        masteryRect.pivot = expBgRect.pivot;
-                        masteryRect.sizeDelta = expBgRect.sizeDelta;
-                        masteryRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 36f);
-                        masteryRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
-                    }
-                }
-
-                // Гарантированное выравнивание текста ранга ("Новичок") строго под шкалой опыта
-                if (masteryRankTitleText != null)
-                {
-                    RectTransform titleRect = masteryRankTitleText.GetComponent<RectTransform>();
-                    if (titleRect != null)
-                    {
-                        titleRect.anchorMin = expBgRect.anchorMin;
-                        titleRect.anchorMax = expBgRect.anchorMax;
-                        titleRect.pivot = expBgRect.pivot;
-                        titleRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 20f);
-                    }
-                }
-
-                // Гарантированное выравнивание второй полоски мастерства (0/100 XP) под текстом ранга
-                if (masteryExpProgressBar != null)
-                {
-                    RectTransform masteryBarBg = (masteryExpProgressBar.transform.parent != null && masteryExpProgressBar.transform.parent != masteryContainer?.transform)
-                        ? masteryExpProgressBar.transform.parent.GetComponent<RectTransform>()
-                        : masteryExpProgressBar.GetComponent<RectTransform>();
-
-                    if (masteryBarBg != null)
-                    {
-                        masteryBarBg.anchorMin = expBgRect.anchorMin;
-                        masteryBarBg.anchorMax = expBgRect.anchorMax;
-                        masteryBarBg.pivot = expBgRect.pivot;
-                        masteryBarBg.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 38f);
-                        masteryBarBg.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
-                    }
-                }
             }
+
+            AutoSanitizeMasteryBarLayout();
         }
 
         string lvlPrefix = Translator.GetText(54); // "Ур. " / "Lvl. " / "Seviye "

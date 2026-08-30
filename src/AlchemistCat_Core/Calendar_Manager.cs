@@ -122,6 +122,7 @@ public class Calendar_Manager : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.interactable = isTodayClaimed;
+            closeButton.gameObject.SetActive(isTodayClaimed);
         }
 
         if (rewardPopupCloseBtn != null)
@@ -131,6 +132,29 @@ public class Calendar_Manager : MonoBehaviour
                 if (rewardPopup != null) rewardPopup.SetActive(false);
             });
         }
+    }
+
+    [ContextMenu("Сбросить Прогресс Календаря (Reset Calendar Progress)")]
+    public void ResetCalendarProgress()
+    {
+        UpdateCurrentDate();
+        PlayerPrefs.DeleteKey($"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}");
+        PlayerPrefs.DeleteKey("Tutorial_Calendar_Claim_Done");
+        for (int m = 1; m <= 12; m++)
+        {
+            for (int d = 1; d <= 31; d++)
+            {
+                PlayerPrefs.DeleteKey($"Cal_Claimed_{currentYear}_{m}_{d}");
+            }
+        }
+        PlayerPrefs.Save();
+        RefreshAllDaysUI();
+        if (closeButton != null)
+        {
+            closeButton.interactable = false;
+            closeButton.gameObject.SetActive(false);
+        }
+        Debug.Log("[Calendar] Прогресс календаря успешно сброшен!");
     }
 
     private void Start()
@@ -156,6 +180,7 @@ public class Calendar_Manager : MonoBehaviour
         if (closeButton != null)
         {
             closeButton.interactable = isTodayClaimed;
+            closeButton.gameObject.SetActive(isTodayClaimed);
         }
 
         // Всегда синхронизируем и применяем свежие координаты ячеек при открытии

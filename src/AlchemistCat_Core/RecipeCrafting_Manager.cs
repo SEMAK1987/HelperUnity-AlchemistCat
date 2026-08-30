@@ -653,6 +653,19 @@ public class RecipeCrafting_Manager : MonoBehaviour
         OpenInventory();
     }
 
+    [ContextMenu("Сбросить Прогресс Крафта и Сундука (Reset Crafting & Chest)")]
+    public void ResetCraftingAndChestProgress()
+    {
+        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed");
+        PlayerPrefs.DeleteKey("First_Recipe_Done");
+        PlayerPrefs.DeleteKey("Tutorial_Recipe_Done");
+        PlayerPrefs.Save();
+        isMasteryPotionConsumed = false;
+        if (masteryPotionItemObject != null) masteryPotionItemObject.SetActive(true);
+        if (inventoryCloseButton != null) inventoryCloseButton.interactable = false;
+        Debug.Log("[RecipeCrafting_Manager] Прогресс крафта и колбы сундука успешно сброшен!");
+    }
+
     public void OpenInventory()
     {
         if (DialogueSystem_Manager.Instance != null && DialogueSystem_Manager.Instance.dialoguePanel != null)
@@ -672,9 +685,10 @@ public class RecipeCrafting_Manager : MonoBehaviour
         EnsureInventorySlots();
 
         // Проверяем, выпита ли колба опыта мастерства
-        int savedRank = PlayerPrefs.GetInt("Player_Mastery_Rank", 0);
-        int savedExp = PlayerPrefs.GetInt("Player_Mastery_Exp", 0);
-        isMasteryPotionConsumed = (savedRank > 0 || savedExp > 0);
+        isMasteryPotionConsumed = PlayerPrefs.GetInt("Mastery_Flask_Consumed", 0) == 1;
+
+        // Проверяем/привязываем колбу в 1-м слоте
+        EnsureMasteryPotionInFirstSlot();
 
         if (masteryPotionItemObject != null)
         {
@@ -710,19 +724,96 @@ public class RecipeCrafting_Manager : MonoBehaviour
         TextMeshProUGUI[] tmps = inventoryPanel.GetComponentsInChildren<TextMeshProUGUI>(true);
         foreach (var t in tmps)
         {
-            if (t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
+            if (t.name.Contains("Title") || t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
             {
                 t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim();
                 if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика";
+                t.alignment = TextAlignmentOptions.Center;
+
+                RectTransform rt = t.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = new Vector2(0.5f, 1f);
+                    rt.anchorMax = new Vector2(0.5f, 1f);
+                    rt.pivot = new Vector2(0.5f, 1f);
+                    rt.anchoredPosition = new Vector2(0f, -22f);
+                }
             }
         }
         UnityEngine.UI.Text[] texts = inventoryPanel.GetComponentsInChildren<UnityEngine.UI.Text>(true);
         foreach (var t in texts)
         {
-            if (t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
+            if (t.name.Contains("Title") || t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
             {
                 t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim();
                 if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика";
+                t.alignment = TextAnchor.MiddleCenter;
+
+                RectTransform rt = t.GetComponent<RectTransform>();
+                if (rt != null)
+                {
+                    rt.anchorMin = new Vector2(0.5f, 1f);
+                    rt.anchorMax = new Vector2(0.5f, 1f);
+                    rt.pivot = new Vector2(0.5f, 1f);
+                    rt.anchoredPosition = new Vector2(0f, -22f);
+                }
+            }
+        }
+    }
+
+    private void EnsureMasteryPotionInFirstSlot()
+    {
+        if (inventorySlotsContent != null && inventorySlotsContent.childCount > 0)
+        {
+            Transform firstSlot = inventorySlotsContent.GetChild(0);
+
+            if (masteryPotionItemObject == null)
+            {
+                // Ищем существующий объект колбы внутри 1-го слота
+                Transform found = firstSlot.Find("Mastery_Potion_Flask");
+                if (found == null) found = firstSlot.Find("Potion_Item");
+                if (found == null) found = firstSlot.Find("Flask");
+
+                if (found != null)
+                {
+                    masteryPotionItemObject = found.gameObject;
+                }
+                else
+                {
+                    // Создаем плашку колбы опыта мастерства в первом слоте
+                    GameObject flaskObj = new GameObject("Mastery_Potion_Flask", typeof(RectTransform), typeof(Image), typeof(Button));
+                    flaskObj.transform.SetParent(firstSlot, false);
+
+                    RectTransform frt = flaskObj.GetComponent<RectTransform>();
+                    frt.anchorMin = Vector2.zero;
+                    frt.anchorMax = Vector2.one;
+                    frt.offsetMin = new Vector2(8, 8);
+                    frt.offsetMax = new Vector2(-8, -8);
+
+                    Image fImg = flaskObj.GetComponent<Image>();
+                    if (xpBadge100 != null)
+                    {
+                        fImg.sprite = xpBadge100;
+                    }
+                    else if (floatingXPImage != null && floatingXPImage.sprite != null)
+                    {
+                        fImg.sprite = floatingXPImage.sprite;
+                    }
+                    else
+                    {
+                        fImg.color = new Color(0.2f, 0.9f, 0.6f, 0.95f);
+                    }
+
+                    masteryPotionItemObject = flaskObj;
+                }
+            }
+
+            if (masteryPotionItemObject != null)
+            {
+                masteryPotionButton = masteryPotionItemObject.GetComponent<Button>();
+                if (masteryPotionButton == null) masteryPotionButton = masteryPotionItemObject.AddComponent<Button>();
+                masteryPotionButton.onClick.RemoveAllListeners();
+                masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked);
             }
         }
     }

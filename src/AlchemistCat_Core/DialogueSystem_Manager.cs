@@ -1622,4 +1622,17 @@ public class DialogueSystem_Manager : MonoBehaviour
             isCalendarOpenStep = true
         });
     }
+
+    [ContextMenu("Полный Сброс Всех Данных Игры (Full Master Reset)")]
+    public void FullMasterGameReset()
+    {
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+        currentStepIndex = 0;
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+        currentPhase = DialoguePhase.IntroAndCalendar;
+        BuildIntroScenario();
+        DisplayStep(0);
+        Debug.Log("[DialogueSystem_Manager] Полный сброс PlayerPrefs выполнен успешно!");
+    }
 }

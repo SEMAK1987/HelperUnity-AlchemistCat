@@ -401,7 +401,7 @@ public class Knowledge_Manager : MonoBehaviour
         trt.offsetMax = new Vector2(-16, 0);
 
         TextMeshProUGUI tmp = textObj.GetComponent<TextMeshProUGUI>();
-        tmp.text = $"<color=#FFE57F><b>✦ {stageTitle} ✦</b></color>";
+        tmp.text = $"<color=#FFE57F><b>{stageTitle}</b></color>";
         tmp.fontSize = 18f;
         tmp.alignment = TextAlignmentOptions.Center;
     }
@@ -451,15 +451,15 @@ public class Knowledge_Manager : MonoBehaviour
 
         if (isCompleted)
         {
-            statusBadge = "<color=#4DFFBF>[✔ ИЗУЧЕНО]</color>";
+            statusBadge = "<color=#4DFFBF>[ИЗУЧЕНО]</color>";
         }
         else if (isCurrent)
         {
-            statusBadge = "<color=#FFE57F>[★ ТЕКУЩИЙ РАНГ]</color>";
+            statusBadge = "<color=#FFE57F>[ТЕКУЩИЙ РАНГ]</color>";
         }
         else
         {
-            statusBadge = "<color=#AAAAAA>[🔒 ЗАКРЫТО]</color>";
+            statusBadge = "<color=#AAAAAA>[ЗАКРЫТО]</color>";
         }
 
         infoText.text = $"<size=20><b>#{rank.rankIndex}. <color=#{hexColor}>{rank.rankNameRU}</color></b>   {statusBadge}</size>\n" +
@@ -471,7 +471,7 @@ public class Knowledge_Manager : MonoBehaviour
     private void UpdateRankCardsProgress()
     {
         // Обновление состояния существующих карточек
-        int currentRankIndex = PlayerPrefs.GetInt("Player_Mastery_Rank", 1);
+        int currentRankIndex = PlayerPrefs.GetInt("Player_Mastery_Rank", 0);
         int cardIdx = 0;
 
         for (int i = 0; i < knowledgeContent.childCount; i++)
