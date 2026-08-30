@@ -240,7 +240,20 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
 
         if (recipeScrollCloseButton != null)
-            recipeScrollCloseButton.onClick.AddListener(CloseRecipeScrollUI);
+        {
+            recipeScrollCloseButton.onClick.RemoveAllListeners();
+            recipeScrollCloseButton.onClick.AddListener(() => {
+                // Если эта кнопка назначена как кнопка 'Начать' или в RecipeCrafting_Manager еще не запущен крафт
+                if (RecipeCrafting_Manager.Instance != null)
+                {
+                    RecipeCrafting_Manager.Instance.OnStartCraftButtonClicked();
+                }
+                else
+                {
+                    CloseRecipeScrollUI();
+                }
+            });
+        }
 
         if (smallScrollButton != null)
             smallScrollButton.onClick.AddListener(OnSmallScrollButtonClicked);

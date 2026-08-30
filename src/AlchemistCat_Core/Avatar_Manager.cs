@@ -169,6 +169,11 @@ public class Avatar_Manager : MonoBehaviour
     {
         Instance = this;
 
+        // Если в инспекторе остались старые значения Pos X (<= 0), автоматически корректируем их на 130
+        if (expBarPosition.x <= 0f) expBarPosition.x = 130f;
+        if (masteryBarPosition.x <= 0f) masteryBarPosition.x = 130f;
+        if (levelBadgePosition.x <= 0f) levelBadgePosition.x = 130f;
+
         if (closeButton != null)
         {
             closeButton.onClick.RemoveAllListeners();
@@ -284,7 +289,9 @@ public class Avatar_Manager : MonoBehaviour
             RectTransform masteryRect = masteryContainer.GetComponent<RectTransform>();
             if (masteryRect != null)
             {
-                masteryRect.anchoredPosition = masteryBarPosition;
+                Vector2 targetPos = masteryBarPosition;
+                if (targetPos.x <= 0f) targetPos.x = 130f;
+                masteryRect.anchoredPosition = targetPos;
                 masteryRect.localScale = new Vector3(masteryBarScale.x, masteryBarScale.y, 1f);
             }
         }
@@ -341,7 +348,12 @@ public class Avatar_Manager : MonoBehaviour
             if (levelBadgeText != null)
             {
                 RectTransform lvlRect = levelBadgeText.GetComponent<RectTransform>();
-                if (lvlRect != null) lvlRect.anchoredPosition = levelBadgePosition;
+                if (lvlRect != null)
+                {
+                    Vector2 targetLvlPos = levelBadgePosition;
+                    if (targetLvlPos.x <= 0f) targetLvlPos.x = 130f;
+                    lvlRect.anchoredPosition = targetLvlPos;
+                }
                 levelBadgeText.fontSize = levelTextFontSize;
             }
 
@@ -350,7 +362,9 @@ public class Avatar_Manager : MonoBehaviour
                 RectTransform expBgRect = expProgressBar.transform.parent.GetComponent<RectTransform>();
                 if (expBgRect != null)
                 {
-                    expBgRect.anchoredPosition = expBarPosition;
+                    Vector2 targetExpPos = expBarPosition;
+                    if (targetExpPos.x <= 0f) targetExpPos.x = 130f;
+                    expBgRect.anchoredPosition = targetExpPos;
                     expBgRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
                 }
             }

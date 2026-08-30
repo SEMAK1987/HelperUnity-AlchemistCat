@@ -231,7 +231,7 @@ public class RecipeCrafting_Manager : MonoBehaviour
         if (tableCauldronObject != null) 
         {
             tableCauldronObject.SetActive(true);
-            if (tableCauldronObject.transform.parent != null && tableCauldronObject.transform.parent.name.Contains("Table_Cauldron"))
+            if (tableCauldronObject.transform.parent != null && (tableCauldronObject.transform.parent.name.Contains("Table") || tableCauldronObject.transform.parent.name.Contains("Cauldron")))
             {
                 tableCauldronObject.transform.parent.gameObject.SetActive(true);
             }
@@ -239,13 +239,46 @@ public class RecipeCrafting_Manager : MonoBehaviour
         else
         {
             GameObject foundTable = GameObject.Find("Table_Cauldron_Group");
-            if (foundTable != null) foundTable.SetActive(true);
+            if (foundTable == null) foundTable = GameObject.Find("Table_Group");
+            if (foundTable == null) foundTable = GameObject.Find("Table");
+            if (foundTable != null)
+            {
+                foundTable.SetActive(true);
+                tableCauldronObject = foundTable;
+            }
+        }
+
+        // Если есть cauldronClickButton, убедимся что клик назначен
+        if (cauldronClickButton != null)
+        {
+            cauldronClickButton.onClick.RemoveAllListeners();
+            cauldronClickButton.onClick.AddListener(OnCauldronClicked);
+        }
+        else if (tableCauldronObject != null)
+        {
+            Button btn = tableCauldronObject.GetComponentInChildren<Button>(true);
+            if (btn != null)
+            {
+                btn.onClick.RemoveAllListeners();
+                btn.onClick.AddListener(OnCauldronClicked);
+            }
         }
 
         if (tableMiniCatObject != null)
         {
             tableMiniCatObject.SetActive(true);
             SanitizeMiniCatObject();
+        }
+        else
+        {
+            GameObject foundMiniCat = GameObject.Find("Mini_Cat");
+            if (foundMiniCat == null) foundMiniCat = GameObject.Find("Table_Mini_Cat");
+            if (foundMiniCat != null)
+            {
+                foundMiniCat.SetActive(true);
+                tableMiniCatObject = foundMiniCat;
+                SanitizeMiniCatObject();
+            }
         }
 
         // Показываем бабл с подсказкой котика на столе
