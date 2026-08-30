@@ -660,9 +660,13 @@ public class RecipeCrafting_Manager : MonoBehaviour
             DialogueSystem_Manager.Instance.dialoguePanel.SetActive(false);
         }
 
+        // Скрываем верхнюю панель ресурсов, чтобы не накладывалась на заголовок сундука
+        HideTopResources();
+
         if (inventoryPanel != null)
         {
             inventoryPanel.SetActive(true);
+            SanitizeInventoryTitle();
         }
 
         EnsureInventorySlots();
@@ -681,6 +685,45 @@ public class RecipeCrafting_Manager : MonoBehaviour
         if (inventoryCloseButton != null)
         {
             inventoryCloseButton.interactable = isMasteryPotionConsumed;
+        }
+    }
+
+    private void HideTopResources()
+    {
+        GameObject topPanel = GameObject.Find("TopPanel");
+        if (topPanel != null) topPanel.SetActive(false);
+        GameObject headerPlate = GameObject.Find("Header_Plate");
+        if (headerPlate != null) headerPlate.SetActive(false);
+    }
+
+    private void RestoreTopResources()
+    {
+        GameObject topPanel = GameObject.Find("TopPanel");
+        if (topPanel != null) topPanel.SetActive(true);
+        GameObject headerPlate = GameObject.Find("Header_Plate");
+        if (headerPlate != null) headerPlate.SetActive(true);
+    }
+
+    private void SanitizeInventoryTitle()
+    {
+        if (inventoryPanel == null) return;
+        TextMeshProUGUI[] tmps = inventoryPanel.GetComponentsInChildren<TextMeshProUGUI>(true);
+        foreach (var t in tmps)
+        {
+            if (t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
+            {
+                t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim();
+                if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика";
+            }
+        }
+        UnityEngine.UI.Text[] texts = inventoryPanel.GetComponentsInChildren<UnityEngine.UI.Text>(true);
+        foreach (var t in texts)
+        {
+            if (t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
+            {
+                t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim();
+                if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика";
+            }
         }
     }
 
@@ -762,6 +805,9 @@ public class RecipeCrafting_Manager : MonoBehaviour
         {
             inventoryPanel.SetActive(false);
         }
+
+        // Восстанавливаем отображение верхней панели ресурсов
+        RestoreTopResources();
 
         if (DialogueSystem_Manager.Instance != null)
         {

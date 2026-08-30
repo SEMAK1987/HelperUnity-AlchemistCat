@@ -394,8 +394,38 @@ public class Avatar_Manager : MonoBehaviour
                         masteryRect.anchorMax = expBgRect.anchorMax;
                         masteryRect.pivot = expBgRect.pivot;
                         masteryRect.sizeDelta = expBgRect.sizeDelta;
-                        masteryRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 28f);
+                        masteryRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 36f);
                         masteryRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+                    }
+                }
+
+                // Гарантированное выравнивание текста ранга ("Новичок") строго под шкалой опыта
+                if (masteryRankTitleText != null)
+                {
+                    RectTransform titleRect = masteryRankTitleText.GetComponent<RectTransform>();
+                    if (titleRect != null)
+                    {
+                        titleRect.anchorMin = expBgRect.anchorMin;
+                        titleRect.anchorMax = expBgRect.anchorMax;
+                        titleRect.pivot = expBgRect.pivot;
+                        titleRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 20f);
+                    }
+                }
+
+                // Гарантированное выравнивание второй полоски мастерства (0/100 XP) под текстом ранга
+                if (masteryExpProgressBar != null)
+                {
+                    RectTransform masteryBarBg = (masteryExpProgressBar.transform.parent != null && masteryExpProgressBar.transform.parent != masteryContainer?.transform)
+                        ? masteryExpProgressBar.transform.parent.GetComponent<RectTransform>()
+                        : masteryExpProgressBar.GetComponent<RectTransform>();
+
+                    if (masteryBarBg != null)
+                    {
+                        masteryBarBg.anchorMin = expBgRect.anchorMin;
+                        masteryBarBg.anchorMax = expBgRect.anchorMax;
+                        masteryBarBg.pivot = expBgRect.pivot;
+                        masteryBarBg.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y - 38f);
+                        masteryBarBg.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
                     }
                 }
             }

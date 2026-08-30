@@ -118,11 +118,10 @@ public class Calendar_Manager : MonoBehaviour
         UpdateCurrentDate();
         string todayKey = $"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}";
         bool isTodayClaimed = PlayerPrefs.GetInt(todayKey, 0) == 1;
-        bool isTutorialDone = PlayerPrefs.GetInt("Tutorial_Calendar_Claim_Done", 0) == 1;
 
         if (closeButton != null)
         {
-            closeButton.interactable = (isTodayClaimed || isTutorialDone);
+            closeButton.interactable = isTodayClaimed;
         }
 
         if (rewardPopupCloseBtn != null)
@@ -154,10 +153,9 @@ public class Calendar_Manager : MonoBehaviour
         UpdateCurrentDate();
         string todayKey = $"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}";
         bool isTodayClaimed = PlayerPrefs.GetInt(todayKey, 0) == 1;
-        bool isTutorialDone = PlayerPrefs.GetInt("Tutorial_Calendar_Claim_Done", 0) == 1;
         if (closeButton != null)
         {
-            closeButton.interactable = (isTodayClaimed || isTutorialDone);
+            closeButton.interactable = isTodayClaimed;
         }
 
         // Всегда синхронизируем и применяем свежие координаты ячеек при открытии
@@ -179,10 +177,9 @@ public class Calendar_Manager : MonoBehaviour
         UpdateCurrentDate();
         string todayKey = $"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}";
         bool isTodayClaimed = PlayerPrefs.GetInt(todayKey, 0) == 1;
-        bool isTutorialDone = PlayerPrefs.GetInt("Tutorial_Calendar_Claim_Done", 0) == 1;
 
-        // Если это первый обязательный визит с Котом и день еще не отмечен — блокируем выход и показываем подсказку
-        if (!isTodayClaimed && !isTutorialDone)
+        // Если сегодняшний день еще не отмечен — строго блокируем выход и показываем подсказку
+        if (!isTodayClaimed)
         {
             string curLang = PlayerPrefs.GetString("Selected_Language", "RU");
             string title = curLang == "EN" ? "Attendance Required" : (curLang == "TR" ? "Giriş Damgası Gerekli" : "Отметьте день");

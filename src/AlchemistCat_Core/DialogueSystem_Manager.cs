@@ -95,7 +95,7 @@ public class DialogueSystem_Manager : MonoBehaviour
     public Button knowledgeButton;
     public Knowledge_Manager knowledgeManager;
     public bool autoAlignKnowledgeToChest = true;
-    public Vector2 knowledgeOffsetFromChest = new Vector2(-110f, 0f);
+    public Vector2 knowledgeOffsetFromChest = new Vector2(-135f, 0f);
 
     [Header("Иконка Колеса Мини-Игр в верхнем UI")]
     public GameObject minigamesWheelIconButton; // Иконка Колеса Мини-Игр
@@ -915,14 +915,17 @@ public class DialogueSystem_Manager : MonoBehaviour
                     knowRect.pivot = refRect.pivot;
                     knowRect.sizeDelta = refRect.sizeDelta;
 
+                    Vector2 actualOffset = knowledgeOffsetFromChest;
+                    if (actualOffset.x > -125f) actualOffset.x = -135f;
+
                     if (chestIconButton != null)
                     {
                         RectTransform chestRect = chestIconButton.GetComponent<RectTransform>();
-                        knowRect.anchoredPosition = chestRect.anchoredPosition + knowledgeOffsetFromChest;
+                        knowRect.anchoredPosition = chestRect.anchoredPosition + actualOffset;
                     }
                     else
                     {
-                        knowRect.anchoredPosition = refRect.anchoredPosition + knowledgeOffsetFromChest;
+                        knowRect.anchoredPosition = refRect.anchoredPosition + actualOffset;
                     }
                 }
             }
@@ -1277,9 +1280,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Поздравление со званием Новичок-травник
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=108%>Поздравляю! Ты выпил колбу, получил <b><color=#80FFDB>+100 Опыта Мастерства</color></b> и стал <b><color=#52B788>Новичком-травником</color></b>!\n\nТвоя шкала мастерства в профиле заполнилась и открыла путь к великим таинствам!</size>",
-            textEN = "<size=108%>Congratulations! You drank the flask, gained <b><color=#80FFDB>+100 Mastery XP</color></b>, and became an <b><color=#52B788>Herbalist Novice</color></b>!\n\nYour mastery bar reached the next milestone!</size>",
-            textTR = "<size=108%>Tebrikler! Siseyi ictin, <b><color=#80FFDB>+100 Ustalik XP</color></b> kazandin ve <b><color=#52B788>Bitkici Acemi</color></b> oldun!\n\nUstalik cubugun yeni bir asama acti!</size>",
+            textRU = "<size=82%>Поздравляю! Ты выпил колбу, получил <b><color=#80FFDB>+100 Опыта Мастерства</color></b> и стал <b><color=#52B788>Новичком-травником</color></b>!\n\nТвоя шкала мастерства в профиле заполнилась и открыла путь к великим таинствам!</size>",
+            textEN = "<size=82%>Congratulations! You drank the flask, gained <b><color=#80FFDB>+100 Mastery XP</color></b>, and became an <b><color=#52B788>Herbalist Novice</color></b>!\n\nYour mastery bar reached the next milestone!</size>",
+            textTR = "<size=82%>Tebrikler! Siseyi ictin, <b><color=#80FFDB>+100 Ustalik XP</color></b> kazandin ve <b><color=#52B788>Bitkici Acemi</color></b> oldun!\n\nUstalik cubugun yeni bir asama acti!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1291,9 +1294,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 2. Рассказ про раздел Знания (Древо Рангов)
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=100%>Слева от сундука открылся раздел <b><color=#FFD166>Знания</color></b> (древние фолианты)!\n\nВ нем хранятся все <b>4 Этапа</b> и <b>21 Алхимический Ранг</b> — от Новичка до Создателя Философского камня.</size>",
-            textEN = "<size=100%>To the left of your chest, the <b><color=#FFD166>Knowledge</color></b> section has unlocked!\n\nIt displays all <b>4 Stages</b> and <b>21 Alchemy Ranks</b> — from Novice to Philosopher's Stone Creator.</size>",
-            textTR = "<size=100%>Sandigin solunda <b><color=#FFD166>Bilgi</color></b> bolumu acildi!\n\nBurada Acemiden Felsefe Tasi Yaraticisina kadar tum <b>4 Asama</b> ve <b>21 Rutbe</b> bulunur.</size>",
+            textRU = "<size=84%>Слева от сундука открылся раздел <b><color=#FFD166>Знания</color></b> (древние фолианты)!\n\nВ нем хранятся все <b>4 Этапа</b> и <b>21 Алхимический Ранг</b> — от Новичка до Создателя Философского камня.</size>",
+            textEN = "<size=84%>To the left of your chest, the <b><color=#FFD166>Knowledge</color></b> section has unlocked!\n\nIt displays all <b>4 Stages</b> and <b>21 Alchemy Ranks</b> — from Novice to Philosopher's Stone Creator.</size>",
+            textTR = "<size=84%>Sandigin solunda <b><color=#FFD166>Bilgi</color></b> bolumu acildi!\n\nBurada Acemiden Felsefe Tasi Yaraticisina kadar tum <b>4 Asama</b> ve <b>21 Rutbe</b> bulunur.</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1305,9 +1308,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 3. Предложение изучить древо знаний
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=105%>Давай изучим древо мастерства!\n\nНажми кнопку ниже, чтобы открыть окно <b>Знаний</b> и посмотреть свои награды и следующие ранги!</size>",
-            textEN = "<size=105%>Let us explore the mastery tree!\n\nTap below to open the <b>Knowledge</b> window and inspect your upcoming ranks and rewards!</size>",
-            textTR = "<size=105%>Hadi ustalik agacini kesfedelim!\n\n<b>Bilgi</b> penceresini acip sonraki rutbeleri gormek icin butona bas!</size>",
+            textRU = "<size=85%>Давай изучим древо мастерства!\n\nНажми кнопку ниже, чтобы открыть окно <b>Знаний</b> и посмотреть свои награды и следующие ранги!</size>",
+            textEN = "<size=85%>Let us explore the mastery tree!\n\nTap below to open the <b>Knowledge</b> window and inspect your upcoming ranks and rewards!</size>",
+            textTR = "<size=85%>Hadi ustalik agacini kesfedelim!\n\n<b>Bilgi</b> penceresini acip sonraki rutbeleri gormek icin butona bas!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
