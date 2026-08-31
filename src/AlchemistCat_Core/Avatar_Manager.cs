@@ -253,6 +253,62 @@ public class Avatar_Manager : MonoBehaviour
         UpdateProfileUI();
     }
 
+    public void AddGold(int amount)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddGold(amount);
+        }
+        else
+        {
+            int current = PlayerPrefs.GetInt("Player_Gold", 5000);
+            PlayerPrefs.SetInt("Player_Gold", current + amount);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public void AddStones(int amount)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddResources(0, amount, 0, 0);
+        }
+        else
+        {
+            int current = PlayerPrefs.GetInt("Player_Stones", 10);
+            PlayerPrefs.SetInt("Player_Stones", current + amount);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public void AddScrolls(int amount)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddResources(0, 0, amount, 0);
+        }
+        else
+        {
+            int current = PlayerPrefs.GetInt("Player_Scrolls", 3);
+            PlayerPrefs.SetInt("Player_Scrolls", current + amount);
+            PlayerPrefs.Save();
+        }
+    }
+
+    public void AddCrystals(int amount)
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.AddCrystals(amount);
+        }
+        else
+        {
+            int current = PlayerPrefs.GetInt("Player_Crystals", 0);
+            PlayerPrefs.SetInt("Player_Crystals", current + amount);
+            PlayerPrefs.Save();
+        }
+    }
+
     public void GainPlayerExperience(int amount)
     {
         AddExperience(amount);

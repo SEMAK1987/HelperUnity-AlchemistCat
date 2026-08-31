@@ -137,6 +137,7 @@ public class DialogueSystem_Manager : MonoBehaviour
         public bool showMinigamesIcon = false;
         public bool isConfirmMinigamesStep = false;
         public bool isMinigamesWheelOpenStep = false;
+        public bool isConfirmFishingStep = false;
     }
 
     private List<DialogStep> dialogueSteps = new List<DialogStep>();
@@ -598,6 +599,8 @@ public class DialogueSystem_Manager : MonoBehaviour
                         nextStepButtonText.text = "Я согласен!";
                     else if (step.isMinigamesWheelOpenStep)
                         nextStepButtonText.text = "Открыть Колесо Игр";
+                    else if (step.isConfirmFishingStep)
+                        nextStepButtonText.text = "Согласен";
                     else
                         nextStepButtonText.text = "Далее";
                 }
@@ -1363,9 +1366,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Кот рассказывает, что в башне есть мини-игры, но забыл как играть, спрашивает согласен ли игрок помочь
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=90%>Поздравляю! Ты изучил великие таинства алхимии и ранги мастеров!\n\nЗнаешь, в нашей башне есть ещё <b><color=#FFE57F>волшебные мини-игры</color></b>, но я совсем позабыл, как в них играть... Поможешь мне вспомнить их правила?</size>",
-            textEN = "<size=90%>Congratulations! You have studied the great alchemy mysteries!\n\nOur tower also holds <b><color=#FFE57F>magical mini-games</color></b>, but I forgot how to play them... Will you help me recall the rules?</size>",
-            textTR = "<size=90%>Tebrikler! Simyanin buyuk gizemlerini ogrendin!\n\nKulemizde <b><color=#FFE57F>mini oyunlar</color></b> var ama nasil oynandigini unuttum... Bana kurallari hatirlatmamda yardim eder misin?</size>",
+            textRU = "<size=88%>Поздравляю! Ты изучил великие таинства алхимии и ранги мастеров!\n\nЗнаешь, в нашей башне есть ещё <b><color=#FFE57F>волшебные мини-игры</color></b>, но я совсем позабыл, как в них играть... Поможешь мне вспомнить их правила?</size>",
+            textEN = "<size=88%>Congratulations! You have studied the great alchemy mysteries!\n\nOur tower also holds <b><color=#FFE57F>magical mini-games</color></b>, but I forgot how to play them... Will you help me recall the rules?</size>",
+            textTR = "<size=88%>Tebrikler! Simyanin buyuk gizemlerini ogrendin!\n\nKulemizde <b><color=#FFE57F>mini oyunlar</color></b> var ama nasil oynandigini unuttum... Bana kurallari hatirlatmamda yardim eder misin?</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1376,12 +1379,12 @@ public class DialogueSystem_Manager : MonoBehaviour
             isConfirmMinigamesStep = true
         });
 
-        // 2. Игрок соглашается, кот представляет первую игру «Поймай мышку» и открывает колесо
+        // 2. Игрок соглашается, кот представляет первую игру «Поймай мышку», объясняет награды всех 3 уровней сложности и открывает колесо
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=90%>Мурр! Замечательно! Вверху открылось наше <b><color=#FFE57F>Колесо Мини-Игр</color></b>!\n\nПервая игра, которую мы вспомним — <b><color=#80FFDB>«Поймай мышку»</color></b>!\n\nНажми кнопку ниже, чтобы взглянуть на Колесо Игр!</size>",
-            textEN = "<size=90%>Purr! Wonderful! Our <b><color=#FFE57F>Mini-Games Wheel</color></b> has unlocked above!\n\nThe very first game to recall is <b><color=#80FFDB>«Catch the Mouse»</color></b>!\n\nTap below to open the Games Wheel!</size>",
-            textTR = "<size=90%>Miyav! Harika! Yukarida <b><color=#FFE57F>Mini Oyun Carki</color></b> acildi!\n\nHatirlayacagimiz ilk oyun <b><color=#80FFDB>«Fareyi Yakala»</color></b>!\n\nCarki gormek icin asagidaki butona bas!</size>",
+            textRU = "<size=80%>Мурр! Вверху открылось наше <b><color=#FFE57F>Колесо Мини-Игр</color></b>!\nПервая игра — <b><color=#80FFDB>«Поймай мышку»</color></b>! Награды по уровням:\n• <b>Легкий</b>: <b><color=#80FFDB>+20 XP</color></b>, <b><color=#FFE57F>+1 000 Золота</color></b>, <b><color=#A0C4FF>+5 Камней</color></b>\n• <b>Средний</b>: <b><color=#80FFDB>+50 XP</color></b>, <b><color=#FFE57F>+2 000 Золота</color></b>, <b><color=#A0C4FF>+10 Камней</color></b>, <b><color=#CDB4DB>+1 Свиток</color></b>\n• <b>Сложный</b>: <b><color=#80FFDB>+100 XP</color></b>, <b><color=#F72585>+1 Зелье Мастерства (+100 XP)</color></b>, <b><color=#A0C4FF>+20 Камней</color></b>, <b><color=#CDB4DB>+3 Свитка</color></b>!\n\nНажми кнопку ниже, чтобы открыть Колесо Игр!</size>",
+            textEN = "<size=80%>Purr! Our <b><color=#FFE57F>Mini-Games Wheel</color></b> is unlocked above!\nFirst game — <b><color=#80FFDB>«Catch the Mouse»</color></b>! Rewards per difficulty:\n• <b>Easy</b>: <b><color=#80FFDB>+20 XP</color></b>, <b><color=#FFE57F>+1k Gold</color></b>, <b><color=#A0C4FF>+5 Stones</color></b>\n• <b>Normal</b>: <b><color=#80FFDB>+50 XP</color></b>, <b><color=#FFE57F>+2k Gold</color></b>, <b><color=#A0C4FF>+10 Stones</color></b>, <b><color=#CDB4DB>+1 Scroll</color></b>\n• <b>Hard</b>: <b><color=#80FFDB>+100 XP</color></b>, <b><color=#F72585>+1 Mastery Potion (+100 XP)</color></b>, <b><color=#A0C4FF>+20 Stones</color></b>, <b><color=#CDB4DB>+3 Scrolls</color></b>!\n\nTap below to open the Games Wheel!</size>",
+            textTR = "<size=80%>Miyav! Yukarida <b><color=#FFE57F>Mini Oyun Carki</color></b> acildi!\nIlk oyun — <b><color=#80FFDB>«Fareyi Yakala»</color></b>! Oduller:\n• <b>Kolay</b>: <b><color=#80FFDB>+20 XP</color></b>, <b><color=#FFE57F>+1.000 Altin</color></b>, <b><color=#A0C4FF>+5 Tas</color></b>\n• <b>Orta</b>: <b><color=#80FFDB>+50 XP</color></b>, <b><color=#FFE57F>+2.000 Altin</color></b>, <b><color=#A0C4FF>+10 Tas</color></b>, <b><color=#CDB4DB>+1 Parsomen</color></b>\n• <b>Zor</b>: <b><color=#80FFDB>+100 XP</color></b>, <b><color=#F72585>+1 Ustalik Iksiri (+100 XP)</color></b>, <b><color=#A0C4FF>+20 Tas</color></b>, <b><color=#CDB4DB>+3 Parsomen</color></b>!\n\nCarki acmak icin butona bas!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1390,6 +1393,68 @@ public class DialogueSystem_Manager : MonoBehaviour
             showKnowledgeIcon = true,
             showMinigamesIcon = true,
             isMinigamesWheelOpenStep = true
+        });
+
+        DisplayStep(0);
+    }
+
+    // -------------------------------------------------------------
+    // ФАЗА 7: ПОСЛЕ ПОБЕДЫ В МЫШКАХ — ПОДАРОК И АНОНС «АЛХИМИЧЕСКОЙ РЫБАЛКИ»
+    // -------------------------------------------------------------
+    public void StartPostMinigameFishingDialogue()
+    {
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+
+        if (cauldronButton != null) cauldronButton.SetActive(false);
+        if (roomCatObject != null) roomCatObject.SetActive(false);
+
+        dialogueSteps.Clear();
+        currentStepIndex = 0;
+
+        // 1. Кот восхищен победой и спрашивает, согласен ли игрок узнать про новую игру
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=86%>Мурр! Ты смог меня удивить тем, что поймал всех мышей! За это я дарю тебе заслуженные подарки!\n\nА может, я смогу тебя ещё заинтересовать нашими увлекательными играми?</size>",
+            textEN = "<size=86%>Purr! You truly surprised me catching all those clever mice! Enjoy your well-deserved reward!\n\nMay I interest you in another thrilling magical game?</size>",
+            textTR = "<size=86%>Miyav! Tum fareleri yakalayarak beni sasirtmayi basardin! Hak ettigin hediyeler senin olsun!\n\nSeni baska bir heyecan verici oyunla ilgilendirebilir miyim?</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmFishingStep = true
+        });
+
+        // 2. Кот представляет правила «Алхимической Рыбалки» (Шкалы заброса и ловли)
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=82%>Мурр! Наша новая игра называется <b><color=#80FFDB>«Алхимическая Рыбалка»</color></b>!\n\nВ ней нужно будет забрасывать удочку в пруд стихий:\n• <b>Вертикальная шкала</b> движется вверх и вниз — нажми вовремя, чтобы забросить поплавок <b>далеко</b>!\n• Затем <b>горизонтальная шкала</b> расходится от центра к краям — нужно нажать точно <b>по центру</b>!</size>",
+            textEN = "<size=82%>Purr! Our upcoming game is called <b><color=#80FFDB>«Alchemy Fishing»</color></b>!\n\nCast your magical fishing rod into the elemental pond:\n• A <b>vertical gauge</b> oscillates up and down — hit it right to cast <b>far</b>!\n• Then a <b>horizontal gauge</b> spreads outward from the center — tap precisely at the <b>center marker</b>!</size>",
+            textTR = "<size=82%>Miyav! Yeni oyunumuzun adi <b><color=#80FFDB>«Simyaci Balikciligi»</color></b>!\n\nOltani elementler golune firlatacaksin:\n• <b>Dikey gosterge</b> yukari-asagi hareket eder — <b>uzaga</b> atmak icin dogru anda bas!\n• Ardindan <b>yatay gosterge</b> merkezden yayilir — tam <b>ortada</b> yakala!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true
+        });
+
+        // 3. Таблица улова и дропа зелий опыта
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=77%>Твой улов зависит от точности заброса:\n• <b>Близко и плохо</b>: Пустые бутылочки, осколки, камни, тина и <i>Малое зелье (+10 XP)</i>.\n• <b>Средний заброс</b>: Магические камни, тина, <i>Малое (+10 XP)</i>, <i>Среднее (+50 XP)</i> и <i>Большое (+100 XP)</i> зелья!\n• <b>Идеальный дальний</b>: Зелья от Малого до <i>Магического (+300)</i>, <i>Легендарного (+500)</i>, <i>Мифического (+1000)</i> и <b><color=#FFE57F>Драконьего (+3000 XP)</color></b>!</size>",
+            textEN = "<size=77%>Your catch depends on casting precision:\n• <b>Short/Poor</b>: Empty bottles, junk jars, stones, duckweed & <i>Small Potion (+10 XP)</i>.\n• <b>Medium</b>: Magic stones, pond slime, <i>Small (+10 XP)</i>, <i>Medium (+50 XP)</i> & <i>High (+100 XP)</i> potions!\n• <b>Perfect Long Cast</b>: Potions up to <i>Magical (+300)</i>, <i>Legendary (+500)</i>, <i>Mythic (+1000)</i> & <b><color=#FFE57F>Dragon Potion (+3000 XP)</color></b>!</size>",
+            textTR = "<size=77%>Avin atis hassasiyetine baglidir:\n• <b>Kisa/Kotu</b>: Bos siseler, cam kiriklari, taslar, yosun ve <i>Kucuk iksir (+10 XP)</i>.\n• <b>Orta</b>: Buyu taslari, <i>Kucuk (+10)</i>, <i>Orta (+50)</i> ve <i>Buyuk (+100 XP)</i> iksirler!\n• <b>Mukemmel Uzak</b>: <i>Efsanevi (+500)</i>, <i>Mitolojik (+1000)</i> ve <b><color=#FFE57F>Ejderha Iksirine (+3000 XP)</color></b> kadar!",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true
         });
 
         DisplayStep(0);

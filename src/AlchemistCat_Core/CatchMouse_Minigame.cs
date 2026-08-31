@@ -64,12 +64,11 @@ public class CatchMouse_Minigame : MonoBehaviour
 
     [Header("3D-Перспектива и Настройка Дорожки (Road_Track)")]
     public bool autoApplyRoadPerspective = true;
-    [Range(0f, 60f)]
-    public float roadPerspectiveTiltAngle = 0f; // Угол наклона (0 = прямой, 25-35 = 3D перспектива)
-    public float roadYOffset = -138f;            // Смещение дорожки по высоте (скриншот 6: Pos Y = -138)
-    public float roadWidth = 1050f;              // Ширина растяжения дорожки
-    public float roadHeight = 120f;              // Высота дорожки
-    public float mouseRunYOffset = 0f;           // Тонкая подстройка высоты бега мышек по дорожке
+    public float roadPerspectiveTiltAngle = -126.083f; // Точный угол наклона дорожки
+    public float roadYOffset = -18f;                   // Смещение дорожки по высоте (скриншот 2: Pos Y = -18)
+    public float roadWidth = 960f;                     // Длина дорожки 960 для всех экранов 4K и телефонов
+    public float roadHeight = 120f;                    // Высота дорожки
+    public float mouseRunYOffset = 0f;                 // Тонкая подстройка высоты бега мышек по кромке дорожки
 
     [Header("Окно Победы и Награды")]
     public GameObject rewardPopupPanel;         // Reward_Popup_Panel
@@ -113,7 +112,7 @@ public class CatchMouse_Minigame : MonoBehaviour
         SetupRoadPerspective();
 
         if (closeButton != null)
-            closeButton.onClick.AddListener(CloseMinigame);
+            closeButton.onClick.AddListener(HandleCloseButtonClicked);
 
         if (claimRewardButton != null)
             claimRewardButton.onClick.AddListener(ClaimRewardAndExit);
@@ -150,7 +149,7 @@ public class CatchMouse_Minigame : MonoBehaviour
         // 1. Настройка дорожки Road_Track
         if (roadTrack != null)
         {
-            // Отключаем PreserveAspect на компоненте Image, чтобы текстура заполнила всю ширину 1050px!
+            // Отключаем PreserveAspect на компоненте Image, чтобы текстура заполнила всю длину 960px!
             Image roadImg = roadTrack.GetComponent<Image>();
             if (roadImg != null)
             {
@@ -162,11 +161,11 @@ public class CatchMouse_Minigame : MonoBehaviour
             roadTrack.anchorMax = new Vector2(0.5f, 0.5f);
             roadTrack.pivot = new Vector2(0.5f, 0.5f);
             roadTrack.sizeDelta = new Vector2(roadWidth, roadHeight);
-            roadTrack.anchoredPosition = new Vector2(0f, roadYOffset);
+            roadTrack.anchoredPosition3D = new Vector3(0f, roadYOffset, 24.77593f);
             roadTrack.localEulerAngles = new Vector3(roadPerspectiveTiltAngle, 0f, 0f);
         }
 
-        // 2. Проверка контейнера норок Holes_Container
+        // 2. Проверка контейнера норок Holes_Container (поднять по Y 60, ширина 1000, высота 150)
         if (holes != null && holes.Length > 0 && holes[0] != null && holes[0].parent != null)
         {
             RectTransform holesContainer = holes[0].parent.GetComponent<RectTransform>();
@@ -175,9 +174,26 @@ public class CatchMouse_Minigame : MonoBehaviour
                 holesContainer.anchorMin = new Vector2(0.5f, 0.5f);
                 holesContainer.anchorMax = new Vector2(0.5f, 0.5f);
                 holesContainer.pivot = new Vector2(0.5f, 0.5f);
-                holesContainer.anchoredPosition = new Vector2(0f, -65f);
+                holesContainer.anchoredPosition = new Vector2(0f, 60f);
                 holesContainer.sizeDelta = new Vector2(1000f, 150f);
             }
+        }
+    }
+
+    public void HandleCloseButtonClicked()
+    {
+        if (clickSound != null && SettingsManager.Instance != null)
+            SettingsManager.Instance.PlaySoundEffect(clickSound);
+
+        // Если игрок прямо сейчас играет, не может пройти или открыто окно победы — возвращаем на выбор сложности!
+        if (isGameActive || isGameWon || (rewardPopupPanel != null && rewardPopupPanel.activeSelf) || (difficultySelectionPanel != null && !difficultySelectionPanel.activeSelf))
+        {
+            ShowDifficultySelection();
+        }
+        else
+        {
+            // Если уже на экране выбора сложности — закрываем окно мини-игры полностью
+            CloseMinigame();
         }
     }
 
@@ -433,16 +449,16 @@ public class CatchMouse_Minigame : MonoBehaviour
             endHolePos = new Vector2(-250f + (endIdx * 125f), 30f);
         }
 
-        // Вычисляем высоту дорожки относительно слоя бега
+        // Вычисляем высоту дорожки относительно слоя бега (верхняя каменная кромка дорожки)
         float roadY;
         if (roadTrack != null)
         {
             Vector2 roadInMice = miceRunningLayer.InverseTransformPoint(roadTrack.position);
-            roadY = roadInMice.y + mouseRunYOffset;
+            roadY = roadInMice.y + 12f + mouseRunYOffset;
         }
         else
         {
-            roadY = startHolePos.y - 70f + mouseRunYOffset;
+            roadY = startHolePos.y - 48f + mouseRunYOffset;
         }
 
         bool runRight = endHolePos.x > startHolePos.x;
@@ -540,9 +556,9 @@ public class CatchMouse_Minigame : MonoBehaviour
             }
             else if (t < 0.78f)
             {
-                // ЭТАП 2: Основной бег по дорожке слева направо / справа налево
+                // ЭТАП 2: Основной бег по дорожке слева направо / справа налево по верхней каменной кромке
                 float roadT = (t - 0.22f) / (0.78f - 0.22f);
-                float jumpOffset = Mathf.Abs(Mathf.Sin(roadT * Mathf.PI * 8f)) * 7f; // Реалистичный пружинящий бег
+                float jumpOffset = Mathf.Abs(Mathf.Sin(roadT * Mathf.PI * 8f)) * 4f; // Плавный естественный пружинящий шаг
 
                 currentPos = new Vector2(Mathf.Lerp(startHole.x, endHole.x, roadT), roadY + jumpOffset);
                 currentScale = 1.0f;
@@ -697,8 +713,37 @@ public class CatchMouse_Minigame : MonoBehaviour
         onComplete?.Invoke();
     }
 
+    public void GetDifficultyRewards(DifficultyLevel diff, out int gold, out int stones, out int scrolls, out int xp, out bool givePotion)
+    {
+        switch (diff)
+        {
+            case DifficultyLevel.Easy:
+                gold = 1000;
+                stones = 5;
+                scrolls = 0;
+                xp = 20;
+                givePotion = false;
+                break;
+            case DifficultyLevel.Normal:
+                gold = 2000;
+                stones = 10;
+                scrolls = 1;
+                xp = 50;
+                givePotion = false;
+                break;
+            case DifficultyLevel.Hard:
+            default:
+                gold = 0;
+                stones = 20;
+                scrolls = 3;
+                xp = 100;
+                givePotion = true; // +1 шт Зелье Опыта Мастерства (+100 XP)
+                break;
+        }
+    }
+
     /// <summary>
-    /// Отображение окна победы с пересчетом наград по множителю сложности
+    /// Отображение окна победы с точными наградами за выбранный уровень сложности
     /// </summary>
     private void ShowVictoryPopup()
     {
@@ -707,26 +752,21 @@ public class CatchMouse_Minigame : MonoBehaviour
             rewardPopupPanel.SetActive(true);
         }
 
-        float mult = GetDifficultyMultiplier();
-        int baseGold = 5000;
-        int baseStones = 10;
-        int baseScrolls = 2;
-        int baseXP = 600;
+        GetDifficultyRewards(selectedDifficulty, out int finalGold, out int finalStones, out int finalScrolls, out int finalXP, out bool givePotion);
 
-        int finalGold = Mathf.RoundToInt(baseGold * mult);
-        int finalStones = Mathf.RoundToInt(baseStones * mult);
-        int finalScrolls = Mathf.RoundToInt(baseScrolls * mult);
-        int finalXP = Mathf.RoundToInt(baseXP * mult);
-
-        string diffName = selectedDifficulty == DifficultyLevel.Easy ? "Легкий (x1.0)" :
-                         (selectedDifficulty == DifficultyLevel.Normal ? "Средний (x1.5)" : "Сложный (x2.5)");
+        string diffName = selectedDifficulty == DifficultyLevel.Easy ? "Легкий" :
+                         (selectedDifficulty == DifficultyLevel.Normal ? "Средний" : "Сложный");
 
         if (rewardDescriptionText != null)
         {
+            string goldStr = finalGold > 0 ? $"<b><color=#FFD166>+{finalGold:N0} Золота</color></b> | " : "";
+            string scrollsStr = finalScrolls > 0 ? $" | <b><color=#CDB4DB>+{finalScrolls} Свиток</color></b>" : "";
+            string potionStr = givePotion ? $"\n<b><color=#F72585>+1 Зелье Опыта Мастерства (+100 XP)</color></b>" : "";
+
             rewardDescriptionText.text = $"Уровень: <b><color=#FFD166>{diffName}</color></b>\n" +
-                                         $"<b><color=#FFD166>+{finalGold:N0} Золота</color></b> | <b><color=#A0C4FF>+{finalStones} Камней</color></b> | <b><color=#CDB4DB>+{finalScrolls} Свитка</color></b>\n" +
-                                         $"<b><color=#80FFDB>+{finalXP} Опыта Игрока</color></b>\n" +
-                                         $"<b><color=#F72585>+1 Особое Зелье Мастерства</color></b>";
+                                         $"{goldStr}<b><color=#A0C4FF>+{finalStones} Камней</color></b>{scrollsStr}\n" +
+                                         $"<b><color=#80FFDB>+{finalXP} Опыта Игрока</color></b>" +
+                                         potionStr;
 
             RectTransform txtRt = rewardDescriptionText.GetComponent<RectTransform>();
             if (txtRt != null)
@@ -760,47 +800,30 @@ public class CatchMouse_Minigame : MonoBehaviour
         }
     }
 
-    private float GetDifficultyMultiplier()
-    {
-        switch (selectedDifficulty)
-        {
-            case DifficultyLevel.Easy: return 1.0f;
-            case DifficultyLevel.Normal: return 1.5f;
-            case DifficultyLevel.Hard: return 2.5f;
-            default: return 1.0f;
-        }
-    }
-
     /// <summary>
-    /// Выдача всех наград игроку и начисление в систему сохранения
+    /// Выдача всех наград игроку, сохранение, блокировка колеса игр и запуск победного диалога Кота
     /// </summary>
     public void ClaimRewardAndExit()
     {
         if (clickSound != null && SettingsManager.Instance != null)
             SettingsManager.Instance.PlaySoundEffect(clickSound);
 
-        float mult = GetDifficultyMultiplier();
-        int finalGold = Mathf.RoundToInt(5000 * mult);
-        int finalStones = Mathf.RoundToInt(10 * mult);
-        int finalScrolls = Mathf.RoundToInt(2 * mult);
-        int finalXP = Mathf.RoundToInt(600 * mult);
+        GetDifficultyRewards(selectedDifficulty, out int finalGold, out int finalStones, out int finalScrolls, out int finalXP, out bool givePotion);
 
         // 1. Начисление ресурсов в PlayerPrefs
         int gold = PlayerPrefs.GetInt("Player_Gold", 0) + finalGold;
         int stones = PlayerPrefs.GetInt("Player_Stones", 0) + finalStones;
         int scrolls = PlayerPrefs.GetInt("Player_Scrolls", 0) + finalScrolls;
-        int xp = PlayerPrefs.GetInt("Player_XP", 0) + finalXP;
 
         PlayerPrefs.SetInt("Player_Gold", gold);
         PlayerPrefs.SetInt("Player_Stones", stones);
         PlayerPrefs.SetInt("Player_Scrolls", scrolls);
-        PlayerPrefs.SetInt("Player_XP", xp);
         PlayerPrefs.Save();
 
-        // 2. Добавление зелья в инвентарь
-        if (RecipeCrafting_Manager.Instance != null)
+        // 2. Добавление зелья в инвентарь при сложном уровне
+        if (givePotion && RecipeCrafting_Manager.Instance != null)
         {
-            RecipeCrafting_Manager.Instance.AddPotionToFirstEmptySlot("Player_Potion_XP_Mastery", $"Зелье Мастерства (+{finalXP} XP)");
+            RecipeCrafting_Manager.Instance.AddPotionToFirstEmptySlot("Player_Potion_XP_Mastery", "Зелье Мастерства (+100 XP)");
         }
 
         // 3. Обновление ресурсов в верхнем UI
@@ -815,7 +838,19 @@ public class CatchMouse_Minigame : MonoBehaviour
             Avatar_Manager.Instance.GainPlayerExperience(finalXP);
         }
 
+        // 5. Блокировка колеса мини-игр
+        if (DialogueSystem_Manager.Instance != null)
+        {
+            DialogueSystem_Manager.Instance.SetMinigamesButtonInteractable(false);
+        }
+
         CloseMinigame();
+
+        // 6. Запуск диалога Кота с подарком и предложением «Алхимической Рыбалки»
+        if (DialogueSystem_Manager.Instance != null)
+        {
+            DialogueSystem_Manager.Instance.StartPostMinigameFishingDialogue();
+        }
     }
 
     public void CloseMinigame()
