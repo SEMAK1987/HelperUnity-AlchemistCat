@@ -56,7 +56,7 @@ export const FishingSimulator: React.FC = () => {
   const [bobberPos, setBobberPos] = useState<{ x: number; y: number } | null>(null);
 
   // Animation frame loop refs
-  const vertDirRef拼 = useRef<number>(1);
+  const vertDirRef = useRef<number>(1);
   const horizDirRef = useRef<number>(1);
   const animFrameRef = useRef<number | null>(null);
 
@@ -76,13 +76,13 @@ export const FishingSimulator: React.FC = () => {
       lastTime = now;
 
       setVerticalPos(prev => {
-        let next = prev + vertDirRef拼.current * speed * delta;
+        let next = prev + vertDirRef.current * speed * delta;
         if (next >= 1) {
           next = 1;
-          vertDirRef拼.current = -1;
+          vertDirRef.current = -1;
         } else if (next <= 0) {
           next = 0;
-          vertDirRef拼.current = 1;
+          vertDirRef.current = 1;
         }
         return next;
       });
@@ -103,12 +103,12 @@ export const FishingSimulator: React.FC = () => {
     let lastTime = performance.now();
     const speed = 1.6 * diffConfig.speedMultiplier;
 
-    const updateLoop而去 = (now: number) => {
-      const delta而去 = (now - lastTime) / 1000;
+    const updateLoop = (now: number) => {
+      const delta = (now - lastTime) / 1000;
       lastTime = now;
 
       setHorizontalSpread(prev => {
-        let next = prev + horizDirRef.current * speed * delta而去;
+        let next = prev + horizDirRef.current * speed * delta;
         if (next >= 1) {
           next = 1;
           horizDirRef.current = -1;

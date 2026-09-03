@@ -96,13 +96,36 @@ async function checkOllamaStatus() {
 }
 
 async function loadHistory() {
-  if (!(await fs.pathExists(historyPath))) {
-    await fs.writeJson(historyPath, [], { spaces: 2 });
+  try {
+    if (!(await fs.pathExists(historyPath))) {
+      await fs.writeJson(historyPath, [], { spaces: 2 });
+      return [];
+    }
+    const content = await fs.readFile(historyPath, "utf-8");
+    if (!content.trim()) {
+      await fs.writeJson(historyPath, [], { spaces: 2 });
+      return [];
+    }
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (e) {
+    console.warn("Failed to load history, resetting to empty array", e);
+    await fs.writeJson(historyPath, [], { spaces: 2 }).catch(() => {});
+    return [];
   }
-  return await fs.readJson(historyPath);
 }
 
 async function addToHistory(event: string, filePath: string) {
+  const basename = path.basename(filePath);
+  if (
+    basename === "history.json" ||
+    basename === "chat_history.json" ||
+    basename === "project_stats.json" ||
+    basename.startsWith(".")
+  ) {
+    return;
+  }
+
   try {
     const history = await loadHistory();
     history.unshift({
@@ -974,7 +997,7 @@ async function startServer() {
         const ignoredNames = [
           'node_modules', 'dist', 'local_storage', 'Library', 'Temp', 'Obj', 'Build', 'Logs', 'uploads',
           'project_stats.json', 'PROJECT_MASTER_BLUEPRINT.md', 'ccgs_project_blueprint.json',
-          'knowledge_base.json', 'version.json', 'unity_version.txt'
+          'knowledge_base.json', 'version.json', 'unity_version.txt', 'history.json', 'chat_history.json', 'game_design.json'
         ];
         
         if (basename.startsWith('.')) return true;
