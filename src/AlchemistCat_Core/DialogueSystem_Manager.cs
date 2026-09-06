@@ -462,6 +462,12 @@ public class DialogueSystem_Manager : MonoBehaviour
                 SetCalendarButtonInteractable(true); // Разблокировка кнопки календаря
                 OpenCalendarUI(); // Автоматическое открытие календаря
             }
+            else
+            {
+                // Пометка полного прохождения всех диалогов и разблокировки элементов
+                PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1);
+                PlayerPrefs.Save();
+            }
         }
     }
 
@@ -794,7 +800,7 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (smallScrollIconButton != null)
         {
             smallScrollIconButton.SetActive(true);
-            SetSmallScrollInteractable(true);
+            SetSmallScrollInteractable(false); // Свиток заблокирован до нажатия кнопки Кота («Посмотреть рецепт»)
         }
 
         currentStepIndex++;
@@ -1538,9 +1544,47 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (playerAvatarContainer != null) playerAvatarContainer.SetActive(false);
         if (smallScrollIconButton != null) smallScrollIconButton.SetActive(false);
 
+        bool opened = false;
         if (recipeScrollPanel != null)
         {
-            recipeScrollPanel.SetActive(true);
+            recipeScrollPanel.SetActive(true); // Активация панели свитка рецепта
+            opened = true;
+        }
+        else if (RecipeCrafting_Manager.Instance != null && RecipeCrafting_Manager.Instance.recipeScrollPanel != null)
+        {
+            RecipeCrafting_Manager.Instance.recipeScrollPanel.SetActive(true); // Активация через RecipeCrafting_Manager
+            opened = true;
+        }
+
+        if (!opened)
+        {
+            string[] names = { "RecipeScroll_Panel", "RecipeScrollPanel", "RecipeScroll", "RecipePanel", "Scroll_Panel", "ScrollPanel" };
+            foreach (var n in names)
+            {
+                GameObject foundScroll = GameObject.Find(n);
+                if (foundScroll != null)
+                {
+                    foundScroll.SetActive(true);
+                    opened = true;
+                    break;
+                }
+            }
+
+            if (!opened)
+            {
+                foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+                {
+                    if (go.name == "RecipeScroll_Panel" || go.name == "RecipeScrollPanel" || go.name == "RecipeScroll" || go.name == "RecipePanel")
+                    {
+                        if (go.hideFlags == HideFlags.None && go.scene.isLoaded)
+                        {
+                            go.SetActive(true);
+                            opened = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
 
         if (cauldronButton != null) cauldronButton.SetActive(true);

@@ -186,8 +186,14 @@ public class Avatar_Manager : MonoBehaviour
             avatarIconButton.onClick.AddListener(OnAvatarIconClicked); // Назначение открытия панели гардероба
         }
 
+        InitDefaultData(); // Инициализация начальной коллекции аватарок и рамок (должна быть до загрузки профиля)
         LoadPlayerProfile(); // Загрузка сохраненного прогресса профиля (уровень, опыт, выбранные облики)
-        InitDefaultData(); // Инициализация начальной коллекции аватарок и рамок
+    }
+
+    public int GetRequiredAvatarUnlockLevel(int avatarId) // Получение уровня открытия для аватарки
+    {
+        AvatarData av = allAvatars.Find(a => a.id == avatarId); // Поиск данных аватарки в списке
+        return av != null ? av.unlockLevelRequired : 999; // Возврат требуемого уровня или 999
     }
 
     private void Start()
@@ -214,12 +220,12 @@ public class Avatar_Manager : MonoBehaviour
         selectedFrameId = PlayerPrefs.GetInt("Selected_Frame_Id", 0); // Выбранный ID рамки
 
         // Защита: стартовая выбранная аватарка по умолчанию должна быть 0 (бесплатная Стартовый Ученик #1)
-        if (selectedAvatarId < 0 || selectedAvatarId > 2) // Если не из стартовых
+        if (selectedAvatarId < 0 || selectedAvatarId >= 3) // Если не входит в 3 стартовые бесплатные (индексы 0, 1, 2)
         {
-            if (PlayerPrefs.GetInt($"Avatar_Unlocked_{selectedAvatarId}", 0) != 1) // И не куплена
+            if (PlayerPrefs.GetInt($"Avatar_Unlocked_{selectedAvatarId}", 0) != 1 && currentLevel < GetRequiredAvatarUnlockLevel(selectedAvatarId)) // И не куплена, и уровень недостаточен
             {
-                selectedAvatarId = 0; // Сброс на базовую
-                PlayerPrefs.SetInt("Selected_Avatar_Id", 0); // Сохранение сброса
+                selectedAvatarId = 0; // Сброс на базового первого кота
+                PlayerPrefs.SetInt("Selected_Avatar_Id", 0); // Сохранение безопасного сброса
             }
         }
 
@@ -1101,7 +1107,7 @@ public class Avatar_Manager : MonoBehaviour
     public bool IsAvatarUnlocked(AvatarData data) // Проверка: открыта ли аватарка кота
     {
         if (data.isUnlockedByDefault) return true; // Стартовая открыта по умолчанию
-        if (data.id < 3 && data.category == AvatarCategory.Free) return true; // Первые 3 стартовые аватарки всегда открыты
+        if (data.id == 0 && data.category == AvatarCategory.Free) return true; // Только первая стартовая аватарка открыта по умолчанию
         if (PlayerPrefs.GetInt($"Avatar_Unlocked_{data.id}", 0) == 1) return true; // Сохранен статус покупки
 
         if (data.category == AvatarCategory.Free && currentLevel >= data.unlockLevelRequired) // Достигнут уровень
