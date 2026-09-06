@@ -1386,12 +1386,26 @@ public class DialogueSystem_Manager : MonoBehaviour
             showKnowledgeIcon = true
         });
 
-        // 2. Рассказ про раздел Знания (Древо Рангов)
+        // 2. Рассказ про раздел Знания (Древо Рангов и 3 Божественных ранга)
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=82%>Слева от сундука открылся раздел <b><color=#FFD166>Знания</color></b> (древние фолианты)!\n\nВ нем хранятся все <b>21 Алхимический Ранг</b> и <b>3 ранга Высшей Алхимии</b> — от Новичка до Создателя Философского камня и вечных легенд.</size>",
-            textEN = "<size=82%>To the left of your chest, the <b><color=#FFD166>Knowledge</color></b> section has unlocked!\n\nIt displays all <b>21 Alchemy Ranks</b> and <b>3 Higher Alchemy Ranks</b> — from Novice to Philosopher's Stone Creator and eternal legends.</size>",
-            textTR = "<size=82%>Sandigin solunda <b><color=#FFD166>Bilgi</color></b> bolumu acildi!\n\nBurada Acemiden Felsefe Tasi Yaraticisina kadar tum <b>21 Simya Rutbesi</b> ve <b>3 Yuksek Simya Rutbesi</b> bulunur.</size>",
+            textRU = "<size=80%>Слева от сундука открылся раздел <b><color=#FFD166>Знания</color></b> (древние фолианты)!\n\nТам хранятся <b>21 Алхимический Ранг</b> и <b>3 сверхсложных Божественных Ранга</b> (1.5M, 3M и 5M опыта), дающие великие тайны, новые котлы, бонусные зелья, Мировой Рынок и постройку разрушенных комнат богов!</size>",
+            textEN = "<size=80%>To the left of your chest, the <b><color=#FFD166>Knowledge</color></b> section has unlocked!\n\nIt displays <b>21 Alchemy Ranks</b> and <b>3 extremely hard Divine Ranks</b> granting new cauldrons, bonuses, World Market, and divine rooms!</size>",
+            textTR = "<size=80%>Sandigin solunda <b><color=#FFD166>Bilgi</color></b> bolumu acildi!\n\n21 Simya Rutbesi ve <b>3 Ilahi Rutbe</b> burada yer aliyor!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true
+        });
+
+        // 3. Дополнительный шаг про награды мастерства и котлы
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=78%>По мере роста мастерства тебе откроются: новый <b>Дистиллятор</b> (шанс дубля 30%), <b>Старший фармацевт</b> (+40%), ускорение <b>Быстрый помощник</b>, зелья опыта, новый котел Архимагистра (50%), <b>Мировой Рынок</b> с еженедельными турнирами лидеров и мешочки Мастерской Пыли!</size>",
+            textEN = "<size=78%>As mastery grows, you will unlock: Distiller (30% double), Senior Pharmacist (40%), Quick Helper speed, Archmage Cauldron, World Market tournaments, and Dust Pouches!</size>",
+            textTR = "<size=78%>Ustalik arttikca yeni kazanclar acilacak!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
