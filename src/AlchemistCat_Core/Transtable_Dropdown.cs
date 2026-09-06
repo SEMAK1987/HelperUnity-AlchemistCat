@@ -26,10 +26,10 @@ public class Transtable_Dropdown : MonoBehaviour
     private TMP_FontAsset originalItemFont; // Исходный шрифт элементов списка
     private bool isLocalUpdating = false; // Флаг: выполняется ли локальное обновление
 
-    private void Awake()
+    private void Awake() // Инициализация и сохранение базовых шрифтов
     {
         dropdown = GetComponent<TMP_Dropdown>(); // Получение компонента Dropdown
-        if (dropdown != null)
+        if (dropdown != null) // Если компонент присутствует
         {
             if (dropdown.captionText != null) originalCaptionFont = dropdown.captionText.font; // Сохранение шрифта заголовка
             if (dropdown.itemText != null) originalItemFont = dropdown.itemText.font; // Сохранение шрифта элементов

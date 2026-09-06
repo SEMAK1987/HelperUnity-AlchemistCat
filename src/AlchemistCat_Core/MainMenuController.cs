@@ -40,9 +40,9 @@ public class MainMenuController : MonoBehaviour
     private float titleTimer = 0f; // Таймер синусоиды для покачивания
     private bool cycleDirectionUp = true; // Направление перехода дня/ночи
 
-    private void Start()
+    private void Start() // Инициализация меню при запуске
     {
-        if (backgroundLayer != null)
+        if (backgroundLayer != null) // Если слой фона назначен
         {
             bgStartPos = backgroundLayer.anchoredPosition; // Запоминаем исходную позицию фона
         }
@@ -51,14 +51,14 @@ public class MainMenuController : MonoBehaviour
         UpdateBackgroundBlending(); // Применяем начальные цвета и альфа-каналы фонов
 
         // Плавное проявление меню
-        if (mainMenuCanvasGroup != null)
+        if (mainMenuCanvasGroup != null) // Если CanvasGroup меню задан
         {
             mainMenuCanvasGroup.alpha = 0f; // Делаем меню невидимым
             StartCoroutine(FadeInMenuCoroutine()); // Запускаем корутину плавного появления
         }
 
         // Автоматически запускаем музыку меню через SettingsManager
-        if (SettingsManager.Instance != null)
+        if (SettingsManager.Instance != null) // Если синглтон настроек существует
         {
             SettingsManager.Instance.PlayThemeForActiveScene(); // Включаем музыкальную тему главного меню
         }

@@ -19,13 +19,13 @@ public class UIButtonHoverEffect : MonoBehaviour, IPointerEnterHandler, IPointer
     private Vector3 targetScale; // Целевой масштаб для плавной интерполяции
     private bool isHovered = false; // Флаг: находится ли курсор над кнопкой
 
-    private void Start()
+    private void Start() // Стартовая инициализация исходного масштаба
     {
         originalScale = transform.localScale; // Запоминаем базовый размер кнопки
         targetScale = originalScale; // Устанавливаем целевой размер равным базовому
     }
 
-    private void Update()
+    private void Update() // Плавное масштабирование каждого кадра
     {
         // Плавная интерполяция размера для предотвращения резкого дергания
         transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * animationSpeed); // Плавный переход к targetScale

@@ -40,12 +40,12 @@ public class TimeOfDaySystem : MonoBehaviour
 
     private Coroutine blendCoroutine; // Ссылка на корутину анимации смены освещения
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона
     {
         Instance = this; // Инициализация синглтона при старте
     }
 
-    private void Start()
+    private void Start() // Запуск первичной проверки и таймера
     {
         // Первичная проверка при запуске игры
         CheckAndApplyTimeOfDay(instant: true); // Мгновенное применение освещения без задержки
@@ -53,7 +53,7 @@ public class TimeOfDaySystem : MonoBehaviour
         StartCoroutine(PeriodicTimeCheck()); // Фоновая корутина проверки времени
     }
 
-    private void Update()
+    private void Update() // Покадровое обновление ручного режима
     {
         if (manualOverride) // Если включен ручной режим отладки
         {

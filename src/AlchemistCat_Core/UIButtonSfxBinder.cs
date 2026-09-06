@@ -15,36 +15,36 @@ public class UIButtonSfxBinder : MonoBehaviour
     public bool scanOnStart = true; // Сканировать ли все кнопки при старте игры
     public bool scanOnSceneLoaded = true; // Сканировать ли сцену при каждой смене уровня
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона и DontDestroyOnLoad
     {
-        if (Instance == null)
+        if (Instance == null) // Если экземпляр еще не создан
         {
             Instance = this; // Инициализация единственного экземпляра
             DontDestroyOnLoad(gameObject); // Сохраняем объект между сценами
         }
-        else
+        else // Если дубликат
         {
             Destroy(gameObject); // Уничтожаем дубликат
-            return;
+            return; // Выход
         }
     }
 
-    private void OnEnable()
+    private void OnEnable() // Подписка на события загрузки сцен
     {
-        if (scanOnSceneLoaded)
+        if (scanOnSceneLoaded) // Если включено сканирование при загрузке
         {
             SceneManager.sceneLoaded += OnSceneLoaded; // Подписка на событие загрузки новой сцены
         }
     }
 
-    private void OnDisable()
+    private void OnDisable() // Отписка от событий
     {
         SceneManager.sceneLoaded -= OnSceneLoaded; // Отписка от событий загрузки сцен
     }
 
-    private void Start()
+    private void Start() // Стартовое сканирование кнопок
     {
-        if (scanOnStart)
+        if (scanOnStart) // Если включено сканирование на старте
         {
             ScanAndBindAllButtons(); // Первичное сканирование и привязка звуков ко всем кнопкам
         }

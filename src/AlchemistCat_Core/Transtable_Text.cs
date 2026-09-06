@@ -20,10 +20,10 @@ public class Transtable_Text : MonoBehaviour
     [HideInInspector]
     public TMP_FontAsset originalFont; // Оригинальный шрифт компонента
 
-    private void Awake()
+    private void Awake() // Инициализация и кэширование шрифта
     {
         UIText = GetComponent<TextMeshProUGUI>(); // Получение ссылки на TextMeshProUGUI
-        if (UIText != null)
+        if (UIText != null) // Если компонент присутствует
         {
             originalFont = UIText.font; // Сохранение оригинального шрифта
         }

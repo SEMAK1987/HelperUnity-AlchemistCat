@@ -19,21 +19,21 @@ public class LoadingScreenManager : MonoBehaviour
     public TextMeshProUGUI funnyQuoteText; // Текст кошачьих алхимических цитат и подсказок
     public Image kittenSilhouette; // Силуэт котенка для анимации проявления
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона и защита между сценами
     {
-        if (Instance == null)
+        if (Instance == null) // Если экземпляр еще не создан
         {
             Instance = this; // Назначение глобального синглтона
             DontDestroyOnLoad(gameObject); // Сохранение при переходах между сценами
         }
-        else
+        else // Если дубликат
         {
             Destroy(gameObject); // Уничтожение дубликата менеджера
-            return;
+            return; // Выход
         }
     }
 
-    private void Start()
+    private void Start() // Скрытие экрана загрузки на старте
     {
         if (loadingPanel != null) loadingPanel.SetActive(false); // Скрываем загрузочный экран при старте сцены
     }

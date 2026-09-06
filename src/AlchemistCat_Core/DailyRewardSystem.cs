@@ -26,78 +26,78 @@ public class DailyRewardSystem : MonoBehaviour
         CheckDailyStatus(); // Постоянное обновление таймера обратного отсчета в реальном времени
     }
 
-    private void ValidateInspectorReferences()
+    private void ValidateInspectorReferences() // Проверка и автопоиск привязанных UI компонентов
     {
         // Попытка авто-поиска кнопок и текстов в дочерних объектах, если они не заданы в Инспекторе
-        if (claimButton == null)
+        if (claimButton == null) // Если кнопка сбора не задана
         {
-            claimButton = GetComponentInChildren<Button>(true);
-            if (claimButton == null)
+            claimButton = GetComponentInChildren<Button>(true); // Поиск кнопки в дочерних объектах
+            if (claimButton == null) // Если не найдена
             {
-                Button[] buttons = GetComponentsInChildren<Button>(true);
-                foreach (var b in buttons)
+                Button[] buttons = GetComponentsInChildren<Button>(true); // Получение всех кнопок
+                foreach (var b in buttons) // Перебор кнопок
                 {
-                    if (b.name.ToLower().Contains("claim") || b.name.ToLower().Contains("reward") || b.name.ToLower().Contains("button"))
+                    if (b.name.ToLower().Contains("claim") || b.name.ToLower().Contains("reward") || b.name.ToLower().Contains("button")) // Поиск по ключевым именам
                     {
-                        claimButton = b;
-                        break;
+                        claimButton = b; // Назначение найденной кнопки
+                        break; // Выход из цикла
                     }
                 }
             }
         }
 
-        if (timerText == null)
+        if (timerText == null) // Если текст таймера не задан
         {
-            Text[] texts = GetComponentsInChildren<Text>(true);
-            foreach (var t in texts)
+            Text[] texts = GetComponentsInChildren<Text>(true); // Получение всех текстовых полей
+            foreach (var t in texts) // Перебор текстов
             {
-                if (t.name.ToLower().Contains("timer") || t.name.ToLower().Contains("time"))
+                if (t.name.ToLower().Contains("timer") || t.name.ToLower().Contains("time")) // Поиск по имени
                 {
-                    timerText = t;
-                    break;
+                    timerText = t; // Привязка текста
+                    break; // Выход
                 }
             }
         }
 
-        if (statusText == null)
+        if (statusText == null) // Если текст статуса не задан
         {
-            Text[] texts = GetComponentsInChildren<Text>(true);
-            foreach (var t in texts)
+            Text[] texts = GetComponentsInChildren<Text>(true); // Получение всех текстов
+            foreach (var t in texts) // Перебор текстов
             {
-                if (t.name.ToLower().Contains("status") || t.name.ToLower().Contains("info") || t.name.ToLower().Contains("log"))
+                if (t.name.ToLower().Contains("status") || t.name.ToLower().Contains("info") || t.name.ToLower().Contains("log")) // Поиск по имени
                 {
-                    statusText = t;
-                    break;
+                    statusText = t; // Привязка текста
+                    break; // Выход
                 }
             }
         }
 
-        if (calendarDaySlots == null || calendarDaySlots.Length == 0)
+        if (calendarDaySlots == null || calendarDaySlots.Length == 0) // Если массив слотов пуст
         {
             // Пытаемся найти дочерние объекты, представляющие собой дни календаря
-            System.Collections.Generic.List<Transform> foundSlots = new System.Collections.Generic.List<Transform>();
-            foreach (Transform child in transform)
+            System.Collections.Generic.List<Transform> foundSlots = new System.Collections.Generic.List<Transform>(); // Временный список
+            foreach (Transform child in transform) // Перебор дочерних трансформаций
             {
-                if (child.name.ToLower().Contains("day") || child.name.ToLower().Contains("slot") || child.name.ToLower().Contains("calendar"))
+                if (child.name.ToLower().Contains("day") || child.name.ToLower().Contains("slot") || child.name.ToLower().Contains("calendar")) // Поиск слотов
                 {
-                    foundSlots.Add(child);
+                    foundSlots.Add(child); // Добавление найденного слота
                 }
             }
-            if (foundSlots.Count > 0)
+            if (foundSlots.Count > 0) // Если слоты найдены
             {
-                calendarDaySlots = foundSlots.ToArray();
+                calendarDaySlots = foundSlots.ToArray(); // Преобразование в массив
             }
         }
 
         // Выводим только мягкие информативные предупреждения, чтобы не засорять консоль красными ошибками
-        if (claimButton == null)
-            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Кнопка 'Claim Button' не назначена. Система наград будет работать в фоновом режиме.");
-        if (timerText == null)
-            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Текстовое поле 'Timer Text' отсутствует. Отсчет времени будет скрыт.");
-        if (statusText == null)
-            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Текстовое поле 'Status Text' не назначено.");
-        if (calendarDaySlots == null || calendarDaySlots.Length == 0)
-            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Массив слотов дней 'Calendar Day Slots' пуст.");
+        if (claimButton == null) // Предупреждение о кнопке
+            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Кнопка 'Claim Button' не назначена. Система наград будет работать в фоновом режиме."); // Лог
+        if (timerText == null) // Предупреждение о таймере
+            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Текстовое поле 'Timer Text' отсутствует. Отсчет времени будет скрыт."); // Лог
+        if (statusText == null) // Предупреждение о статусе
+            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Текстовое поле 'Status Text' не назначено."); // Лог
+        if (calendarDaySlots == null || calendarDaySlots.Length == 0) // Предупреждение о слотах
+            Debug.Log("[DailyRewardSystem] Мягкое уведомление: Массив слотов дней 'Calendar Day Slots' пуст."); // Лог
     }
 
     private void CheckDailyStatus() // Проверка текущего статуса ежедневной награды

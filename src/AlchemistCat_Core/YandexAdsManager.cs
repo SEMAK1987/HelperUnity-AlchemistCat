@@ -24,17 +24,17 @@ public class YandexAdsManager : MonoBehaviour
     private Action rewardedCloseCallback; // Колбэк закрытия окна рекламы с наградой
     private Action interstitialCloseCallback; // Колбэк закрытия полноэкранной межстраничной рекламы
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона и DontDestroyOnLoad
     {
-        if (Instance == null)
+        if (Instance == null) // Если экземпляр еще не создан
         {
             Instance = this; // Назначение глобального синглтона
             DontDestroyOnLoad(gameObject); // Сохранение объекта между сценами
         }
-        else
+        else // Если дубликат
         {
             Destroy(gameObject); // Уничтожение дубликата
-            return;
+            return; // Выход
         }
     }
 

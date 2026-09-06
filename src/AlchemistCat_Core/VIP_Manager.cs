@@ -27,19 +27,19 @@ public class VIP_Manager : MonoBehaviour
         460000, 550000, 650000, 750000, 850000, 900000, 940000, 970000, 990000, 1000000
     };
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона и загрузка данных
     {
         Instance = this; // Инициализация синглтона
         LoadVIPData(); // Загрузка сохраненного VIP прогресса из памяти
     }
 
-    public void UnlockVIPFeature()
+    public void UnlockVIPFeature() // Разблокировка кнопки VIP в интерфейсе
     {
-        if (vipOpenIconButton != null)
+        if (vipOpenIconButton != null) // Если кнопка задана
             vipOpenIconButton.gameObject.SetActive(true); // Включаем кнопку VIP при достижении 2 ранга
     }
 
-    public void AddVIP_XP(int amount)
+    public void AddVIP_XP(int amount) // Начисление очков опыта VIP
     {
         currentVIP_XP += amount; // Прибавляем начисленный опыт VIP
         CheckLevelUp(); // Проверяем, повысился ли уровень VIP
@@ -47,19 +47,19 @@ public class VIP_Manager : MonoBehaviour
         UpdateUI(); // Обновляем отображение на экране
     }
 
-    public void ProcessMonthlyCalendarBonus(int missedDays)
+    public void ProcessMonthlyCalendarBonus(int missedDays) // Начисление бонуса за календарный месяц
     {
         if (missedDays == 0) AddVIP_XP(100); // 0 пропусков в календаре: +100 VIP опыта
         else if (missedDays == 1) AddVIP_XP(50); // 1 пропуск в календаре: +50 VIP опыта
         // 2 и более пропусков: 0 очков
     }
 
-    public void ProcessFullYearBonus()
+    public void ProcessFullYearBonus() // Начисление супер-бонуса за полный год
     {
         AddVIP_XP(5000); // Закрыты все 12 месяцев года: +5000 VIP опыта
     }
 
-    private void CheckLevelUp()
+    private void CheckLevelUp() // Проверка повышения ранга VIP
     {
         for (int i = 0; i < 30; i++) // Проходим по всем 30 рангам
         {
@@ -70,7 +70,7 @@ public class VIP_Manager : MonoBehaviour
         }
     }
 
-    public void OpenVIPPanel()
+    public void OpenVIPPanel() // Открытие окна VIP меню
     {
         if (vipPanel != null) // Если окно существует
         {
@@ -79,13 +79,13 @@ public class VIP_Manager : MonoBehaviour
         }
     }
 
-    public void CloseVIPPanel()
+    public void CloseVIPPanel() // Закрытие окна VIP меню
     {
-        if (vipPanel != null)
+        if (vipPanel != null) // Если окно задано
             vipPanel.SetActive(false); // Закрываем окно VIP
     }
 
-    public void ActivateDivineRealmMode()
+    public void ActivateDivineRealmMode() // Активация режима 30 ранга
     {
         if (currentVIPLevel >= 30 && !isDivineRealmActive) // Проверка: достигнут ли 30 ранг VIP
         {
@@ -94,10 +94,10 @@ public class VIP_Manager : MonoBehaviour
         }
     }
 
-    private void UpdateUI()
+    private void UpdateUI() // Обновление текста уровня и слайдера
     {
         if (vipLevelText != null) vipLevelText.text = $"VIP {currentVIPLevel}"; // Вывод номера уровня
-        if (vipXpSlider != null)
+        if (vipXpSlider != null) // Если слайдер задан
         {
             int maxXP = currentVIPLevel < 30 ? vipXpRequirements[currentVIPLevel] : vipXpRequirements[29]; // Получаем порог опыта
             vipXpSlider.maxValue = maxXP; // Задаем максимум слайдера
@@ -106,14 +106,14 @@ public class VIP_Manager : MonoBehaviour
         }
     }
 
-    private void SaveVIPData()
+    private void SaveVIPData() // Сохранение данных VIP в PlayerPrefs
     {
         PlayerPrefs.SetInt("VIP_Level", currentVIPLevel); // Сохраняем уровень в PlayerPrefs
         PlayerPrefs.SetInt("VIP_XP", currentVIP_XP); // Сохраняем опыт в PlayerPrefs
         PlayerPrefs.Save(); // Записываем на диск
     }
 
-    private void LoadVIPData()
+    private void LoadVIPData() // Загрузка данных VIP из PlayerPrefs
     {
         currentVIPLevel = PlayerPrefs.GetInt("VIP_Level", 0); // Считываем уровень
         currentVIP_XP = PlayerPrefs.GetInt("VIP_XP", 0); // Считываем опыт

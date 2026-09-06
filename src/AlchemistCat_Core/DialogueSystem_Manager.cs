@@ -198,95 +198,95 @@ public class DialogueSystem_Manager : MonoBehaviour
     {
         if (recipeCraftingManager == null)
         {
-            recipeCraftingManager = RecipeCrafting_Manager.Instance;
+            recipeCraftingManager = RecipeCrafting_Manager.Instance; // Привязка менеджера крафта рецептов
         }
 
-        StartBackgroundMusic();
+        StartBackgroundMusic(); // Запуск фонового музыкального сопровождения
 
         // Не переопределяем alignment и margins текста кодом, чтобы строго сохранялись настройки из инспектора Unity (выравнивание слева сверху, отступы и стиль)
 
-        if (topPanel != null) topPanel.SetActive(false);
-        if (slotGold != null) slotGold.SetActive(false);
-        if (slotStones != null) slotStones.SetActive(false);
-        if (slotScrolls != null) slotScrolls.SetActive(false);
-        if (slotCrystals != null) slotCrystals.SetActive(false);
+        if (topPanel != null) topPanel.SetActive(false); // Скрытие верхней панели на старте
+        if (slotGold != null) slotGold.SetActive(false); // Скрытие слота золота
+        if (slotStones != null) slotStones.SetActive(false); // Скрытие слота магических камней
+        if (slotScrolls != null) slotScrolls.SetActive(false); // Скрытие слота свитков
+        if (slotCrystals != null) slotCrystals.SetActive(false); // Скрытие слота кристаллов
 
-        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(false);
-        if (calendarIconButton != null) calendarIconButton.SetActive(false);
-        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(false);
-        if (chestIconButton != null) chestIconButton.SetActive(false);
-        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false);
-        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(false);
-        if (minigamesPanel != null) minigamesPanel.SetActive(false);
+        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(false); // Скрытие контейнера аватара игрока
+        if (calendarIconButton != null) calendarIconButton.SetActive(false); // Скрытие иконки календаря
+        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(false); // Скрытие иконки свитка рецептов
+        if (chestIconButton != null) chestIconButton.SetActive(false); // Скрытие иконки сундука алхимика
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false); // Скрытие иконки фолиантов знаний
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(false); // Скрытие иконки колеса мини-игр
+        if (minigamesPanel != null) minigamesPanel.SetActive(false); // Скрытие панели мини-игр
 
-        if (calendarPanel != null) calendarPanel.SetActive(false);
-        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false);
-        if (cauldronButton != null) cauldronButton.SetActive(false);
-        if (roomCatObject != null) roomCatObject.SetActive(false);
-        if (inventoryPanel != null) inventoryPanel.SetActive(false);
+        if (calendarPanel != null) calendarPanel.SetActive(false); // Скрытие окна календаря
+        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false); // Скрытие свитка первого рецепта
+        if (cauldronButton != null) cauldronButton.SetActive(false); // Скрытие кнопки котла
+        if (roomCatObject != null) roomCatObject.SetActive(false); // Скрытие кота в комнате
+        if (inventoryPanel != null) inventoryPanel.SetActive(false); // Скрытие панели инвентаря
 
-        UpdateResourceTextsInstant();
+        UpdateResourceTextsInstant(); // Мгновенное обновление текстовых счетчиков ресурсов
 
-        if (confirmNameButton != null)
+        if (confirmNameButton != null) // Если кнопка подтверждения имени назначена
         {
-            confirmNameButton.onClick.RemoveAllListeners();
-            confirmNameButton.onClick.AddListener(OnConfirmNameClicked);
+            confirmNameButton.onClick.RemoveAllListeners(); // Очистка предыдущих слушателей
+            confirmNameButton.onClick.AddListener(OnConfirmNameClicked); // Подписка на нажатие кнопки ввода имени
         }
 
-        if (nextStepButton != null)
+        if (nextStepButton != null) // Если кнопка 'Далее' назначена
         {
-            nextStepButton.onClick.RemoveAllListeners();
-            nextStepButton.onClick.AddListener(OnNextStepClicked);
+            nextStepButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            nextStepButton.onClick.AddListener(OnNextStepClicked); // Подписка на переход к следующему шагу диалога
         }
 
-        if (nameInputField != null)
+        if (nameInputField != null) // Если поле ввода имени задано
         {
-            nameInputField.onSubmit.AddListener(delegate { OnConfirmNameClicked(); });
-            nameInputField.characterLimit = 12;
-            nameInputField.lineType = TMP_InputField.LineType.SingleLine;
+            nameInputField.onSubmit.AddListener(delegate { OnConfirmNameClicked(); }); // Подтверждение по нажатию Enter
+            nameInputField.characterLimit = 12; // Ограничение длины имени до 12 символов
+            nameInputField.lineType = TMP_InputField.LineType.SingleLine; // Однострочный режим ввода
         }
 
-        if (recipeScrollCloseButton != null)
+        if (recipeScrollCloseButton != null) // Если кнопка закрытия свитка назначена
         {
-            recipeScrollCloseButton.onClick.RemoveAllListeners();
+            recipeScrollCloseButton.onClick.RemoveAllListeners(); // Очистка слушателей
             recipeScrollCloseButton.onClick.AddListener(() => {
                 // Если эта кнопка назначена как кнопка 'Начать' или в RecipeCrafting_Manager еще не запущен крафт
-                if (RecipeCrafting_Manager.Instance != null)
+                if (RecipeCrafting_Manager.Instance != null) // Проверка синглтона крафта
                 {
-                    RecipeCrafting_Manager.Instance.OnStartCraftButtonClicked();
+                    RecipeCrafting_Manager.Instance.OnStartCraftButtonClicked(); // Запуск крафта зелья
                 }
                 else
                 {
-                    CloseRecipeScrollUI();
+                    CloseRecipeScrollUI(); // Закрытие свитка рецепта
                 }
             });
         }
 
-        if (smallScrollButton != null)
-            smallScrollButton.onClick.AddListener(OnSmallScrollButtonClicked);
+        if (smallScrollButton != null) // Если кнопка свитка назначена
+            smallScrollButton.onClick.AddListener(OnSmallScrollButtonClicked); // Открытие рецептов по клику
 
-        if (inventoryCloseButton != null)
+        if (inventoryCloseButton != null) // Если кнопка закрытия инвентаря задана
             inventoryCloseButton.onClick.AddListener(() => {
-                if (inventoryPanel != null) inventoryPanel.SetActive(false);
+                if (inventoryPanel != null) inventoryPanel.SetActive(false); // Скрытие окна инвентаря
             });
 
-        if (chestButton != null)
+        if (chestButton != null) // Если кнопка сундука назначена
             chestButton.onClick.AddListener(() => {
-                if (RecipeCrafting_Manager.Instance != null)
-                    RecipeCrafting_Manager.Instance.OpenInventory();
-                else if (inventoryPanel != null)
-                    inventoryPanel.SetActive(true);
+                if (RecipeCrafting_Manager.Instance != null) // Если менеджер крафта доступен
+                    RecipeCrafting_Manager.Instance.OpenInventory(); // Открытие инвентаря через синглтон
+                else if (inventoryPanel != null) // Фоллбэк активация
+                    inventoryPanel.SetActive(true); // Включение окна инвентаря
             });
 
         // Старт Фазы 1
-        if (PlayerPrefs.GetInt("Tutorial_Full_Flow_Done", 0) == 0)
+        if (PlayerPrefs.GetInt("Tutorial_Full_Flow_Done", 0) == 0) // Если туториал еще не завершен
         {
-            ResetAllManagersAndGameState();
+            ResetAllManagersAndGameState(); // Полный сброс параметров для чистого старта обучения
         }
 
-        currentPhase = DialoguePhase.IntroAndCalendar;
-        BuildIntroScenario();
-        DisplayStep(0);
+        currentPhase = DialoguePhase.IntroAndCalendar; // Установка фазы знакомства и календаря
+        BuildIntroScenario(); // Построение сценария реплик Кота
+        DisplayStep(0); // Отображение начального шага диалога
     }
 
     private void SilenceMenuMusicSources()
@@ -306,250 +306,250 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
     }
 
-    private void StartBackgroundMusic()
+    private void StartBackgroundMusic() // Запуск фонового трека лаборатории
     {
-        if (backgroundMusic == null) return;
-        if (localMusicSource == null) localMusicSource = gameObject.AddComponent<AudioSource>();
+        if (backgroundMusic == null) return; // Если трек не назначен, прерываем
+        if (localMusicSource == null) localMusicSource = gameObject.AddComponent<AudioSource>(); // Создание компонента AudioSource
 
-        localMusicSource.clip = backgroundMusic;
-        localMusicSource.loop = true;
-        localMusicSource.playOnAwake = false;
-        localMusicSource.volume = 0.35f;
-        localMusicSource.Play();
+        localMusicSource.clip = backgroundMusic; // Присвоение аудиоклипа
+        localMusicSource.loop = true; // Зацикливание воспроизведения музыки
+        localMusicSource.playOnAwake = false; // Отключение автозапуска
+        localMusicSource.volume = 0.35f; // Установка комфортной фоновой громкости
+        localMusicSource.Play(); // Старт проигрывания
     }
 
-    public void OnNextStepClicked()
+    public void OnNextStepClicked() // Обработчик нажатия кнопки 'Далее' в диалоге Кота
     {
-        if (buttonClickSound != null && SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(buttonClickSound);
+        if (buttonClickSound != null && SettingsManager.Instance != null) // Если звук клика задан
+            SettingsManager.Instance.PlaySoundEffect(buttonClickSound); // Проигрывание звукового эффекта
 
-        if (isTyping)
+        if (isTyping) // Если текст реплики еще печатается
         {
-            if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-            isTyping = false;
-            if (dialogueBodyText != null)
+            if (typingCoroutine != null) StopCoroutine(typingCoroutine); // Прерывание эффекта печатной машинки
+            isTyping = false; // Сброс флага печати
+            if (dialogueBodyText != null) // Если текстовое поле доступно
             {
-                dialogueBodyText.text = activeFullText;
-                dialogueBodyText.maxVisibleCharacters = 99999;
+                dialogueBodyText.text = activeFullText; // Мгновенный вывод полного текста
+                dialogueBodyText.maxVisibleCharacters = 99999; // Раскрытие всех символов
             }
-            OnTypingFinished();
-            return;
+            OnTypingFinished(); // Завершение шага печати
+            return; // Выход
         }
 
-        if (currentStepIndex < 0 || currentStepIndex >= dialogueSteps.Count) return;
-        DialogStep currentStep = dialogueSteps[currentStepIndex];
+        if (currentStepIndex < 0 || currentStepIndex >= dialogueSteps.Count) return; // Проверка диапазона шагов
+        DialogStep currentStep = dialogueSteps[currentStepIndex]; // Получение текущего шага диалога
 
         // Если это шаг сбора стартовой награды
-        if (currentStep.isClaimStarterRewardStep && !starterRewardClaimed)
+        if (currentStep.isClaimStarterRewardStep && !starterRewardClaimed) // Проверка шага стартовой награды
         {
-            StartCoroutine(AnimateStarterRewardAndContinue());
-            return;
+            StartCoroutine(AnimateStarterRewardAndContinue()); // Запуск анимации начисления 5000 монет, 10 камней, 3 свитков
+            return; // Выход
         }
 
         // Если это шаг открытия календаря
-        if (currentStep.isCalendarOpenStep)
+        if (currentStep.isCalendarOpenStep) // Проверка шага открытия календаря
         {
-            if (dialoguePanel != null) dialoguePanel.SetActive(false);
-            SetCalendarButtonInteractable(true);
-            OpenCalendarUI();
-            return;
+            if (dialoguePanel != null) dialoguePanel.SetActive(false); // Скрытие панели диалога
+            SetCalendarButtonInteractable(true); // Разблокировка кнопки календаря
+            OpenCalendarUI(); // Открытие окна календаря
+            return; // Выход
         }
 
         // Если это шаг открытия окна аватарок
-        if (currentStep.isAvatarShowStep)
+        if (currentStep.isAvatarShowStep) // Проверка шага показа аватарок
         {
-            if (dialoguePanel != null) dialoguePanel.SetActive(false);
-            if (avatarManager != null)
+            if (dialoguePanel != null) dialoguePanel.SetActive(false); // Скрытие диалога
+            if (avatarManager != null) // Если менеджер аватарок задан
             {
-                avatarManager.SetAvatarButtonInteractable(true);
-                avatarManager.OpenAvatarPanel();
+                avatarManager.SetAvatarButtonInteractable(true); // Разблокировка кнопки аватарок
+                avatarManager.OpenAvatarPanel(); // Открытие панели выбора аватарок и рамок
             }
-            return;
+            return; // Выход
         }
 
         // Если это шаг согласия на изготовление первого рецепта (100 золота, 5 камней, 1 свиток)
-        if (currentStep.isConfirmRecipeStep)
+        if (currentStep.isConfirmRecipeStep) // Проверка согласия на первый крафт
         {
-            StartCoroutine(ProcessFirstRecipeCraftAndContinue());
-            return;
+            StartCoroutine(ProcessFirstRecipeCraftAndContinue()); // Списание ресурсов и появление свитка
+            return; // Выход
         }
 
         // Если это шаг открытия Большого Свитка Рецепта
-        if (currentStep.isRecipeStep)
+        if (currentStep.isRecipeStep) // Проверка шага открытия свитка
         {
-            OpenRecipeScrollUI();
-            return;
+            OpenRecipeScrollUI(); // Открытие окна свитка рецептов
+            return; // Выход
         }
 
         // Если это шаг открытия Инвентаря
-        if (currentStep.isInventoryOpenStep)
+        if (currentStep.isInventoryOpenStep) // Проверка шага открытия инвентаря
         {
-            if (dialoguePanel != null) dialoguePanel.SetActive(false);
-            if (RecipeCrafting_Manager.Instance != null)
+            if (dialoguePanel != null) dialoguePanel.SetActive(false); // Скрытие диалога
+            if (RecipeCrafting_Manager.Instance != null) // Если менеджер крафта активен
             {
-                RecipeCrafting_Manager.Instance.OpenInventory();
+                RecipeCrafting_Manager.Instance.OpenInventory(); // Открытие инвентаря
             }
-            else if (inventoryPanel != null)
+            else if (inventoryPanel != null) // Фоллбэк
             {
-                inventoryPanel.SetActive(true);
-                if (inventoryCloseButton != null) inventoryCloseButton.interactable = false;
+                inventoryPanel.SetActive(true); // Включение окна инвентаря
+                if (inventoryCloseButton != null) inventoryCloseButton.interactable = false; // Блокировка закрытия
             }
-            return;
+            return; // Выход
         }
 
         // Если это шаг открытия Окна Знаний
-        if (currentStep.isKnowledgeOpenStep)
+        if (currentStep.isKnowledgeOpenStep) // Проверка шага знаний
         {
-            OpenKnowledgeUI();
-            return;
+            OpenKnowledgeUI(); // Открытие окна древа знаний и рангов
+            return; // Выход
         }
 
         // Если это шаг открытия Колеса Мини-Игр
-        if (currentStep.isMinigamesWheelOpenStep)
+        if (currentStep.isMinigamesWheelOpenStep) // Проверка шага мини-игр
         {
-            OpenMinigamesWheelUI();
-            return;
+            OpenMinigamesWheelUI(); // Открытие панели Колеса Мини-Игр
+            return; // Выход
         }
 
-        currentStepIndex++;
-        if (currentStepIndex < dialogueSteps.Count)
+        currentStepIndex++; // Переход к следующему индексу реплики
+        if (currentStepIndex < dialogueSteps.Count) // Если есть следующий шаг
         {
-            DisplayStep(currentStepIndex);
+            DisplayStep(currentStepIndex); // Отображение шага диалога
         }
-        else
+        else // Если диалоги фазы завершены
         {
-            if (currentPhase == DialoguePhase.IntroAndCalendar)
+            if (currentPhase == DialoguePhase.IntroAndCalendar) // Если фаза интро
             {
-                SetCalendarButtonInteractable(true);
-                OpenCalendarUI();
+                SetCalendarButtonInteractable(true); // Разблокировка кнопки календаря
+                OpenCalendarUI(); // Автоматическое открытие календаря
             }
         }
     }
 
-    private void DisplayStep(int index)
+    private void DisplayStep(int index) // Отображение шага диалога и обновление элементов интерфейса
     {
-        if (index < 0 || index >= dialogueSteps.Count) return;
+        if (index < 0 || index >= dialogueSteps.Count) return; // Проверка валидности индекса
 
-        if (nameInputContainer != null) nameInputContainer.SetActive(false);
-        if (nextStepButton != null) nextStepButton.gameObject.SetActive(false);
+        if (nameInputContainer != null) nameInputContainer.SetActive(false); // Скрытие поля ввода имени
+        if (nextStepButton != null) nextStepButton.gameObject.SetActive(false); // Скрытие кнопки 'Далее' до завершения печати
 
-        DialogStep step = dialogueSteps[index];
+        DialogStep step = dialogueSteps[index]; // Текущий шаг данных
 
-        HandleResourceReveal(step.revealResourceIndex);
+        HandleResourceReveal(step.revealResourceIndex); // Поэтапное раскрытие ресурсов в шапке
 
-        if (step.showCalendarIcon && calendarIconButton != null)
+        if (step.showCalendarIcon && calendarIconButton != null) // Если требуется показать иконку календаря
         {
-            calendarIconButton.SetActive(true);
-            SetCalendarButtonInteractable(false);
+            calendarIconButton.SetActive(true); // Активация иконки календаря
+            SetCalendarButtonInteractable(false); // Блокировка клика во время диалога
         }
 
-        if (step.revealAvatarUI && playerAvatarContainer != null)
+        if (step.revealAvatarUI && playerAvatarContainer != null) // Если нужно открыть аватарку игрока
         {
-            playerAvatarContainer.SetActive(true);
-            if (avatarManager != null)
+            playerAvatarContainer.SetActive(true); // Показ контейнера аватара
+            if (avatarManager != null) // Если менеджер аватарок доступен
             {
-                avatarManager.UpdateProfileUI();
-                avatarManager.SetAvatarButtonInteractable(false);
+                avatarManager.UpdateProfileUI(); // Обновление текста имени и опыта
+                avatarManager.SetAvatarButtonInteractable(false); // Блокировка нажатия
             }
         }
 
-        if (step.showSmallScrollIcon && smallScrollIconButton != null)
+        if (step.showSmallScrollIcon && smallScrollIconButton != null) // Если нужно показать иконку свитка
         {
-            AlignSmallScrollButtonToCalendar();
-            smallScrollIconButton.SetActive(true);
-            SetSmallScrollInteractable(false);
+            AlignSmallScrollButtonToCalendar(); // Выравнивание свитка слева от календаря
+            smallScrollIconButton.SetActive(true); // Активация иконки свитка
+            SetSmallScrollInteractable(false); // Блокировка нажатия во время речи
         }
 
-        if (step.showChestIcon && chestIconButton != null)
+        if (step.showChestIcon && chestIconButton != null) // Если нужно показать иконку сундука
         {
-            AlignChestButtonToSmallScroll();
-            chestIconButton.SetActive(true);
-            SetChestButtonInteractable(false);
+            AlignChestButtonToSmallScroll(); // Выравнивание сундука слева от свитка
+            chestIconButton.SetActive(true); // Активация иконки сундука
+            SetChestButtonInteractable(false); // Блокировка нажатия
         }
 
-        if (step.showKnowledgeIcon && knowledgeIconButton != null)
+        if (step.showKnowledgeIcon && knowledgeIconButton != null) // Если нужно показать иконку знаний
         {
-            AlignKnowledgeButtonToChest();
-            knowledgeIconButton.SetActive(true);
-            SetKnowledgeButtonInteractable(false);
+            AlignKnowledgeButtonToChest(); // Выравнивание книг знаний слева от сундука
+            knowledgeIconButton.SetActive(true); // Активация иконки фолиантов
+            SetKnowledgeButtonInteractable(false); // Блокировка нажатия
         }
 
-        if (step.showMinigamesIcon && minigamesWheelIconButton != null)
+        if (step.showMinigamesIcon && minigamesWheelIconButton != null) // Если нужно показать Колесо Мини-Игр
         {
-            AlignMinigamesButtonToKnowledge();
-            minigamesWheelIconButton.SetActive(true);
-            SetMinigamesButtonInteractable(false);
+            AlignMinigamesButtonToKnowledge(); // Выравнивание колеса мини-игр
+            minigamesWheelIconButton.SetActive(true); // Активация иконки колеса
+            SetMinigamesButtonInteractable(false); // Блокировка нажатия
         }
 
-        string rawText = GetLocalizedText(step.textRU, step.textEN, step.textTR);
-        activeFullText = FormatPlayerName(rawText);
+        string rawText = GetLocalizedText(step.textRU, step.textEN, step.textTR); // Получение локализованного текста реплики
+        activeFullText = FormatPlayerName(rawText); // Подстановка имени игрока с форматированием
 
-        if (typingCoroutine != null) StopCoroutine(typingCoroutine);
-        typingCoroutine = StartCoroutine(TypeTextCoroutine(activeFullText, step));
+        if (typingCoroutine != null) StopCoroutine(typingCoroutine); // Остановка предыдущей корутины печати
+        typingCoroutine = StartCoroutine(TypeTextCoroutine(activeFullText, step)); // Запуск эффекта печатной машинки
     }
 
-    private void HandleResourceReveal(int resourceIndex)
+    private void HandleResourceReveal(int resourceIndex) // Пошаговое открытие ресурсов в верхней панели
     {
-        if (resourceIndex == -1) return;
-        if (topPanel != null) topPanel.SetActive(true);
+        if (resourceIndex == -1) return; // Если открытие ресурсов не требуется
+        if (topPanel != null) topPanel.SetActive(true); // Активация верхней полосы
 
-        if (resourceIndex == 0)
+        if (resourceIndex == 0) // Только золото
         {
-            if (slotGold != null) slotGold.SetActive(true);
+            if (slotGold != null) slotGold.SetActive(true); // Показ слота золота
         }
-        else if (resourceIndex == 1)
+        else if (resourceIndex == 1) // Золото + Камни
         {
-            if (slotGold != null) slotGold.SetActive(true);
-            if (slotStones != null) slotStones.SetActive(true);
+            if (slotGold != null) slotGold.SetActive(true); // Показ золота
+            if (slotStones != null) slotStones.SetActive(true); // Показ камней
         }
-        else if (resourceIndex == 2)
+        else if (resourceIndex == 2) // Золото + Камни + Свитки
         {
-            if (slotGold != null) slotGold.SetActive(true);
-            if (slotStones != null) slotStones.SetActive(true);
-            if (slotScrolls != null) slotScrolls.SetActive(true);
+            if (slotGold != null) slotGold.SetActive(true); // Показ золота
+            if (slotStones != null) slotStones.SetActive(true); // Показ камней
+            if (slotScrolls != null) slotScrolls.SetActive(true); // Показ свитков
         }
-        else if (resourceIndex >= 3)
+        else if (resourceIndex >= 3) // Полный набор (Золото, Камни, Свитки, Кристаллы)
         {
-            if (slotGold != null) slotGold.SetActive(true);
-            if (slotStones != null) slotStones.SetActive(true);
-            if (slotScrolls != null) slotScrolls.SetActive(true);
-            if (slotCrystals != null) slotCrystals.SetActive(true);
+            if (slotGold != null) slotGold.SetActive(true); // Показ золота
+            if (slotStones != null) slotStones.SetActive(true); // Показ камней
+            if (slotScrolls != null) slotScrolls.SetActive(true); // Показ свитков
+            if (slotCrystals != null) slotCrystals.SetActive(true); // Показ кристаллов
         }
     }
 
-    private IEnumerator TypeTextCoroutine(string text, DialogStep step)
+    private IEnumerator TypeTextCoroutine(string text, DialogStep step) // Корутина посимвольного вывода текста с озвучкой
     {
-        isTyping = true;
-        if (dialogueBodyText != null)
+        isTyping = true; // Установка флага активной печати
+        if (dialogueBodyText != null) // Если текстовый компонент назначен
         {
-            dialogueBodyText.text = text;
-            dialogueBodyText.maxVisibleCharacters = 0;
-            dialogueBodyText.ForceMeshUpdate();
+            dialogueBodyText.text = text; // Назначение полного текста
+            dialogueBodyText.maxVisibleCharacters = 0; // Скрытие всех символов
+            dialogueBodyText.ForceMeshUpdate(); // Обновление геометрии шрифта
 
-            int totalVisibleCharacters = dialogueBodyText.textInfo.characterCount;
-            for (int visibleCount = 1; visibleCount <= totalVisibleCharacters; visibleCount++)
+            int totalVisibleCharacters = dialogueBodyText.textInfo.characterCount; // Подсчет общего количества символов
+            for (int visibleCount = 1; visibleCount <= totalVisibleCharacters; visibleCount++) // Цикл посимвольного раскрытия
             {
-                dialogueBodyText.maxVisibleCharacters = visibleCount;
+                dialogueBodyText.maxVisibleCharacters = visibleCount; // Увеличение числа видимых букв
 
-                if (textTypeSound != null && SettingsManager.Instance != null && visibleCount - 1 < dialogueBodyText.textInfo.characterInfo.Length)
+                if (textTypeSound != null && SettingsManager.Instance != null && visibleCount - 1 < dialogueBodyText.textInfo.characterInfo.Length) // Проверка звука печати
                 {
-                    char c = dialogueBodyText.textInfo.characterInfo[visibleCount - 1].character;
-                    if (c != ' ' && c != '\n' && c != '\t')
+                    char c = dialogueBodyText.textInfo.characterInfo[visibleCount - 1].character; // Получение текущего символа
+                    if (c != ' ' && c != '\n' && c != '\t') // Игнорирование пробелов и переносов строк
                     {
-                        SettingsManager.Instance.PlaySoundEffect(textTypeSound);
+                        SettingsManager.Instance.PlaySoundEffect(textTypeSound); // Воспроизведение звука щелчка буквы
                     }
                 }
-                yield return new WaitForSeconds(textSpeed);
+                yield return new WaitForSeconds(textSpeed); // Ожидание задержки между буквами
             }
-            dialogueBodyText.maxVisibleCharacters = 99999;
+            dialogueBodyText.maxVisibleCharacters = 99999; // Отображение всего текста
         }
         else
         {
-            yield return null;
+            yield return null; // Ожидание кадра
         }
 
-        isTyping = false;
-        OnTypingFinished();
+        isTyping = false; // Сброс флага печати
+        OnTypingFinished(); // Обработка завершения печати
     }
 
     private void OnTypingFinished()

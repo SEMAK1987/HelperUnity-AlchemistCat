@@ -15,23 +15,23 @@ public class Menu_Game : MonoBehaviour
 {
     public static Menu_Game Instance { get; private set; } // Статический синглтон главного меню игры
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона меню
     {
-        if (Instance == null)
+        if (Instance == null) // Если первый запуск
         {
             Instance = this; // Инициализация синглтона при первом запуске
         }
-        else if (Instance != this)
+        else if (Instance != this) // Если повторная сцена
         {
             Instance.TransferNewReferences(this); // Автоматический перенос ссылок на новый инстанс
             Destroy(gameObject); // Уничтожение лишнего объекта
-            return;
+            return; // Выход
         }
     }
 
-    private void OnDestroy()
+    private void OnDestroy() // Очистка синглтона при удалении
     {
-        if (Instance == this)
+        if (Instance == this) // Если текущий объект
         {
             Instance = null; // Очистка синглтона при уничтожении
         }
@@ -136,20 +136,20 @@ public class Menu_Game : MonoBehaviour
     private float titleStartY = 0f; // Начальная высота Y заголовка
     private bool cycleDirectionUp = true; // Направление перехода цикла дня/ночи
 
-    private void Start()
+    private void Start() // Инициализация параметров меню и запуск темы
     {
         // Поддержка совместимости со старыми сценами
-        if (!autoCycleBackgrounds && cycleType == DayNightCycleType.AutomaticPingPong)
+        if (!autoCycleBackgrounds && cycleType == DayNightCycleType.AutomaticPingPong) // Проверка устаревшего флага
         {
             cycleType = DayNightCycleType.Manual; // Переключение в ручной режим
         }
 
-        if (backgroundLayer != null)
+        if (backgroundLayer != null) // Если слой фона задан
         {
             bgStartPos = backgroundLayer.anchoredPosition; // Запоминаем исходную позицию фона
         }
 
-        if (gameTitleText != null)
+        if (gameTitleText != null) // Если заголовок задан
         {
             titleStartY = gameTitleText.anchoredPosition.y; // Запоминаем исходную высоту заголовка
         }
@@ -159,16 +159,16 @@ public class Menu_Game : MonoBehaviour
         ShowPanel(mainMenuPanel); // Открытие главного экрана меню
 
         // Автоматически запускаем музыку меню через SettingsManager
-        if (SettingsManager.Instance != null)
+        if (SettingsManager.Instance != null) // Проверка менеджера настроек
         {
             SettingsManager.Instance.PlayThemeForActiveScene(); // Запуск фоновой музыки для меню
         }
     }
 
-    private void Update()
+    private void Update() // Анимация заголовка, параллакс и смена дня/ночи
     {
         // 1. Анимация парения заголовка (Легкое дыхание)
-        if (gameTitleText != null)
+        if (gameTitleText != null) // Если заголовок существует
         {
             titleTimer += Time.deltaTime * titleAnimSpeed; // Инкремент таймера парения
             float offset = Mathf.Sin(titleTimer) * 12f; // Синусоидальное смещение по высоте
@@ -176,67 +176,67 @@ public class Menu_Game : MonoBehaviour
         }
 
         // 2. Интерактивный Параллакс фона за счет наклона мыши
-        if (backgroundLayer != null)
+        if (backgroundLayer != null) // Если слой фона существует
         {
-            Vector2 mousePos = Vector2.zero;
-            bool gotMouse = false;
+            Vector2 mousePos = Vector2.zero; // Позиция мыши
+            bool gotMouse = false; // Флаг считывания
 #if ENABLE_INPUT_SYSTEM || UNITY_INPUT_SYSTEM
             try
             {
-                if (Mouse.current != null)
+                if (Mouse.current != null) // Если New Input System активен
                 {
-                    mousePos = Mouse.current.position.ReadValue();
-                    gotMouse = true;
+                    mousePos = Mouse.current.position.ReadValue(); // Чтение координат
+                    gotMouse = true; // Успех
                 }
             }
             catch {}
 #endif
-            if (!gotMouse)
+            if (!gotMouse) // Резервный Input Manager
             {
                 try
                 {
-                    mousePos = Input.mousePosition;
+                    mousePos = Input.mousePosition; // Получение координат мыши
                 }
                 catch (System.InvalidOperationException)
                 {
                     // Игнорируем ошибку, если Input Manager полностью отключен в Player Settings
-                    mousePos = new Vector2(Screen.width / 2f, Screen.height / 2f);
+                    mousePos = new Vector2(Screen.width / 2f, Screen.height / 2f); // Центр экрана по умолчанию
                 }
             }
 
-            float normX = (mousePos.x / Screen.width) - 0.5f;
-            float normY = (mousePos.y / Screen.height) - 0.5f;
+            float normX = (mousePos.x / Screen.width) - 0.5f; // Нормализация координаты X (-0.5..0.5)
+            float normY = (mousePos.y / Screen.height) - 0.5f; // Нормализация координаты Y (-0.5..0.5)
 
-            Vector2 targetPos = bgStartPos + new Vector2(normX * parallaxStrength, normY * parallaxStrength);
-            backgroundLayer.anchoredPosition = Vector2.Lerp(backgroundLayer.anchoredPosition, targetPos, Time.deltaTime * 5f);
+            Vector2 targetPos = bgStartPos + new Vector2(normX * parallaxStrength, normY * parallaxStrength); // Целевое смещение параллакса
+            backgroundLayer.anchoredPosition = Vector2.Lerp(backgroundLayer.anchoredPosition, targetPos, Time.deltaTime * 5f); // Плавная интерполяция
         }
 
         // 3. Плавный цикл смены дня и ночи в зависимости от выбранного режима
-        if (cycleType == DayNightCycleType.AutomaticPingPong)
+        if (cycleType == DayNightCycleType.AutomaticPingPong) // Автоматический цикл
         {
-            if (cycleDirectionUp)
+            if (cycleDirectionUp) // Фаза наступления ночи
             {
-                dayNightBlendFactor += Time.deltaTime * dayNightCycleSpeed;
-                if (dayNightBlendFactor >= 1f)
+                dayNightBlendFactor += Time.deltaTime * dayNightCycleSpeed; // Нарастание ночи
+                if (dayNightBlendFactor >= 1f) // Достижение максимума
                 {
-                    dayNightBlendFactor = 1f;
-                    cycleDirectionUp = false;
+                    dayNightBlendFactor = 1f; // Ограничение
+                    cycleDirectionUp = false; // Смена направления на день
                 }
             }
-            else
+            else // Фаза наступления дня
             {
-                dayNightBlendFactor -= Time.deltaTime * dayNightCycleSpeed;
-                if (dayNightBlendFactor <= 0f)
+                dayNightBlendFactor -= Time.deltaTime * dayNightCycleSpeed; // Нарастание дня
+                if (dayNightBlendFactor <= 0f) // Достижение минимума
                 {
-                    dayNightBlendFactor = 0f;
-                    cycleDirectionUp = true;
+                    dayNightBlendFactor = 0f; // Ограничение
+                    cycleDirectionUp = true; // Смена направления на ночь
                 }
             }
         }
-        else if (cycleType == DayNightCycleType.RealTimeClock)
+        else if (cycleType == DayNightCycleType.RealTimeClock) // Реальное время ПК
         {
             // Получаем часы и минуты реального компьютера
-            System.DateTime now = System.DateTime.Now;
+            System.DateTime now = System.DateTime.Now; // Текущее время системы
             float hour = (float)now.Hour + (float)now.Minute / 60f; // Отрезок от 0 до 24
             
             // Формула плавной гармонической волны:
@@ -244,34 +244,34 @@ public class Menu_Game : MonoBehaviour
             // В 00:00 -> cos(0)  = 1.0  -> dayNightBlendFactor = 1.0 (Чистая ночь)
             // В 06:00 -> cos(PI/2) = 0.0 -> dayNightBlendFactor = 0.5 (Рассвет / Сумерки)
             // В 18:00 -> cos(3PI/2)= 0.0 -> dayNightBlendFactor = 0.5 (Закат / Полумрак)
-            float angle = (hour / 24f) * 2f * Mathf.PI;
-            dayNightBlendFactor = (Mathf.Cos(angle) + 1f) / 2f;
+            float angle = (hour / 24f) * 2f * Mathf.PI; // Угол в радианах
+            dayNightBlendFactor = (Mathf.Cos(angle) + 1f) / 2f; // Коэффициент дня/ночи
         }
         // Если выбран режим DayNightCycleType.Manual, мы ничего не делаем автоматически.
         // Значение dayNightBlendFactor полностью контролируется вручную в инспекторе или из других скриптов.
 
-        UpdateBackgroundBlending();
+        UpdateBackgroundBlending(); // Обновление альфы слоев фона
     }
 
     /// <summary>
     /// Обновляет прозрачность дневного и ночного слоев на основе dayNightBlendFactor (0 = чистый день, 1 = чистая ночь)
     /// </summary>
-    public void UpdateBackgroundBlending()
+    public void UpdateBackgroundBlending() // Смешивание прозрачности дневного и ночного фона
     {
-        if (dayBackgroundImage != null)
+        if (dayBackgroundImage != null) // Если дневной фон задан
         {
-            Color c = dayBackgroundImage.color;
+            Color c = dayBackgroundImage.color; // Текущий цвет
             // Дневной фон плавно затухает от 1 до 0
-            c.a = 1f - dayNightBlendFactor;
-            dayBackgroundImage.color = c;
+            c.a = 1f - dayNightBlendFactor; // Расчет альфы дня
+            dayBackgroundImage.color = c; // Применение цвета
         }
 
-        if (nightBackgroundImage != null)
+        if (nightBackgroundImage != null) // Если ночной фон задан
         {
-            Color c = nightBackgroundImage.color;
+            Color c = nightBackgroundImage.color; // Текущий цвет
             // Ночной фон плавно проявляется от 0 до 1
-            c.a = dayNightBlendFactor;
-            nightBackgroundImage.color = c;
+            c.a = dayNightBlendFactor; // Расчет альфы ночи
+            nightBackgroundImage.color = c; // Применение цвета
         }
     }
 
