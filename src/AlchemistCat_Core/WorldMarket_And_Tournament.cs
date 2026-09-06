@@ -38,16 +38,16 @@ public class WorldMarket_And_Tournament : MonoBehaviour
     }
 
     // Выставление лота на рынок с комиссией 1%
-    public bool ListMarketItem(string itemName, int priceGold, int playerRankLevel, int itemRequiredRank)
+    public bool ListMarketItem(string itemName, int priceGold, int playerRankLevel, int itemRequiredRank) // Публичный метод размещения товара на бирже
     {
-        if (playerRankLevel < itemRequiredRank)
+        if (playerRankLevel < itemRequiredRank) // Проверка соответствия ранга алхимика требованиям предмета
         {
-            Debug.LogWarning("Ваш ранг мастерства слишком мал для продажи этого предмета!");
-            return false;
+            Debug.LogWarning("Ваш ранг мастерства слишком мал для продажи этого предмета!"); // Предупреждение о недостатке ранга
+            return false; // Отказ в выставлении лота
         }
 
-        int commission = Mathf.Max(1, (int)(priceGold * 0.01f));
-        Debug.Log($"Предмет {itemName} выставлен на Мировой Рынок за {priceGold}G. Комиссия: {commission}G.");
-        return true;
+        int commission = Mathf.Max(1, (int)(priceGold * 0.01f)); // Расчет 1% комиссии гильдии торговцев (минимум 1G)
+        Debug.Log($"Предмет {itemName} выставлен на Мировой Рынок за {priceGold}G. Комиссия: {commission}G."); // Логирование успешного размещения
+        return true; // Успешное размещение лота на рынке
     }
 }

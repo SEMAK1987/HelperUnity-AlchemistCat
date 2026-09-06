@@ -100,132 +100,132 @@ public class DailyRewardSystem : MonoBehaviour
             Debug.Log("[DailyRewardSystem] Мягкое уведомление: Массив слотов дней 'Calendar Day Slots' пуст.");
     }
 
-    private void CheckDailyStatus()
+    private void CheckDailyStatus() // Проверка текущего статуса ежедневной награды
     {
-        TimeSpan difference = DateTime.Now - lastClaimTime;
-        bool isRewardReady = false;
+        TimeSpan difference = DateTime.Now - lastClaimTime; // Разница во времени с последнего захода
+        bool isRewardReady = false; // Флаг готовности награды
 
-        if (difference.TotalHours >= 24 && difference.TotalHours < 48)
+        if (difference.TotalHours >= 24 && difference.TotalHours < 48) // Если прошло от 24 до 48 часов
         {
-            isRewardReady = true;
-            if (claimButton != null) claimButton.interactable = true;
-            if (timerText != null) timerText.text = "Новая награда готова!";
+            isRewardReady = true; // Награда готова к получению
+            if (claimButton != null) claimButton.interactable = true; // Активация кнопки сбора
+            if (timerText != null) timerText.text = "Новая награда готова!"; // Текст готовности
         }
-        else if (difference.TotalHours >= 48)
+        else if (difference.TotalHours >= 48) // Если пропущено более 48 часов
         {
             // Сброс серии за пропуск дня
-            currentStreak = 0;
-            isRewardReady = true;
-            if (claimButton != null) claimButton.interactable = true;
-            if (timerText != null) timerText.text = "Серия сброшена! Заберите День 1.";
+            currentStreak = 0; // Сброс серии заходов
+            isRewardReady = true; // Награда 1-го дня готова
+            if (claimButton != null) claimButton.interactable = true; // Активация кнопки
+            if (timerText != null) timerText.text = "Серия сброшена! Заберите День 1."; // Уведомление о сбросе
         }
-        else
+        else // Если 24 часа еще не прошло
         {
-            isRewardReady = false;
-            if (claimButton != null) claimButton.interactable = false;
-            TimeSpan timeToWait = TimeSpan.FromHours(24) - difference;
-            if (timerText != null)
+            isRewardReady = false; // Награда пока не готова
+            if (claimButton != null) claimButton.interactable = false; // Блокировка кнопки
+            TimeSpan timeToWait = TimeSpan.FromHours(24) - difference; // Вычисление оставшегося времени
+            if (timerText != null) // Обновление текста таймера
             {
                 timerText.text = string.Format("До награды: {0:D2}:{1:D2}:{2:D2}", 
-                    timeToWait.Hours, timeToWait.Minutes, timeToWait.Seconds);
+                    timeToWait.Hours, timeToWait.Minutes, timeToWait.Seconds); // Форматирование чч:мм:сс
             }
         }
 
-        UpdateCalendarVisuals(isRewardReady);
+        UpdateCalendarVisuals(isRewardReady); // Обновление подсветки слотов календаря
     }
 
-    public void ClaimReward()
+    public void ClaimReward() // Метод сбора ежедневной награды игроком
     {
         currentStreak = (currentStreak % 7) + 1; // Цикл 7 дней
-        lastClaimTime = DateTime.Now;
+        lastClaimTime = DateTime.Now; // Фиксация точного времени получения
 
         // Начисление наград
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Проверка доступности менеджера игры
         {
             // Начисление золота и кристаллов
-            switch (currentStreak)
+            switch (currentStreak) // Награда в зависимости от дня серии
             {
-                case 1: GameManager.Instance.AddGold(100); break;
-                case 2: GameManager.Instance.AddGold(250); break;
-                case 3: GameManager.Instance.AddCrystals(1); break;
-                case 4: GameManager.Instance.AddGold(500); break;
+                case 1: GameManager.Instance.AddGold(100); break; // День 1: +100 золота
+                case 2: GameManager.Instance.AddGold(250); break; // День 2: +250 золота
+                case 3: GameManager.Instance.AddCrystals(1); break; // День 3: +1 кристалл
+                case 4: GameManager.Instance.AddGold(500); break; // День 4: +500 золота
                 case 5: 
-                    GameManager.Instance.AddVipXP(10);
-                    if (MinigamesManager.Instance != null)
-                        MinigamesManager.Instance.UnlockDarts();
-                    if (statusText != null) statusText.text = "Вам открыт ДАРТС!";
+                    GameManager.Instance.AddVipXP(10); // День 5: +10 VIP опыта
+                    if (MinigamesManager.Instance != null) // Проверка менеджера игр
+                        MinigamesManager.Instance.UnlockDarts(); // Разблокировка миниигры в дартс
+                    if (statusText != null) statusText.text = "Вам открыт ДАРТС!"; // Сообщение в UI
                     break;
-                case 6: GameManager.Instance.AddGold(1000); break;
+                case 6: GameManager.Instance.AddGold(1000); break; // День 6: +1000 золота
                 case 7: 
-                    GameManager.Instance.AddCrystals(10);
-                    if (statusText != null) statusText.text = "Вы получили Золотой Сундук!";
+                    GameManager.Instance.AddCrystals(10); // День 7: +10 кристаллов
+                    if (statusText != null) statusText.text = "Вы получили Золотой Сундук!"; // Сообщение супер-награды
                     break;
             }
 
             // Дополнительная проверка на активность дней
-            GameManager.Instance.daysActive++;
-            if (GameManager.Instance.daysActive % 10 == 0)
+            GameManager.Instance.daysActive++; // Увеличение общего числа активных дней
+            if (GameManager.Instance.daysActive % 10 == 0) // Каждые 10 дней игры
             {
-                if (MinigamesManager.Instance != null)
-                    MinigamesManager.Instance.UnlockMouseCatch();
-                if (statusText != null) statusText.text = "Открыта игра: ЛОВЛЯ МЫШЕЙ!";
+                if (MinigamesManager.Instance != null) // Проверка менеджера игр
+                    MinigamesManager.Instance.UnlockMouseCatch(); // Разблокировка ловли мышей
+                if (statusText != null) statusText.text = "Открыта игра: ЛОВЛЯ МЫШЕЙ!"; // Уведомление игрока
             }
         }
         else
         {
             // Запасная заглушка, если GameManager отсутствует (для тестов вне основной сцены)
-            Debug.LogWarning($"[DailyRewardSystem] GameManager.Instance не найден. Имитация начисления за день {currentStreak}.");
-            if (statusText != null) statusText.text = $"Забрана награда дня {currentStreak} (Тестовый режим)";
+            Debug.LogWarning($"[DailyRewardSystem] GameManager.Instance не найден. Имитация начисления за день {currentStreak}."); // Лог
+            if (statusText != null) statusText.text = $"Забрана награда дня {currentStreak} (Тестовый режим)"; // UI статус
         }
 
-        SaveDailyData();
+        SaveDailyData(); // Сохранение обновленной серии и времени
     }
 
-    private void UpdateCalendarVisuals(bool isRewardReady)
+    private void UpdateCalendarVisuals(bool isRewardReady) // Отрисовка цветовых статусов ячеек календаря
     {
-        if (calendarDaySlots == null) return;
+        if (calendarDaySlots == null) return; // Пропуск если слоты не назначены
 
-        for (int i = 0; i < calendarDaySlots.Length; i++)
+        for (int i = 0; i < calendarDaySlots.Length; i++) // Проход по всем 7 дням
         {
-            if (calendarDaySlots[i] == null) continue;
+            if (calendarDaySlots[i] == null) continue; // Защита от пустых ссылок
             
-            Image slotImage = calendarDaySlots[i].GetComponent<Image>();
-            if (slotImage == null) continue;
+            Image slotImage = calendarDaySlots[i].GetComponent<Image>(); // Получение Image компонента
+            if (slotImage == null) continue; // Пропуск при отсутствии
 
-            if (i < currentStreak)
+            if (i < currentStreak) // Уже пройденные дни
             {
                 slotImage.color = Color.green; // Зеленый - получено
             }
-            else if (i == currentStreak && isRewardReady)
+            else if (i == currentStreak && isRewardReady) // Текущий готовый день
             {
                 slotImage.color = Color.yellow; // Желтый - готово к получению
             }
-            else
+            else // Будущие дни
             {
                 slotImage.color = Color.gray; // Серый - закрыто
             }
         }
     }
 
-    private void LoadDailyData()
+    private void LoadDailyData() // Чтение сохраненных данных ежедневного входа
     {
-        currentStreak = PlayerPrefs.GetInt("DailyStreak", 0);
-        string lastClaimStr = PlayerPrefs.GetString("LastDailyClaim", "");
-        if (!string.IsNullOrEmpty(lastClaimStr))
+        currentStreak = PlayerPrefs.GetInt("DailyStreak", 0); // Загрузка номера дня серии
+        string lastClaimStr = PlayerPrefs.GetString("LastDailyClaim", ""); // Загрузка строки времени
+        if (!string.IsNullOrEmpty(lastClaimStr)) // Если дата сохранена
         {
-            lastClaimTime = DateTime.Parse(lastClaimStr);
+            lastClaimTime = DateTime.Parse(lastClaimStr); // Парсинг даты последнего сбора
         }
         else
         {
             // По умолчанию даем забрать сразу
-            lastClaimTime = DateTime.Now.AddDays(-2);
+            lastClaimTime = DateTime.Now.AddDays(-2); // Инициализация 2 дня назад для мгновенной доступности
         }
     }
 
-    private void SaveDailyData()
+    private void SaveDailyData() // Запись прогресса ежедневного входа
     {
-        PlayerPrefs.SetInt("DailyStreak", currentStreak);
-        PlayerPrefs.SetString("LastDailyClaim", lastClaimTime.ToString());
-        PlayerPrefs.Save();
+        PlayerPrefs.SetInt("DailyStreak", currentStreak); // Сохранение дня серии
+        PlayerPrefs.SetString("LastDailyClaim", lastClaimTime.ToString()); // Сохранение времени сбора
+        PlayerPrefs.Save(); // Запись на постоянный диск
     }
 }

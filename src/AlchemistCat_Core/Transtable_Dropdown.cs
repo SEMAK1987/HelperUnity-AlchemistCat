@@ -36,143 +36,143 @@ public class Transtable_Dropdown : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    private void OnEnable() // Событие включения объекта
     {
-        Translator.AddDropdown(this);
-        UpdateDropdown();
+        Translator.AddDropdown(this); // Добавление выпадающего списка в реестр локализации
+        UpdateDropdown(); // Немедленный пересчет текста вариантов
     }
 
-    private void OnDisable()
+    private void OnDisable() // Событие отключения объекта
     {
-        Translator.DeleteDropdown(this);
+        Translator.DeleteDropdown(this); // Удаление списка из реестра переводчика
     }
 
-    public void UpdateDropdown()
+    public void UpdateDropdown() // Метод обновления переводов элементов списка
     {
-        if (isLocalUpdating) return;
-        isLocalUpdating = true;
+        if (isLocalUpdating) return; // Защита от рекурсивного вызова
+        isLocalUpdating = true; // Установка флага обновления
 
         try
         {
-            if (dropdown == null) dropdown = GetComponent<TMP_Dropdown>();
-            if (dropdown == null || Translator.Instance == null) return;
+            if (dropdown == null) dropdown = GetComponent<TMP_Dropdown>(); // Кэширование компонента Dropdown
+            if (dropdown == null || Translator.Instance == null) return; // Проверка готовности синглтонов
 
-            bool oldIsUpdating = false;
+            bool oldIsUpdating = false; // Сохранение предыдущего состояния настроек
             if (SettingsManager.Instance != null)
             {
-                oldIsUpdating = SettingsManager.Instance.isUpdatingSettings;
-                SettingsManager.Instance.isUpdatingSettings = true;
+                oldIsUpdating = SettingsManager.Instance.isUpdatingSettings; // Запоминаем флаг обновления настроек
+                SettingsManager.Instance.isUpdatingSettings = true; // Временно блокируем триггеры событий
             }
 
             try
             {
                 // Сохраняем оригинальные шрифты при первом обновлении, если Awake еще не отработал
-                if (originalCaptionFont == null && dropdown.captionText != null) originalCaptionFont = dropdown.captionText.font;
-                if (originalItemFont == null && dropdown.itemText != null) originalItemFont = dropdown.itemText.font;
+                if (originalCaptionFont == null && dropdown.captionText != null) originalCaptionFont = dropdown.captionText.font; // Сохранение шрифта подписи
+                if (originalItemFont == null && dropdown.itemText != null) originalItemFont = dropdown.itemText.font; // Сохранение шрифта элементов
 
-                int lang = Translator.LanguageID;
-                TMP_FontAsset font = Translator.Instance.defaultFont;
-                TMP_FontAsset itemFont = Translator.Instance.defaultFont;
+                int lang = Translator.LanguageID; // Текущий ID языка
+                TMP_FontAsset font = Translator.Instance.defaultFont; // Шрифт для заголовка
+                TMP_FontAsset itemFont = Translator.Instance.defaultFont; // Шрифт для выпадающих пунктов
 
                 // Для сохранения оригинальных шрифтов, если это русский или английский и оригинальные шрифты заданы.
                 // Для турецкого (2), корейского (7), китайского (8/6) принудительно используем шрифты с полной поддержкой символов.
-                if (lang == 0 || lang == 1)
+                if (lang == 0 || lang == 1) // Русский или Английский
                 {
-                    if (originalCaptionFont != null) font = originalCaptionFont;
-                    if (originalItemFont != null) itemFont = originalItemFont;
+                    if (originalCaptionFont != null) font = originalCaptionFont; // Использование исходного шрифта
+                    if (originalItemFont != null) itemFont = originalItemFont; // Исходный шрифт элементов
                 }
-                else if (lang == 7) 
+                else if (lang == 7) // Корейский язык
                 {
-                    font = Translator.Instance.koreanFont;
-                    itemFont = Translator.Instance.koreanFont;
+                    font = Translator.Instance.koreanFont; // Корейский шрифт
+                    itemFont = Translator.Instance.koreanFont; // Корейский шрифт элементов
                 }
-                else if (lang == 8 || lang == 6) 
+                else if (lang == 8 || lang == 6) // Китайский язык
                 {
-                    font = Translator.Instance.chineseFont;
-                    itemFont = Translator.Instance.chineseFont;
+                    font = Translator.Instance.chineseFont; // Китайский шрифт
+                    itemFont = Translator.Instance.chineseFont; // Китайский шрифт элементов
                 }
-                float charSpacing = 0f;
+                float charSpacing = 0f; // Межбуквенный интервал
                 charSpacing = 0f; // Сбрасываем межбуквенный интервал, чтобы русский и турецкий помещались идеально
 
                 // Если включена опция boldForRussian и активный язык русский, делаем текст жирным (Bold)
-                FontStyles style = (boldForRussian && lang == 0) ? FontStyles.Bold : FontStyles.Normal;
+                FontStyles style = (boldForRussian && lang == 0) ? FontStyles.Bold : FontStyles.Normal; // Выбор начертания
 
-                if (dropdown.captionText != null)
+                if (dropdown.captionText != null) // Настройка главного текста текущего выбора
                 {
-                    dropdown.captionText.font = font;
-                    dropdown.captionText.characterSpacing = charSpacing;
-                    dropdown.captionText.wordSpacing = 0;
-                    dropdown.captionText.alignment = TextAlignmentOptions.Center;
-                    dropdown.captionText.fontStyle = style;
-                    dropdown.captionText.textWrappingMode = TextWrappingModes.NoWrap;
-                    dropdown.captionText.overflowMode = TextOverflowModes.Overflow;
+                    dropdown.captionText.font = font; // Назначение шрифта
+                    dropdown.captionText.characterSpacing = charSpacing; // Межбуквенный интервал
+                    dropdown.captionText.wordSpacing = 0; // Межсловный интервал
+                    dropdown.captionText.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
+                    dropdown.captionText.fontStyle = style; // Стиль начертания
+                    dropdown.captionText.textWrappingMode = TextWrappingModes.NoWrap; // Отключение переноса строк
+                    dropdown.captionText.overflowMode = TextOverflowModes.Overflow; // Режим переполнения
                 }
 
-                if (dropdown.itemText != null)
+                if (dropdown.itemText != null) // Настройка текста элементов в выпадающем окне
                 {
-                    dropdown.itemText.font = itemFont;
-                    dropdown.itemText.characterSpacing = charSpacing;
-                    dropdown.itemText.wordSpacing = 0;
-                    dropdown.itemText.alignment = TextAlignmentOptions.Center;
-                    dropdown.itemText.fontStyle = style;
-                    dropdown.itemText.textWrappingMode = TextWrappingModes.NoWrap;
-                    dropdown.itemText.overflowMode = TextOverflowModes.Overflow;
+                    dropdown.itemText.font = itemFont; // Назначение шрифта элементов
+                    dropdown.itemText.characterSpacing = charSpacing; // Межбуквенный интервал
+                    dropdown.itemText.wordSpacing = 0; // Межсловный интервал
+                    dropdown.itemText.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
+                    dropdown.itemText.fontStyle = style; // Стиль начертания
+                    dropdown.itemText.textWrappingMode = TextWrappingModes.NoWrap; // Без переносов
+                    dropdown.itemText.overflowMode = TextOverflowModes.Overflow; // Без обрезки
                 }
 
                 // Применяем перевод по ID или используем автоопределение
-                if (gameObject.name.ToLower().Contains("lang") || gameObject.name.ToLower().Contains("language"))
+                if (gameObject.name.ToLower().Contains("lang") || gameObject.name.ToLower().Contains("language")) // Если это выпадающий список выбора языка
                 {
-                    if (dropdown.options.Count != 3)
+                    if (dropdown.options.Count != 3) // Проверка количества языков
                     {
-                        dropdown.ClearOptions();
-                        dropdown.AddOptions(new List<string> { "Русский", "English", "Türkçe" });
+                        dropdown.ClearOptions(); // Очистка старых опций
+                        dropdown.AddOptions(new List<string> { "Русский", "English", "Türkçe" }); // Добавление 3 доступных языков
                     }
                     else
                     {
-                        dropdown.options[0].text = "Русский";
-                        dropdown.options[1].text = "English";
-                        dropdown.options[2].text = "Türkçe";
+                        dropdown.options[0].text = "Русский"; // Название опции 0
+                        dropdown.options[1].text = "English"; // Название опции 1
+                        dropdown.options[2].text = "Türkçe"; // Название опции 2
                     }
                 }
-                else if (translations.optionTextIDs != null && translations.optionTextIDs.Length > 0)
+                else if (translations.optionTextIDs != null && translations.optionTextIDs.Length > 0) // Если заданы явные ID переводов
                 {
-                    for (int i = 0; i < dropdown.options.Count; i++)
+                    for (int i = 0; i < dropdown.options.Count; i++) // Перебор опций
                     {
-                        if (i < translations.optionTextIDs.Length)
+                        if (i < translations.optionTextIDs.Length) // Проверка выхода за границы
                         {
-                            dropdown.options[i].text = Translator.GetText(translations.optionTextIDs[i]);
+                            dropdown.options[i].text = Translator.GetText(translations.optionTextIDs[i]); // Получение локализованного текста
                         }
                     }
                 }
                 else
                 {
                     // AUTO-DETECT Logic for other types
-                    string lowerName = gameObject.name.ToLower();
+                    string lowerName = gameObject.name.ToLower(); // Имя объекта в нижнем регистре
                     
-                    if (dropdown.options.Count == 6) // Quality List (ID 37-42)
+                    if (dropdown.options.Count == 6) // Список качества графики (ID 37-42)
                     {
-                        for (int i = 0; i < 6; i++) dropdown.options[i].text = Translator.GetText(37 + i);
+                        for (int i = 0; i < 6; i++) dropdown.options[i].text = Translator.GetText(37 + i); // Подстановка названий уровней качества
                     }
-                    else if (dropdown.options.Count == 2) // Full Screen (ID 44-45)
+                    else if (dropdown.options.Count == 2) // Полноэкранный режим (Да/Нет)
                     {
-                        dropdown.options[0].text = Translator.GetText(44); // Yes/Да
-                        dropdown.options[1].text = Translator.GetText(45); // No/Нет
+                        dropdown.options[0].text = Translator.GetText(44); // Текст "Да"
+                        dropdown.options[1].text = Translator.GetText(45); // Текст "Нет"
                     }
                 }
 
-                dropdown.RefreshShownValue();
+                dropdown.RefreshShownValue(); // Обновление отображения выбранного значения
             }
             finally
             {
                 if (SettingsManager.Instance != null)
                 {
-                    SettingsManager.Instance.isUpdatingSettings = oldIsUpdating;
+                    SettingsManager.Instance.isUpdatingSettings = oldIsUpdating; // Восстановление состояния настроек
                 }
             }
         }
         finally
         {
-            isLocalUpdating = false;
+            isLocalUpdating = false; // Снятие флага обновления
         }
     }
 }

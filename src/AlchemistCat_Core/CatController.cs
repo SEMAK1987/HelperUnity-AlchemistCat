@@ -33,13 +33,13 @@ public class CatController : MonoBehaviour
     public enum CatState { Idle, Happy, Sleeping, Brewing } // Перечисление состояний поведения кота
     private CatState currentState = CatState.Idle; // Текущее состояние кота
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона при создании объекта
     {
         if (Instance == null) Instance = this; // Инициализация синглтона
         else Destroy(gameObject); // Уничтожение дубликата при повторном создании
     }
 
-    private void Start()
+    private void Start() // Стартовая инициализация кота
     {
         if (catImage == null) catImage = GetComponent<Image>(); // Автопоиск Image если ссылка не назначена
         originalScale = transform.localScale; // Запоминаем исходный размер
@@ -51,24 +51,24 @@ public class CatController : MonoBehaviour
     /// <summary>
     /// Меняет состояние кота и обновляет его визуальный спрайт.
     /// </summary>
-    public void SetState(CatState newState)
+    public void SetState(CatState newState) // Смена состояния и спрайта кота
     {
-        currentState = newState;
-        if (catImage == null) return;
+        currentState = newState; // Запоминаем новое состояние
+        if (catImage == null) return; // Проверка наличия компонента Image
 
-        switch (currentState)
+        switch (currentState) // Переключение по состояниям
         {
-            case CatState.Idle:
-                catImage.sprite = idleSprite;
+            case CatState.Idle: // Состояние покоя
+                catImage.sprite = idleSprite; // Спрайт покоя
                 break;
-            case CatState.Happy:
-                catImage.sprite = happySprite;
+            case CatState.Happy: // Состояние радости
+                catImage.sprite = happySprite; // Спрайт радости
                 break;
-            case CatState.Sleeping:
-                catImage.sprite = sleepingSprite;
+            case CatState.Sleeping: // Состояние сна
+                catImage.sprite = sleepingSprite; // Спрайт сна
                 break;
-            case CatState.Brewing:
-                catImage.sprite = brewingSprite;
+            case CatState.Brewing: // Состояние варки
+                catImage.sprite = brewingSprite; // Спрайт варки
                 break;
         }
     }
@@ -76,88 +76,88 @@ public class CatController : MonoBehaviour
     /// <summary>
     /// Вызывается при клике/поглаживании кота в интерфейсе.
     /// </summary>
-    public void OnCatClicked()
+    public void OnCatClicked() // Обработка клика по коту
     {
-        if (currentState == CatState.Sleeping)
+        if (currentState == CatState.Sleeping) // Если кот спит
         {
-            WakeUp();
-            return;
+            WakeUp(); // Пробуждение кота
+            return; // Выход
         }
 
         // Запускаем анимацию покачивания
-        StopAllCoroutines();
-        StartCoroutine(BounceCatCoroutine());
+        StopAllCoroutines(); // Остановка текущих корутин
+        StartCoroutine(BounceCatCoroutine()); // Запуск анимации сжатия-растяжения
 
         // Добавляем немного опыта Коту
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Если GameManager доступен
         {
-            GameManager.Instance.AddXP(5);
+            GameManager.Instance.AddXP(5); // Начисление 5 опыта
         }
 
         // Проигрываем звук и показываем "Мяу!"
-        if (meowSound != null && SettingsManager.Instance != null)
+        if (meowSound != null && SettingsManager.Instance != null) // Если звук и настройки есть
         {
-            SettingsManager.Instance.PlaySoundEffect(meowSound);
+            SettingsManager.Instance.PlaySoundEffect(meowSound); // Воспроизведение мяуканья
         }
 
-        string[] catPhrases = {
-            "Муррр... Погладь еще!", "Мяу! Котел готов к варке!", "Дай мышку, хозяин!",
-            "Ура, алхимия!", "Мяу! Наставник спит!", "Фррр... Зелье пахнет вкусно!"
+        string[] catPhrases = { // Набор фраз кота
+            "Муррр... Погладь еще!", "Мяу! Котел готов к варке!", "Дай мышку, хозяин!", // Фразы 1-3
+            "Ура, алхимия!", "Мяу! Наставник спит!", "Фррр... Зелье пахнет вкусно!" // Фразы 4-6
         };
-        string phrase = catPhrases[Random.Range(0, catPhrases.Length)];
-        ShowMeowBubble(phrase);
+        string phrase = catPhrases[Random.Range(0, catPhrases.Length)]; // Выбор случайной фразы
+        ShowMeowBubble(phrase); // Отображение речевого облачка
     }
 
-    public void ShowMeowBubble(string text)
+    public void ShowMeowBubble(string text) // Отображение речевого облачка с фразой
     {
-        if (bubbleObject == null || meowBubbleText == null) return;
+        if (bubbleObject == null || meowBubbleText == null) return; // Проверка наличия UI компонентов
 
-        if (bubbleCoroutine != null) StopCoroutine(bubbleCoroutine);
-        bubbleCoroutine = StartCoroutine(ShowBubbleCoroutine(text));
+        if (bubbleCoroutine != null) StopCoroutine(bubbleCoroutine); // Остановка старого показа
+        bubbleCoroutine = StartCoroutine(ShowBubbleCoroutine(text)); // Запуск новой корутины показа
     }
 
-    private IEnumerator ShowBubbleCoroutine(string text)
+    private IEnumerator ShowBubbleCoroutine(string text) // Корутина отображения облачка на 3 секунды
     {
-        bubbleObject.SetActive(true);
-        meowBubbleText.text = text;
-        yield return new WaitForSeconds(3f);
-        bubbleObject.SetActive(false);
+        bubbleObject.SetActive(true); // Включение облачка
+        meowBubbleText.text = text; // Установка текста
+        yield return new WaitForSeconds(3f); // Пауза 3 секунды
+        bubbleObject.SetActive(false); // Скрытие облачка
     }
 
-    private IEnumerator BounceCatCoroutine()
+    private IEnumerator BounceCatCoroutine() // Корутина пружинящей анимации кота при клике
     {
-        float duration = 0.15f;
-        float elapsed = 0f;
+        float duration = 0.15f; // Длительность полуфазы
+        float elapsed = 0f; // Таймер анимации
 
         // Быстрое сжатие
-        while (elapsed < duration)
+        while (elapsed < duration) // Цикл сжатия
         {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            transform.localScale = Vector3.Lerp(originalScale, new Vector3(originalScale.x * 1.15f, originalScale.y * 0.85f, originalScale.z), t);
-            yield return null;
+            elapsed += Time.deltaTime; // Прирост времени
+            float t = elapsed / duration; // Нормализация от 0 до 1
+            transform.localScale = Vector3.Lerp(originalScale, new Vector3(originalScale.x * 1.15f, originalScale.y * 0.85f, originalScale.z), t); // Сплющивание
+            yield return null; // Ожидание следующего кадра
         }
 
-        elapsed = 0f;
+        elapsed = 0f; // Сброс таймера
         // Возврат
-        while (elapsed < duration)
+        while (elapsed < duration) // Цикл возврата в норму
         {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            transform.localScale = Vector3.Lerp(new Vector3(originalScale.x * 1.15f, originalScale.y * 0.85f, originalScale.z), originalScale, t);
-            yield return null;
+            elapsed += Time.deltaTime; // Прирост времени
+            float t = elapsed / duration; // Нормализация
+            transform.localScale = Vector3.Lerp(new Vector3(originalScale.x * 1.15f, originalScale.y * 0.85f, originalScale.z), originalScale, t); // Восстановление
+            yield return null; // Ожидание следующего кадра
         }
 
-        transform.localScale = originalScale;
+        transform.localScale = originalScale; // Фиксация исходного масштаба
     }
 
-    public void WakeUp()
+    public void WakeUp() // Пробуждение спящего кота
     {
-        SetState(CatState.Idle);
-        ShowMeowBubble("Мяу! Я проснулся!");
-        if (meowSound != null && SettingsManager.Instance != null)
+        SetState(CatState.Idle); // Переход в спокойное состояние
+        ShowMeowBubble("Мяу! Я проснулся!"); // Фраза пробуждения
+        if (meowSound != null && SettingsManager.Instance != null) // Если звук назначен
         {
-            SettingsManager.Instance.PlaySoundEffect(meowSound);
+            SettingsManager.Instance.PlaySoundEffect(meowSound); // Воспроизведение звука
         }
     }
 }

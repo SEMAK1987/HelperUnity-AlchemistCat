@@ -110,12 +110,12 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         public Color rarityColor; // Цвет рамки редкости
     }
 
-    private void Awake()
+    private void Awake() // Инициализация при создании объекта
     {
         Instance = this; // Инициализация синглтона
     }
 
-    private void Start()
+    private void Start() // Стартовая инициализация подписчиков и панелей
     {
         if (easyButton) easyButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Easy)); // Выбор легкого уровня
         if (mediumButton) mediumButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Medium)); // Выбор среднего уровня
@@ -129,252 +129,252 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         ShowDifficultySelection(); // Открываем меню выбора сложности на старте
     }
 
-    public void ShowDifficultySelection()
+    public void ShowDifficultySelection() // Показ экрана выбора уровня сложности
     {
-        if (difficultySelectPanel) difficultySelectPanel.SetActive(true);
-        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false);
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false);
+        if (difficultySelectPanel) difficultySelectPanel.SetActive(true); // Включение панели сложности
+        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Выключение игровой панели
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Выключение итогового окна
     }
 
-    public void StartFishingSession(FishingDifficulty difficulty)
+    public void StartFishingSession(FishingDifficulty difficulty) // Старт сессии рыбалки из 10 попыток
     {
-        currentDifficulty = difficulty;
-        currentAttempt = 1;
-        caughtSessionLoot.Clear();
-        totalSessionXpGained = 0;
+        currentDifficulty = difficulty; // Запоминаем выбранную сложность
+        currentAttempt = 1; // Сброс номера попытки на 1
+        caughtSessionLoot.Clear(); // Очистка накопленного улова
+        totalSessionXpGained = 0; // Сброс опыта сессии
 
-        if (difficultySelectPanel) difficultySelectPanel.SetActive(false);
-        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(true);
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false);
+        if (difficultySelectPanel) difficultySelectPanel.SetActive(false); // Прячем выбор сложности
+        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(true); // Открываем экран рыбалки
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Прячем результаты
 
         // Настройка делителей зон в зависимости от сложности
-        ConfigureDifficultySettings();
-        ResetAttemptToIdle();
+        ConfigureDifficultySettings(); // Конфигурация шкал под уровень
+        ResetAttemptToIdle(); // Сброс в режим ожидания заброса
     }
 
-    private void ConfigureDifficultySettings()
+    private void ConfigureDifficultySettings() // Конфигурация высоты зон и разделителей
     {
         // Зона 4: Легкий = 35% высоты, Средний = 22%, Сложный = 12%
-        float z4Height = currentDifficulty == FishingDifficulty.Easy ? 0.35f :
-                         currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f;
+        float z4Height = currentDifficulty == FishingDifficulty.Easy ? 0.35f : // 35% для легкого
+                         currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f; // 22% для среднего, 12% для сложного
 
-        if (delimiterZone4 && verticalBarBg)
+        if (delimiterZone4 && verticalBarBg) // Если разделитель и фон назначены
         {
-            float totalH = verticalBarBg.rect.height;
-            delimiterZone4.anchoredPosition = new Vector2(0, totalH * (1f - z4Height));
+            float totalH = verticalBarBg.rect.height; // Полная высота шкалы
+            delimiterZone4.anchoredPosition = new Vector2(0, totalH * (1f - z4Height)); // Позиционирование 4 зоны
         }
     }
 
-    private void ResetAttemptToIdle()
+    private void ResetAttemptToIdle() // Сброс состояния попытки в ожидание клика по удочке
     {
-        currentPhase = GamePhase.Idle;
-        if (attemptsCounterText) attemptsCounterText.text = $"Попытка: {currentAttempt} / {MAX_ATTEMPTS}";
-        if (totalSessionXpText) totalSessionXpText.text = $"+{totalSessionXpGained} XP";
+        currentPhase = GamePhase.Idle; // Установка состояния ожидания
+        if (attemptsCounterText) attemptsCounterText.text = $"Попытка: {currentAttempt} / {MAX_ATTEMPTS}"; // Текст счетчика попыток
+        if (totalSessionXpText) totalSessionXpText.text = $"+{totalSessionXpGained} XP"; // Текст набранного опыта
 
-        if (verticalBarContainer) verticalBarContainer.SetActive(false);
-        if (horizontalBarContainer) horizontalBarContainer.SetActive(false);
-        if (bobberTransform) bobberTransform.gameObject.SetActive(false);
+        if (verticalBarContainer) verticalBarContainer.SetActive(false); // Прячем вертикальную шкалу
+        if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Прячем горизонтальную шкалу
+        if (bobberTransform) bobberTransform.gameObject.SetActive(false); // Прячем поплавок
 
         // Разблокировка удочки
-        if (fishRodButton) fishRodButton.interactable = true;
-        if (fishRodImage) fishRodImage.color = Color.white;
-        if (actionButtonText) actionButtonText.text = "ЗАБРОСИТЬ УДОЧКУ!";
+        if (fishRodButton) fishRodButton.interactable = true; // Разблокировка кликабельности удочки
+        if (fishRodImage) fishRodImage.color = Color.white; // Яркий белый цвет удочки
+        if (actionButtonText) actionButtonText.text = "ЗАБРОСИТЬ УДОЧКУ!"; // Текст кнопки действия
     }
 
-    public void OnRodOrActionButtonClicked()
+    public void OnRodOrActionButtonClicked() // Обработка клика по удочке или кнопке действия
     {
-        switch (currentPhase)
+        switch (currentPhase) // Переключение по фазам
         {
-            case GamePhase.Idle:
+            case GamePhase.Idle: // Фаза 1: запуск заброса
                 // 1. Клик по удочке: удочка блокируется, появляется вертикальная шкала 1
-                currentPhase = GamePhase.VerticalCasting;
-                if (fishRodButton) fishRodButton.interactable = false;
-                if (fishRodImage) fishRodImage.color = new Color(0.7f, 0.7f, 0.7f, 1f);
-                if (verticalBarContainer) verticalBarContainer.SetActive(true);
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(false);
-                if (actionButtonText) actionButtonText.text = "ОСТАНОВИТЬ ДАЛЬНОСТЬ (КЛИК)!";
+                currentPhase = GamePhase.VerticalCasting; // Переход в фазу вертикальной шкалы
+                if (fishRodButton) fishRodButton.interactable = false; // Блокировка удочки во время процесса
+                if (fishRodImage) fishRodImage.color = new Color(0.7f, 0.7f, 0.7f, 1f); // Затемнение удочки
+                if (verticalBarContainer) verticalBarContainer.SetActive(true); // Включение вертикальной шкалы
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Выключение горизонтальной
+                if (actionButtonText) actionButtonText.text = "ОСТАНОВИТЬ ДАЛЬНОСТЬ (КЛИК)!"; // Текст подсказки
                 break;
 
-            case GamePhase.VerticalCasting:
+            case GamePhase.VerticalCasting: // Фаза 2: остановка дальности и запуск поклевки
                 // 2. Остановка шкалы 1: фиксируем дальность, прячем шкалу 1, запускаем шкалу 2
-                lockedVertical = verticalValue;
-                currentPhase = GamePhase.HorizontalCatching;
-                if (verticalBarContainer) verticalBarContainer.SetActive(false);
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(true);
-                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ НА КРАЯХ (КЛИК)!";
+                lockedVertical = verticalValue; // Фиксация дальности заброса
+                currentPhase = GamePhase.HorizontalCatching; // Переход в фазу подсечки
+                if (verticalBarContainer) verticalBarContainer.SetActive(false); // Прячем вертикальную шкалу
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(true); // Показываем горизонтальную
+                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ НА КРАЯХ (КЛИК)!"; // Текст подсказки
 
                 // Анимация заброса удочки и полет поплавка
-                StartCoroutine(AnimateRodCast(lockedVertical));
+                StartCoroutine(AnimateRodCast(lockedVertical)); // Запуск анимации взмаха
                 break;
 
-            case GamePhase.HorizontalCatching:
+            case GamePhase.HorizontalCatching: // Фаза 3: подсечка и выуживание
                 // 3. Остановка шкалы 2: подсекаем поплавок когда лучи на краях
-                lockedHorizontal = horizontalSpread;
-                currentPhase = GamePhase.Splashing;
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(false);
-                if (actionButtonText) actionButtonText.text = "ТЯНЕМ УЛОВ... 🌊";
+                lockedHorizontal = horizontalSpread; // Фиксация горизонтального расхождения
+                currentPhase = GamePhase.Splashing; // Фаза анимации всплеска
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Прячем шкалу
+                if (actionButtonText) actionButtonText.text = "ТЯНЕМ УЛОВ... 🌊"; // Текст процесса вытягивания
 
-                StartCoroutine(ProcessCatchResult(lockedVertical, lockedHorizontal));
+                StartCoroutine(ProcessCatchResult(lockedVertical, lockedHorizontal)); // Расчет улова
                 break;
         }
     }
 
-    private void Update()
+    private void Update() // Покадровое обновление движения бегунков
     {
-        float speedMultiplier = currentDifficulty == FishingDifficulty.Easy ? 1.0f :
-                                currentDifficulty == FishingDifficulty.Medium ? 1.4f : 1.9f;
+        float speedMultiplier = currentDifficulty == FishingDifficulty.Easy ? 1.0f : // Множитель легкой скорости
+                                currentDifficulty == FishingDifficulty.Medium ? 1.4f : 1.9f; // Множитель средней и сложной скорости
 
-        if (currentPhase == GamePhase.VerticalCasting)
+        if (currentPhase == GamePhase.VerticalCasting) // Если активна вертикальная шкала
         {
             // Движение стрелки по вертикали 0..1
-            verticalValue += verticalDirection * baseVerticalSpeed * speedMultiplier * Time.deltaTime;
-            if (verticalValue >= 1f) { verticalValue = 1f; verticalDirection = -1; }
-            else if (verticalValue <= 0f) { verticalValue = 0f; verticalDirection = 1; }
+            verticalValue += verticalDirection * baseVerticalSpeed * speedMultiplier * Time.deltaTime; // Смещение стрелки
+            if (verticalValue >= 1f) { verticalValue = 1f; verticalDirection = -1; } // Отскок от верхнего края
+            else if (verticalValue <= 0f) { verticalValue = 0f; verticalDirection = 1; } // Отскок от нижнего края
 
-            if (verticalSliderArrow && verticalBarBg)
+            if (verticalSliderArrow && verticalBarBg) // Если стрелка и фон заданы
             {
-                float totalH = verticalBarBg.rect.height;
-                verticalSliderArrow.anchoredPosition = new Vector2(verticalSliderArrow.anchoredPosition.x, verticalValue * totalH);
+                float totalH = verticalBarBg.rect.height; // Полная высота шкалы
+                verticalSliderArrow.anchoredPosition = new Vector2(verticalSliderArrow.anchoredPosition.x, verticalValue * totalH); // Перемещение стрелки
             }
         }
-        else if (currentPhase == GamePhase.HorizontalCatching)
+        else if (currentPhase == GamePhase.HorizontalCatching) // Если активна горизонтальная шкала
         {
             // 2 луча расходятся от центра (0) к краям (1) и обратно
-            horizontalSpread += horizontalDirection * baseHorizontalSpeed * speedMultiplier * Time.deltaTime;
-            if (horizontalSpread >= 1f) { horizontalSpread = 1f; horizontalDirection = -1; }
-            else if (horizontalSpread <= 0f) { horizontalSpread = 0f; horizontalDirection = 1; }
+            horizontalSpread += horizontalDirection * baseHorizontalSpeed * speedMultiplier * Time.deltaTime; // Расхождение лучей
+            if (horizontalSpread >= 1f) { horizontalSpread = 1f; horizontalDirection = -1; } // Отскок от краев к центру
+            else if (horizontalSpread <= 0f) { horizontalSpread = 0f; horizontalDirection = 1; } // Отскок от центра к краям
 
-            if (horizontalBarBg)
+            if (horizontalBarBg) // Фон горизонтальной шкалы
             {
-                float halfW = horizontalBarBg.rect.width * 0.5f;
-                if (leftMovingBeam) leftMovingBeam.anchoredPosition = new Vector2(-horizontalSpread * halfW, 0);
-                if (rightMovingBeam) rightMovingBeam.anchoredPosition = new Vector2(horizontalSpread * halfW, 0);
+                float halfW = horizontalBarBg.rect.width * 0.5f; // Половина ширины шкалы
+                if (leftMovingBeam) leftMovingBeam.anchoredPosition = new Vector2(-horizontalSpread * halfW, 0); // Левый луч
+                if (rightMovingBeam) rightMovingBeam.anchoredPosition = new Vector2(horizontalSpread * halfW, 0); // Правый луч
             }
         }
     }
 
-    private IEnumerator AnimateRodCast(float power)
+    private IEnumerator AnimateRodCast(float power) // Корутина анимации взмаха удочки и броска поплавка
     {
-        if (fishRodTransform)
+        if (fishRodTransform) // Если есть трансформ удочки
         {
             // Наклон удочки при замахе
-            fishRodTransform.localRotation = Quaternion.Euler(0, 0, -20f);
-            yield return new WaitForSeconds(0.2f);
-            fishRodTransform.localRotation = Quaternion.Euler(0, 0, 0);
+            fishRodTransform.localRotation = Quaternion.Euler(0, 0, -20f); // Замах назад
+            yield return new WaitForSeconds(0.2f); // Пауза
+            fishRodTransform.localRotation = Quaternion.Euler(0, 0, 0); // Возврат в исходное положение
         }
 
-        if (bobberTransform)
+        if (bobberTransform) // Если есть поплавок
         {
-            bobberTransform.gameObject.SetActive(true);
-            bobberTransform.anchoredPosition = new Vector2(0, -50f + power * 120f);
+            bobberTransform.gameObject.SetActive(true); // Включение поплавка
+            bobberTransform.anchoredPosition = new Vector2(0, -50f + power * 120f); // Полет поплавка в воду
         }
     }
 
-    private IEnumerator ProcessCatchResult(float vVal, float hVal)
+    private IEnumerator ProcessCatchResult(float vVal, float hVal) // Корутина расчета выловленного предмета
     {
-        yield return new WaitForSeconds(0.8f);
+        yield return new WaitForSeconds(0.8f); // Имитация времени выуживания
 
         // Определение сектора заброса
-        float z4Threshold = 1f - (currentDifficulty == FishingDifficulty.Easy ? 0.35f :
-                                  currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f);
-        int sector = vVal >= z4Threshold ? 4 : vVal >= 0.50f ? 3 : vVal >= 0.25f ? 2 : 1;
+        float z4Threshold = 1f - (currentDifficulty == FishingDifficulty.Easy ? 0.35f : // Порог 4-й зоны для легкого
+                                  currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f); // Порог 4-й зоны для среднего/сложного
+        int sector = vVal >= z4Threshold ? 4 : vVal >= 0.50f ? 3 : vVal >= 0.25f ? 2 : 1; // Номер попавшего сектора
 
         // Точность по горизонтали (чем ближе лучи к краям 1.0, тем выше точность)
-        float edgeAccuracy = hVal;
-        float roll = Random.value;
+        float edgeAccuracy = hVal; // Значение близости к краю
+        float roll = Random.value; // Случайное число от 0 до 1
 
-        LootResult result = new LootResult();
+        LootResult result = new LootResult(); // Структура выпавшего предмета
 
-        if (sector == 4 && edgeAccuracy > 0.75f)
+        if (sector == 4 && edgeAccuracy > 0.75f) // Попадание в 4 сектор при высокой точности
         {
-            if (roll < 0.08f) { result.itemId = "potion_3000"; result.itemName = "Драконье Зелье Опыта"; result.xp = 3000; result.sprite = potion3000Sprite; result.rarityColor = new Color(1f, 0.4f, 0f); }
-            else if (roll < 0.25f) { result.itemId = "potion_1000"; result.itemName = "Мифическое Зелье Опыта"; result.xp = 1000; result.sprite = potion1000Sprite; result.rarityColor = new Color(0.7f, 0.3f, 1f); }
-            else if (roll < 0.60f) { result.itemId = "potion_500"; result.itemName = "Легендарное Зелье Опыта"; result.xp = 500; result.sprite = potion500Sprite; result.rarityColor = new Color(1f, 0.85f, 0.2f); }
-            else { result.itemId = "potion_300"; result.itemName = "Магическое Зелье Опыта"; result.xp = 300; result.sprite = potion300Sprite; result.rarityColor = new Color(0.9f, 0.2f, 0.3f); }
+            if (roll < 0.08f) { result.itemId = "potion_3000"; result.itemName = "Драконье Зелье Опыта"; result.xp = 3000; result.sprite = potion3000Sprite; result.rarityColor = new Color(1f, 0.4f, 0f); } // Зелье 3000 XP
+            else if (roll < 0.25f) { result.itemId = "potion_1000"; result.itemName = "Мифическое Зелье Опыта"; result.xp = 1000; result.sprite = potion1000Sprite; result.rarityColor = new Color(0.7f, 0.3f, 1f); } // Зелье 1000 XP
+            else if (roll < 0.60f) { result.itemId = "potion_500"; result.itemName = "Легендарное Зелье Опыта"; result.xp = 500; result.sprite = potion500Sprite; result.rarityColor = new Color(1f, 0.85f, 0.2f); } // Зелье 500 XP
+            else { result.itemId = "potion_300"; result.itemName = "Магическое Зелье Опыта"; result.xp = 300; result.sprite = potion300Sprite; result.rarityColor = new Color(0.9f, 0.2f, 0.3f); } // Зелье 300 XP
         }
-        else if (sector >= 3)
+        else if (sector >= 3) // Попадание в 3 сектор
         {
-            if (roll < 0.30f) { result.itemId = "potion_100"; result.itemName = "Высокое Зелье Опыта"; result.xp = 100; result.sprite = potion100Sprite; result.rarityColor = new Color(0.6f, 0.3f, 0.9f); }
-            else if (roll < 0.70f) { result.itemId = "potion_50"; result.itemName = "Среднее Зелье Опыта"; result.xp = 50; result.sprite = potion50Sprite; result.rarityColor = new Color(0.2f, 0.6f, 1f); }
-            else { result.itemId = "rune_stone"; result.itemName = "Магический Рунный Камень"; result.xp = 25; result.sprite = runeStoneSprite; result.rarityColor = new Color(0.4f, 0.9f, 0.9f); }
+            if (roll < 0.30f) { result.itemId = "potion_100"; result.itemName = "Высокое Зелье Опыта"; result.xp = 100; result.sprite = potion100Sprite; result.rarityColor = new Color(0.6f, 0.3f, 0.9f); } // Зелье 100 XP
+            else if (roll < 0.70f) { result.itemId = "potion_50"; result.itemName = "Среднее Зелье Опыта"; result.xp = 50; result.sprite = potion50Sprite; result.rarityColor = new Color(0.2f, 0.6f, 1f); } // Зелье 50 XP
+            else { result.itemId = "rune_stone"; result.itemName = "Магический Рунный Камень"; result.xp = 25; result.sprite = runeStoneSprite; result.rarityColor = new Color(0.4f, 0.9f, 0.9f); } // Рунный камень
         }
-        else
+        else // 1-й и 2-й секторы (мусор)
         {
-            if (roll < 0.5f) { result.itemId = "duckweed"; result.itemName = "Болотная тина"; result.xp = 0; result.sprite = duckweedSprite; result.rarityColor = Color.gray; }
-            else { result.itemId = "trash_bottle"; result.itemName = "Старая бутылка"; result.xp = 0; result.sprite = trashBottleSprite; result.rarityColor = Color.gray; }
+            if (roll < 0.5f) { result.itemId = "duckweed"; result.itemName = "Болотная тина"; result.xp = 0; result.sprite = duckweedSprite; result.rarityColor = Color.gray; } // Тина
+            else { result.itemId = "trash_bottle"; result.itemName = "Старая бутылка"; result.xp = 0; result.sprite = trashBottleSprite; result.rarityColor = Color.gray; } // Старая бутылка
         }
 
-        caughtSessionLoot.Add(result);
-        totalSessionXpGained += result.xp;
+        caughtSessionLoot.Add(result); // Добавление улова в сессионный список
+        totalSessionXpGained += result.xp; // Прибавление набранного опыта
 
         // Завершение попытки
-        if (currentAttempt >= MAX_ATTEMPTS)
+        if (currentAttempt >= MAX_ATTEMPTS) // Если достигли 10 попыток
         {
-            ShowSummaryPopup();
+            ShowSummaryPopup(); // Показываем окно итогов
         }
-        else
+        else // Если еще есть попытки
         {
-            currentAttempt++;
-            ResetAttemptToIdle();
+            currentAttempt++; // Переход к следующей попытке
+            ResetAttemptToIdle(); // Сброс в режим ожидания
         }
     }
 
-    private void ShowSummaryPopup()
+    private void ShowSummaryPopup() // Показ финального окна итогов после 10 попыток
     {
-        currentPhase = GamePhase.Finished;
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(true);
+        currentPhase = GamePhase.Finished; // Установка завершенной фазы
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(true); // Включение итогового окна
 
         // Начисление базовых наград по уровню сложности
-        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000;
-        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10;
-        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5;
+        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000; // Расчет золота
+        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10; // Расчет камней
+        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5; // Расчет свитков
 
-        if (summaryGoldText) summaryGoldText.text = $"+{gold:N0} Золота";
-        if (summaryStonesText) summaryStonesText.text = $"+{stones} Камней";
-        if (summaryScrollsText) summaryScrollsText.text = $"+{scrolls} Свитков";
-        if (summaryPotionBonusText)
+        if (summaryGoldText) summaryGoldText.text = $"+{gold:N0} Золота"; // Текст золота
+        if (summaryStonesText) summaryStonesText.text = $"+{stones} Камней"; // Текст камней
+        if (summaryScrollsText) summaryScrollsText.text = $"+{scrolls} Свитков"; // Текст свитков
+        if (summaryPotionBonusText) // Бонусное зелье мастерства
         {
-            summaryPotionBonusText.gameObject.SetActive(currentDifficulty == FishingDifficulty.Hard);
-            summaryPotionBonusText.text = "1 шт Зелье Опыта Мастерства (+100 XP)";
+            summaryPotionBonusText.gameObject.SetActive(currentDifficulty == FishingDifficulty.Hard); // Только на сложном
+            summaryPotionBonusText.text = "1 шт Зелье Опыта Мастерства (+100 XP)"; // Текст бонуса
         }
     }
 
-    public void ClaimAllAndProceedToQuest()
+    public void ClaimAllAndProceedToQuest() // Забрать все награды в инвентарь и закрыть сессию
     {
         // 1. Начисление ресурсов и опыта в менеджер профиля
-        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000;
-        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10;
-        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5;
+        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000; // Расчет золота
+        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10; // Расчет камней
+        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5; // Расчет свитков
 
-        if (Avatar_Manager.Instance != null)
+        if (Avatar_Manager.Instance != null) // Если менеджер профиля доступен
         {
-            Avatar_Manager.Instance.AddGold(gold);
-            Avatar_Manager.Instance.AddStones(stones);
-            Avatar_Manager.Instance.AddScrolls(scrolls);
-            Avatar_Manager.Instance.AddExperience(totalSessionXpGained);
+            Avatar_Manager.Instance.AddGold(gold); // Начисление золота
+            Avatar_Manager.Instance.AddStones(stones); // Начисление камней
+            Avatar_Manager.Instance.AddScrolls(scrolls); // Начисление свитков
+            Avatar_Manager.Instance.AddExperience(totalSessionXpGained); // Начисление суммарного опыта
         }
 
         // 2. Добавление всех выловленных зелий в сундук/инвентарь (со стаком одинаковых предметов!)
-        if (Inventory_Manager.Instance != null)
+        if (Inventory_Manager.Instance != null) // Если инвентарь доступен
         {
-            Inventory_Manager.Instance.AddFishingSessionLoot(caughtSessionLoot);
-            if (currentDifficulty == FishingDifficulty.Hard)
+            Inventory_Manager.Instance.AddFishingSessionLoot(caughtSessionLoot); // Передача сессионного лута со стаками
+            if (currentDifficulty == FishingDifficulty.Hard) // Бонус сложного уровня
             {
-                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Опыта Мастерства", 1, 100, potion100Sprite, new Color(1f, 0.85f, 0.2f));
+                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Опыта Мастерства", 1, 100, potion100Sprite, new Color(1f, 0.85f, 0.2f)); // Добавление зелья мастерства
             }
         }
 
         // Закрываем рыбалку
-        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false);
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false);
-        if (difficultySelectPanel) difficultySelectPanel.SetActive(true);
+        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Скрытие игрового экрана
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Скрытие итогового окна
+        if (difficultySelectPanel) difficultySelectPanel.SetActive(true); // Возврат к выбору сложности
 
         // Кот начинает диалог про 3 новые локации (Лавка, Старый дом, Рынок)
-        Debug.Log("Рыбалка завершена! Улов сложен в сундук инвентаря со стаками одинаковых предметов. Запуск квеста Поиска предметов в 3 локациях.");
+        Debug.Log("Рыбалка завершена! Улов сложен в сундук инвентаря со стаками одинаковых предметов. Запуск квеста Поиска предметов в 3 локациях."); // Лог завершения
     }
 
-    public void HandleCloseClicked()
+    public void HandleCloseClicked() // Обработка нажатия кнопки Закрыть
     {
-        ShowDifficultySelection();
+        ShowDifficultySelection(); // Возврат к выбору сложности
     }
 }

@@ -18,40 +18,40 @@ using TMPro;
 /// </summary>
 public class RecipeCrafting_Manager : MonoBehaviour
 {
-    private static RecipeCrafting_Manager _instance;
-    public static RecipeCrafting_Manager Instance
+    private static RecipeCrafting_Manager _instance; // Приватное статическое поле экземпляра
+    public static RecipeCrafting_Manager Instance // Публичный аксессор синглтона с автопоиском в сцене
     {
-        get
+        get // Геттер синглтона
         {
-            if (_instance == null)
+            if (_instance == null) // Если экземпляр еще не найден
             {
 #if UNITY_2023_1_OR_NEWER
-                _instance = FindFirstObjectByType<RecipeCrafting_Manager>();
+                _instance = FindFirstObjectByType<RecipeCrafting_Manager>(); // Поиск первого объекта в Unity 2023+
 #else
-                _instance = FindObjectOfType<RecipeCrafting_Manager>();
+                _instance = FindObjectOfType<RecipeCrafting_Manager>(); // Поиск объекта в ранних версиях Unity
 #endif
-                if (_instance == null)
+                if (_instance == null) // Если все еще не найден
                 {
-                    RecipeCrafting_Manager[] all = Resources.FindObjectsOfTypeAll<RecipeCrafting_Manager>();
-                    foreach (var m in all)
+                    RecipeCrafting_Manager[] all = Resources.FindObjectsOfTypeAll<RecipeCrafting_Manager>(); // Поиск среди всех объектов в памяти
+                    foreach (var m in all) // Перебор найденных объектов
                     {
-                        if (m != null && m.gameObject != null && m.gameObject.scene.isLoaded)
+                        if (m != null && m.gameObject != null && m.gameObject.scene.isLoaded) // Проверка загруженности сцены
                         {
-                            _instance = m;
-                            if (!_instance.gameObject.activeSelf)
+                            _instance = m; // Назначение найденного объекта
+                            if (!_instance.gameObject.activeSelf) // Если объект выключен
                             {
-                                _instance.gameObject.SetActive(true);
+                                _instance.gameObject.SetActive(true); // Включение объекта
                             }
-                            break;
+                            break; // Выход из цикла
                         }
                     }
                 }
             }
-            return _instance;
+            return _instance; // Возврат экземпляра синглтона
         }
-        private set
+        private set // Приватный сеттер синглтона
         {
-            _instance = value;
+            _instance = value; // Присвоение ссылки на экземпляр
         }
     }
 
@@ -127,782 +127,782 @@ public class RecipeCrafting_Manager : MonoBehaviour
 
     private Coroutine craftCoroutine; // Ссылка на запущенную корутину таймера варки
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона, автопоиск элементов и привязка событий кнопок
     {
         Instance = this; // Инициализация синглтона при старте
 
         AutoFindAndBindTableElements(); // Автопоиск и привязка интерактивных элементов стола и котла
 
-        if (startCraftButton != null)
+        if (startCraftButton != null) // Если кнопка начала крафта назначена
         {
             startCraftButton.onClick.RemoveAllListeners(); // Сброс старых обработчиков
             startCraftButton.onClick.AddListener(OnStartCraftButtonClicked); // Назначение клика начала крафта
         }
 
-        if (cauldronClickButton != null)
+        if (cauldronClickButton != null) // Если кнопка котла назначена
         {
-            cauldronClickButton.onClick.RemoveAllListeners();
-            cauldronClickButton.onClick.AddListener(OnCauldronClicked);
+            cauldronClickButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            cauldronClickButton.onClick.AddListener(OnCauldronClicked); // Привязка клика по котлу
         }
 
-        if (miniCatClickButton != null)
+        if (miniCatClickButton != null) // Если кнопка кота назначена
         {
-            miniCatClickButton.onClick.RemoveAllListeners();
-            miniCatClickButton.onClick.AddListener(OnMiniCatClicked);
+            miniCatClickButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            miniCatClickButton.onClick.AddListener(OnMiniCatClicked); // Привязка клика по котику
         }
         
-        SanitizeMiniCatObject();
+        SanitizeMiniCatObject(); // Очистка дублирующихся элементов спрайта кота
 
-        if (makeBadgeButton != null)
+        if (makeBadgeButton != null) // Если кнопка "Изготовить" назначена
         {
-            makeBadgeButton.onClick.RemoveAllListeners();
-            makeBadgeButton.onClick.AddListener(OnMakeBadgeClicked);
+            makeBadgeButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            makeBadgeButton.onClick.AddListener(OnMakeBadgeClicked); // Привязка старта варки
         }
 
-        if (claimPotionButton != null)
+        if (claimPotionButton != null) // Если кнопка "Забрать" назначена
         {
-            claimPotionButton.onClick.RemoveAllListeners();
-            claimPotionButton.onClick.AddListener(OnClaimPotionClicked);
+            claimPotionButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            claimPotionButton.onClick.AddListener(OnClaimPotionClicked); // Привязка сбора зелья
         }
 
-        if (chestButton != null)
+        if (chestButton != null) // Если кнопка сундука назначена
         {
-            chestButton.onClick.RemoveAllListeners();
-            chestButton.onClick.AddListener(OnChestButtonClicked);
+            chestButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            chestButton.onClick.AddListener(OnChestButtonClicked); // Привязка открытия сундука
         }
 
-        if (masteryPotionButton != null)
+        if (masteryPotionButton != null) // Если кнопка колбы опыта назначена
         {
-            masteryPotionButton.onClick.RemoveAllListeners();
-            masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked);
+            masteryPotionButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked); // Привязка выпивания колбы
         }
 
-        if (inventoryCloseButton != null)
+        if (inventoryCloseButton != null) // Если кнопка закрытия инвентаря назначена
         {
-            inventoryCloseButton.onClick.RemoveAllListeners();
-            inventoryCloseButton.onClick.AddListener(OnInventoryCloseClicked);
+            inventoryCloseButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            inventoryCloseButton.onClick.AddListener(OnInventoryCloseClicked); // Привязка закрытия инвентаря
         }
 
         // По умолчанию вспомогательные плашки скрыты в чистом начальном состоянии
-        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false);
-        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false);
-        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false);
-        if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false);
-        if (floatingXPPrefab != null) floatingXPPrefab.SetActive(false);
-        if (chestIconButton != null) chestIconButton.SetActive(false);
-        if (inventoryPanel != null) inventoryPanel.SetActive(false);
+        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false); // Скрытие плашки "Изготовить"
+        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false); // Скрытие шкалы варки
+        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false); // Скрытие кнопки "Забрать"
+        if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false); // Скрытие облачка подсказки
+        if (floatingXPPrefab != null) floatingXPPrefab.SetActive(false); // Скрытие летающего опыта
+        if (chestIconButton != null) chestIconButton.SetActive(false); // Скрытие иконки сундука
+        if (inventoryPanel != null) inventoryPanel.SetActive(false); // Скрытие панели инвентаря
     }
 
-    private void Start()
+    private void Start() // Вызов поиска и связывания элементов стола при старте
     {
-        AutoFindAndBindTableElements();
+        AutoFindAndBindTableElements(); // Повторный автопоиск компонентов в сцене
     }
 
-    public void AutoFindAndBindTableElements()
+    public void AutoFindAndBindTableElements() // Автоматический поиск всех элементов стола, котла и кота в сцене
     {
-        if (tableCauldronGroup == null)
+        if (tableCauldronGroup == null) // Если группа стола не назначена
         {
             // Ищем Table_Cauldron_Group среди всех Canvas и всех объектов сцены (включая неактивные)
 #if UNITY_2023_1_OR_NEWER
-            Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+            Canvas[] allCanvases = FindObjectsByType<Canvas>(FindObjectsInactive.Include, FindObjectsSortMode.None); // Поиск всех холстов в Unity 2023+
 #else
-            Canvas[] allCanvases = FindObjectsOfType<Canvas>(true);
+            Canvas[] allCanvases = FindObjectsOfType<Canvas>(true); // Поиск всех холстов в ранних версиях Unity
 #endif
-            foreach (var canvas in allCanvases)
+            foreach (var canvas in allCanvases) // Перебор всех холстов
             {
-                Transform[] children = canvas.GetComponentsInChildren<Transform>(true);
-                foreach (var child in children)
+                Transform[] children = canvas.GetComponentsInChildren<Transform>(true); // Получение всех дочерних элементов
+                foreach (var child in children) // Поиск подходящего объекта группы
                 {
-                    if (child.name == "Table_Cauldron_Group" || child.name == "Table_Group" || child.name == "Table")
+                    if (child.name == "Table_Cauldron_Group" || child.name == "Table_Group" || child.name == "Table") // Сверка имени
                     {
-                        tableCauldronGroup = child.gameObject;
-                        break;
+                        tableCauldronGroup = child.gameObject; // Привязка группы
+                        break; // Выход
                     }
                 }
-                if (tableCauldronGroup != null) break;
+                if (tableCauldronGroup != null) break; // Прерывание внешнего цикла если группа найдена
             }
         }
 
-        if (tableCauldronGroup != null)
+        if (tableCauldronGroup != null) // Если группа стола найдена
         {
-            Transform[] children = tableCauldronGroup.GetComponentsInChildren<Transform>(true);
-            foreach (var child in children)
+            Transform[] children = tableCauldronGroup.GetComponentsInChildren<Transform>(true); // Все вложенные объекты
+            foreach (var child in children) // Перебор объектов группы
             {
-                if (tableCauldronObject == null && (child.name == "Cauldron_Button" || child.name == "Table_Cauldron" || child.name.Contains("Cauldron")))
+                if (tableCauldronObject == null && (child.name == "Cauldron_Button" || child.name == "Table_Cauldron" || child.name.Contains("Cauldron"))) // Поиск котла
                 {
-                    tableCauldronObject = child.gameObject;
-                    if (cauldronClickButton == null) cauldronClickButton = child.GetComponent<Button>();
+                    tableCauldronObject = child.gameObject; // Привязка объекта котла
+                    if (cauldronClickButton == null) cauldronClickButton = child.GetComponent<Button>(); // Привязка кнопки котла
                 }
-                if (tableMiniCatObject == null && (child.name == "Mini_Cat_Image" || child.name == "Mini_Cat" || child.name == "Table_Mini_Cat"))
+                if (tableMiniCatObject == null && (child.name == "Mini_Cat_Image" || child.name == "Mini_Cat" || child.name == "Table_Mini_Cat")) // Поиск котика
                 {
-                    tableMiniCatObject = child.gameObject;
-                    if (miniCatClickButton == null) miniCatClickButton = child.GetComponent<Button>();
+                    tableMiniCatObject = child.gameObject; // Привязка объекта кота
+                    if (miniCatClickButton == null) miniCatClickButton = child.GetComponent<Button>(); // Привязка кнопки кота
                 }
-                if (miniCatBubblePanel == null && (child.name == "Mini_Cat_Bubble" || child.name.Contains("Bubble")))
+                if (miniCatBubblePanel == null && (child.name == "Mini_Cat_Bubble" || child.name.Contains("Bubble"))) // Поиск облачка реплики
                 {
-                    miniCatBubblePanel = child.gameObject;
-                    if (miniCatBubbleText == null) miniCatBubbleText = child.GetComponentInChildren<TextMeshProUGUI>(true);
+                    miniCatBubblePanel = child.gameObject; // Привязка панели облачка
+                    if (miniCatBubbleText == null) miniCatBubbleText = child.GetComponentInChildren<TextMeshProUGUI>(true); // Привязка текста
                 }
-                if (makeBadgeButtonObject == null && (child.name == "Make_Badge_Button" || child.name.Contains("Make_Badge")))
+                if (makeBadgeButtonObject == null && (child.name == "Make_Badge_Button" || child.name.Contains("Make_Badge"))) // Поиск кнопки "Изготовить"
                 {
-                    makeBadgeButtonObject = child.gameObject;
-                    if (makeBadgeButton == null) makeBadgeButton = child.GetComponent<Button>();
+                    makeBadgeButtonObject = child.gameObject; // Привязка объекта
+                    if (makeBadgeButton == null) makeBadgeButton = child.GetComponent<Button>(); // Привязка компонента кнопки
                 }
-                if (craftingProgressBarContainer == null && (child.name == "Crafting_Progress_Bar" || child.name.Contains("Crafting_Progress")))
+                if (craftingProgressBarContainer == null && (child.name == "Crafting_Progress_Bar" || child.name.Contains("Crafting_Progress"))) // Поиск шкалы прогресса
                 {
-                    craftingProgressBarContainer = child.gameObject;
-                    if (craftingProgressFill == null)
+                    craftingProgressBarContainer = child.gameObject; // Привязка контейнера прогресса
+                    if (craftingProgressFill == null) // Поиск заполнения
                     {
-                        Image[] imgs = child.GetComponentsInChildren<Image>(true);
-                        foreach (var img in imgs)
+                        Image[] imgs = child.GetComponentsInChildren<Image>(true); // Все изображения шкалы
+                        foreach (var img in imgs) // Перебор картинок
                         {
-                            if (img.type == Image.Type.Filled || img.name.Contains("Fill") || img.name.Contains("Bar"))
+                            if (img.type == Image.Type.Filled || img.name.Contains("Fill") || img.name.Contains("Bar")) // Поиск заполняемого спрайта
                             {
-                                craftingProgressFill = img;
-                                break;
+                                craftingProgressFill = img; // Привязка полосы
+                                break; // Выход
                             }
                         }
                     }
-                    if (craftingTimerText == null) craftingTimerText = child.GetComponentInChildren<TextMeshProUGUI>(true);
+                    if (craftingTimerText == null) craftingTimerText = child.GetComponentInChildren<TextMeshProUGUI>(true); // Привязка текста таймера
                 }
-                if (claimPotionButtonObject == null && (child.name == "Claim_Potion_Button" || child.name.Contains("Claim_Potion")))
+                if (claimPotionButtonObject == null && (child.name == "Claim_Potion_Button" || child.name.Contains("Claim_Potion"))) // Поиск кнопки сбора
                 {
-                    claimPotionButtonObject = child.gameObject;
-                    if (claimPotionButton == null) claimPotionButton = child.GetComponent<Button>();
+                    claimPotionButtonObject = child.gameObject; // Привязка объекта кнопки "Забрать"
+                    if (claimPotionButton == null) claimPotionButton = child.GetComponent<Button>(); // Привязка кнопки
                 }
-                if (floatingXPPrefab == null && (child.name == "Floating_XP_Badge" || child.name.Contains("Floating_XP")))
+                if (floatingXPPrefab == null && (child.name == "Floating_XP_Badge" || child.name.Contains("Floating_XP"))) // Поиск плашки опыта
                 {
-                    floatingXPPrefab = child.gameObject;
-                    if (floatingXPSpawnPoint == null) floatingXPSpawnPoint = child.GetComponent<RectTransform>();
-                    if (floatingXPCanvasGroup == null) floatingXPCanvasGroup = child.GetComponent<CanvasGroup>();
-                    if (floatingXPImage == null) floatingXPImage = child.GetComponentInChildren<Image>(true);
+                    floatingXPPrefab = child.gameObject; // Привязка префаба плашки
+                    if (floatingXPSpawnPoint == null) floatingXPSpawnPoint = child.GetComponent<RectTransform>(); // Точка спавна
+                    if (floatingXPCanvasGroup == null) floatingXPCanvasGroup = child.GetComponent<CanvasGroup>(); // CanvasGroup плашки
+                    if (floatingXPImage == null) floatingXPImage = child.GetComponentInChildren<Image>(true); // Иконка плашки
                 }
             }
         }
 
         // Автоматическая привязка кнопки выпивания Колбы Опыта Мастерства
-        if (masteryPotionButton == null && masteryPotionItemObject != null)
+        if (masteryPotionButton == null && masteryPotionItemObject != null) // Если кнопка колбы не найдена
         {
-            masteryPotionButton = masteryPotionItemObject.GetComponent<Button>();
-            if (masteryPotionButton == null)
+            masteryPotionButton = masteryPotionItemObject.GetComponent<Button>(); // Получение кнопки
+            if (masteryPotionButton == null) // Если компонент отсутствует
             {
-                masteryPotionButton = masteryPotionItemObject.AddComponent<Button>();
+                masteryPotionButton = masteryPotionItemObject.AddComponent<Button>(); // Добавление Button
             }
-            masteryPotionButton.onClick.RemoveAllListeners();
-            masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked);
+            masteryPotionButton.onClick.RemoveAllListeners(); // Очистка слушателей
+            masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked); // Привязка выпивания колбы
         }
     }
 
-    private Coroutine miniCatBubbleHideCoroutine;
+    private Coroutine miniCatBubbleHideCoroutine; // Ссылка на корутину автоскрытия облачка котика
 
-    private void SanitizeMiniCatObject()
+    private void SanitizeMiniCatObject() // Очистка и настройка кликабельности спрайта маленького кота
     {
-        if (tableMiniCatObject != null)
+        if (tableMiniCatObject != null) // Если объект кота существует
         {
             // 1. Отключаем лишний дочерний GameObject "Button" с белым фоном, если он был создан
-            Transform childBtn = tableMiniCatObject.transform.Find("Button");
-            if (childBtn != null)
+            Transform childBtn = tableMiniCatObject.transform.Find("Button"); // Поиск дочерней кнопки
+            if (childBtn != null) // Если найдена
             {
-                Image childImg = childBtn.GetComponent<Image>();
-                if (childImg != null) childImg.enabled = false;
-                TextMeshProUGUI childTmp = childBtn.GetComponentInChildren<TextMeshProUGUI>(true);
-                if (childTmp != null) childTmp.text = "";
-                UnityEngine.UI.Text childTxt = childBtn.GetComponentInChildren<UnityEngine.UI.Text>(true);
-                if (childTxt != null) childTxt.text = "";
-                childBtn.gameObject.SetActive(false);
+                Image childImg = childBtn.GetComponent<Image>(); // Ссылка на Image
+                if (childImg != null) childImg.enabled = false; // Отключение отрисовки
+                TextMeshProUGUI childTmp = childBtn.GetComponentInChildren<TextMeshProUGUI>(true); // Текст TMP
+                if (childTmp != null) childTmp.text = ""; // Очистка текста
+                UnityEngine.UI.Text childTxt = childBtn.GetComponentInChildren<UnityEngine.UI.Text>(true); // Текст Legacy
+                if (childTxt != null) childTxt.text = ""; // Очистка текста
+                childBtn.gameObject.SetActive(false); // Деактивация лишней кнопки
             }
 
             // 2. Включаем кликабельность на самом спрайте кота
-            Image catImage = tableMiniCatObject.GetComponent<Image>();
-            if (catImage != null)
+            Image catImage = tableMiniCatObject.GetComponent<Image>(); // Изображение кота
+            if (catImage != null) // Если изображение есть
             {
-                catImage.raycastTarget = true;
+                catImage.raycastTarget = true; // Разрешение получения лучей клика
             }
 
-            Button catBtn = tableMiniCatObject.GetComponent<Button>();
-            if (catBtn == null)
+            Button catBtn = tableMiniCatObject.GetComponent<Button>(); // Компонент кнопки на коте
+            if (catBtn == null) // Если отсутствует
             {
-                catBtn = tableMiniCatObject.AddComponent<Button>();
+                catBtn = tableMiniCatObject.AddComponent<Button>(); // Добавление Button
             }
 
-            if (catImage != null)
+            if (catImage != null) // Если Image назначен
             {
-                catBtn.targetGraphic = catImage;
+                catBtn.targetGraphic = catImage; // Назначение целевого графического элемента
             }
 
-            catBtn.onClick.RemoveAllListeners();
-            catBtn.onClick.AddListener(OnMiniCatClicked);
+            catBtn.onClick.RemoveAllListeners(); // Сброс старых обработчиков
+            catBtn.onClick.AddListener(OnMiniCatClicked); // Привязка клика по коту
         }
     }
 
     /// <summary>
     /// Шаг 1: Игрок открыл Старый Свиток и нажал кнопку 'Начать' внизу свитка (Скриншот 4 -> Скриншот 3)
     /// </summary>
-    public void OnStartCraftButtonClicked()
+    public void OnStartCraftButtonClicked() // Обработчик нажатия на кнопку "Начать" в окне рецепта
     {
-        if (SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(craftStartSound);
+        if (SettingsManager.Instance != null) // Если менеджер настроек доступен
+            SettingsManager.Instance.PlaySoundEffect(craftStartSound); // Звук начала крафта
 
-        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false);
+        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false); // Закрытие свитка рецепта
 
         // Панель ресурсов, аватарка, календарь и свиток остаются видимыми, но БЛОКИРУЮТСЯ (заблокированы) на время варки
-        if (DialogueSystem_Manager.Instance != null)
+        if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов доступен
         {
-            if (DialogueSystem_Manager.Instance.topPanel != null) 
-                DialogueSystem_Manager.Instance.topPanel.SetActive(true);
-            if (DialogueSystem_Manager.Instance.calendarIconButton != null) 
-                DialogueSystem_Manager.Instance.calendarIconButton.SetActive(true);
-            if (DialogueSystem_Manager.Instance.playerAvatarContainer != null) 
-                DialogueSystem_Manager.Instance.playerAvatarContainer.SetActive(true);
-            if (DialogueSystem_Manager.Instance.smallScrollIconButton != null) 
-                DialogueSystem_Manager.Instance.smallScrollIconButton.SetActive(true);
+            if (DialogueSystem_Manager.Instance.topPanel != null) // Верхняя панель ресурсов
+                DialogueSystem_Manager.Instance.topPanel.SetActive(true); // Включение панели
+            if (DialogueSystem_Manager.Instance.calendarIconButton != null) // Кнопка календаря
+                DialogueSystem_Manager.Instance.calendarIconButton.SetActive(true); // Включение кнопки
+            if (DialogueSystem_Manager.Instance.playerAvatarContainer != null) // Контейнер аватара
+                DialogueSystem_Manager.Instance.playerAvatarContainer.SetActive(true); // Включение аватара
+            if (DialogueSystem_Manager.Instance.smallScrollIconButton != null) // Иконка свитка
+                DialogueSystem_Manager.Instance.smallScrollIconButton.SetActive(true); // Включение иконки
 
-            DialogueSystem_Manager.Instance.isCraftingInProgress = true;
-            DialogueSystem_Manager.Instance.SetCalendarButtonInteractable(false);
-            DialogueSystem_Manager.Instance.SetSmallScrollInteractable(false);
+            DialogueSystem_Manager.Instance.isCraftingInProgress = true; // Установка флага процесса крафта
+            DialogueSystem_Manager.Instance.SetCalendarButtonInteractable(false); // Блокировка календаря
+            DialogueSystem_Manager.Instance.SetSmallScrollInteractable(false); // Блокировка свитка
         }
 
-        if (Avatar_Manager.Instance != null)
+        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
         {
-            Avatar_Manager.Instance.SetAvatarButtonInteractable(false);
+            Avatar_Manager.Instance.SetAvatarButtonInteractable(false); // Блокировка профиля
         }
 
         // Автоматически находим и привязываем всю группу стола и котла
-        AutoFindAndBindTableElements();
+        AutoFindAndBindTableElements(); // Поиск элементов сцены
 
-        if (tableCauldronGroup != null)
+        if (tableCauldronGroup != null) // Если группа стола найдена
         {
-            tableCauldronGroup.SetActive(true);
+            tableCauldronGroup.SetActive(true); // Активация группы
         }
 
         // Появляется котел и маленький кот на столе (включая родительскую группу Table_Cauldron_Group при наличии)
-        if (tableCauldronObject != null) 
+        if (tableCauldronObject != null) // Если котел существует
         {
-            tableCauldronObject.SetActive(true);
-            if (tableCauldronObject.transform.parent != null && (tableCauldronObject.transform.parent.name.Contains("Table") || tableCauldronObject.transform.parent.name.Contains("Cauldron")))
+            tableCauldronObject.SetActive(true); // Активация котла
+            if (tableCauldronObject.transform.parent != null && (tableCauldronObject.transform.parent.name.Contains("Table") || tableCauldronObject.transform.parent.name.Contains("Cauldron"))) // Родительский стол
             {
-                tableCauldronObject.transform.parent.gameObject.SetActive(true);
+                tableCauldronObject.transform.parent.gameObject.SetActive(true); // Активация стола
             }
         }
-        else
+        else // Если котел не был привязан
         {
-            GameObject foundTable = GameObject.Find("Table_Cauldron_Group");
-            if (foundTable == null) foundTable = GameObject.Find("Table_Group");
-            if (foundTable == null) foundTable = GameObject.Find("Table");
-            if (foundTable != null)
+            GameObject foundTable = GameObject.Find("Table_Cauldron_Group"); // Поиск по имени
+            if (foundTable == null) foundTable = GameObject.Find("Table_Group"); // Альтернативное имя
+            if (foundTable == null) foundTable = GameObject.Find("Table"); // Альтернативное имя
+            if (foundTable != null) // Если найден
             {
-                foundTable.SetActive(true);
-                tableCauldronObject = foundTable;
+                foundTable.SetActive(true); // Активация объекта
+                tableCauldronObject = foundTable; // Привязка
             }
         }
 
         // Если есть cauldronClickButton, убедимся что клик назначен
-        if (cauldronClickButton != null)
+        if (cauldronClickButton != null) // Если кнопка котла есть
         {
-            cauldronClickButton.onClick.RemoveAllListeners();
-            cauldronClickButton.onClick.AddListener(OnCauldronClicked);
+            cauldronClickButton.onClick.RemoveAllListeners(); // Очистка
+            cauldronClickButton.onClick.AddListener(OnCauldronClicked); // Привязка клика
         }
-        else if (tableCauldronObject != null)
+        else if (tableCauldronObject != null) // Если кнопка во вложенных объектах
         {
-            Button btn = tableCauldronObject.GetComponentInChildren<Button>(true);
-            if (btn != null)
+            Button btn = tableCauldronObject.GetComponentInChildren<Button>(true); // Поиск кнопки
+            if (btn != null) // Если найдена
             {
-                btn.onClick.RemoveAllListeners();
-                btn.onClick.AddListener(OnCauldronClicked);
+                btn.onClick.RemoveAllListeners(); // Очистка
+                btn.onClick.AddListener(OnCauldronClicked); // Привязка клика
             }
         }
 
-        if (tableMiniCatObject != null)
+        if (tableMiniCatObject != null) // Если объект котика есть
         {
-            tableMiniCatObject.SetActive(true);
-            SanitizeMiniCatObject();
+            tableMiniCatObject.SetActive(true); // Включение котика
+            SanitizeMiniCatObject(); // Настройка кликабельности
         }
-        else
+        else // Если котик не привязан
         {
-            GameObject foundMiniCat = GameObject.Find("Mini_Cat");
-            if (foundMiniCat == null) foundMiniCat = GameObject.Find("Table_Mini_Cat");
-            if (foundMiniCat != null)
+            GameObject foundMiniCat = GameObject.Find("Mini_Cat"); // Поиск кота
+            if (foundMiniCat == null) foundMiniCat = GameObject.Find("Table_Mini_Cat"); // Альтернативное имя
+            if (foundMiniCat != null) // Если найден
             {
-                foundMiniCat.SetActive(true);
-                tableMiniCatObject = foundMiniCat;
-                SanitizeMiniCatObject();
+                foundMiniCat.SetActive(true); // Активация котика
+                tableMiniCatObject = foundMiniCat; // Привязка ссылки
+                SanitizeMiniCatObject(); // Настройка
             }
         }
 
         // Показываем бабл с подсказкой котика на столе
-        ShowMiniCatBubble("Нажми на котёл, чтобы начать варить!", false);
+        ShowMiniCatBubble("Нажми на котёл, чтобы начать варить!", false); // Вызов подсказки
     }
 
     /// <summary>
     /// Клик по маленькому коту на столе — переключает/показывает облачко с подсказкой
     /// </summary>
-    public void OnMiniCatClicked()
+    public void OnMiniCatClicked() // Клик по маленькому котику на столе
     {
-        if (miniCatBubblePanel != null)
+        if (miniCatBubblePanel != null) // Если панель облачка есть
         {
-            bool isCurrentActive = miniCatBubblePanel.activeSelf;
-            if (isCurrentActive)
+            bool isCurrentActive = miniCatBubblePanel.activeSelf; // Проверка видимости
+            if (isCurrentActive) // Если активно
             {
-                HideMiniCatBubble();
+                HideMiniCatBubble(); // Скрытие подсказки
             }
-            else
+            else // Если скрыто
             {
-                ShowMiniCatBubble("Нажми на котёл, чтобы начать варить!", false);
-            }
-        }
-    }
-
-    public void ShowMiniCatBubble(string text, bool autoHide = false)
-    {
-        if (miniCatBubblePanel != null)
-        {
-            miniCatBubblePanel.SetActive(true);
-            if (miniCatBubbleText != null)
-            {
-                miniCatBubbleText.text = text;
-            }
-
-            if (miniCatBubbleHideCoroutine != null) StopCoroutine(miniCatBubbleHideCoroutine);
-            if (autoHide)
-            {
-                miniCatBubbleHideCoroutine = StartCoroutine(AutoHideMiniCatBubbleRoutine(3.5f));
+                ShowMiniCatBubble("Нажми на котёл, чтобы начать варить!", false); // Показ подсказки
             }
         }
     }
 
-    public void HideMiniCatBubble()
+    public void ShowMiniCatBubble(string text, bool autoHide = false) // Отображение всплывающей подсказки над котиком
     {
-        if (miniCatBubbleHideCoroutine != null)
+        if (miniCatBubblePanel != null) // Если панель существует
         {
-            StopCoroutine(miniCatBubbleHideCoroutine);
-            miniCatBubbleHideCoroutine = null;
-        }
-        if (miniCatBubblePanel != null)
-        {
-            miniCatBubblePanel.SetActive(false);
+            miniCatBubblePanel.SetActive(true); // Активация панели
+            if (miniCatBubbleText != null) // Если текстовое поле есть
+            {
+                miniCatBubbleText.text = text; // Установка текста подсказки
+            }
+
+            if (miniCatBubbleHideCoroutine != null) StopCoroutine(miniCatBubbleHideCoroutine); // Остановка таймера
+            if (autoHide) // Если требуется авто-скрытие
+            {
+                miniCatBubbleHideCoroutine = StartCoroutine(AutoHideMiniCatBubbleRoutine(3.5f)); // Запуск корутины таймера
+            }
         }
     }
 
-    private IEnumerator AutoHideMiniCatBubbleRoutine(float delay)
+    public void HideMiniCatBubble() // Скрытие подсказки маленького котика
     {
-        yield return new WaitForSeconds(delay);
-        if (miniCatBubblePanel != null)
+        if (miniCatBubbleHideCoroutine != null) // Если корутина активна
         {
-            miniCatBubblePanel.SetActive(false);
+            StopCoroutine(miniCatBubbleHideCoroutine); // Остановка корутины
+            miniCatBubbleHideCoroutine = null; // Обнуление ссылки
         }
-        miniCatBubbleHideCoroutine = null;
+        if (miniCatBubblePanel != null) // Если панель есть
+        {
+            miniCatBubblePanel.SetActive(false); // Деактивация панели
+        }
+    }
+
+    private IEnumerator AutoHideMiniCatBubbleRoutine(float delay) // Корутина таймера автоматического скрытия облачка
+    {
+        yield return new WaitForSeconds(delay); // Ожидание задержки
+        if (miniCatBubblePanel != null) // Если панель существует
+        {
+            miniCatBubblePanel.SetActive(false); // Скрытие облачка
+        }
+        miniCatBubbleHideCoroutine = null; // Обнуление ссылки
     }
 
     /// <summary>
     /// Шаг 2: Нажатие на котел на столе -> скрывается облачко кота, появляется плашка 'Изготовить'
     /// </summary>
-    public void OnCauldronClicked()
+    public void OnCauldronClicked() // Нажатие на котел для перехода к варке
     {
-        if (SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(craftStartSound);
+        if (SettingsManager.Instance != null) // Если менеджер настроек доступен
+            SettingsManager.Instance.PlaySoundEffect(craftStartSound); // Звук взаимодействия
 
-        HideMiniCatBubble();
-        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(true);
+        HideMiniCatBubble(); // Скрытие облачка подсказки
+        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(true); // Появление кнопки "Изготовить"
     }
 
     /// <summary>
     /// Шаг 3: Нажатие на 'Изготовить' -> запуск шкалы варки на 5 секунд
     /// </summary>
-    public void OnMakeBadgeClicked()
+    public void OnMakeBadgeClicked() // Запуск процесса алхимического приготовления зелья
     {
-        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false);
+        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false); // Скрытие плашки "Изготовить"
 
-        if (craftCoroutine != null) StopCoroutine(craftCoroutine);
-        craftCoroutine = StartCoroutine(CraftingProgressRoutine());
+        if (craftCoroutine != null) StopCoroutine(craftCoroutine); // Остановка предыдущей варки
+        craftCoroutine = StartCoroutine(CraftingProgressRoutine()); // Запуск корутины таймера варки
     }
 
-    private IEnumerator CraftingProgressRoutine()
+    private IEnumerator CraftingProgressRoutine() // Корутина 5-секундного процесса варки со шкалой прогресса
     {
-        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(true);
-        if (craftingProgressFill != null) craftingProgressFill.fillAmount = 0f;
+        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(true); // Показ полосы прогресса
+        if (craftingProgressFill != null) craftingProgressFill.fillAmount = 0f; // Сброс заполнения полосы на ноль
 
-        float elapsed = 0f;
-        while (elapsed < craftDurationSeconds)
+        float elapsed = 0f; // Прошедшее время
+        while (elapsed < craftDurationSeconds) // Цикл варки
         {
-            elapsed += Time.deltaTime;
-            float ratio = Mathf.Clamp01(elapsed / craftDurationSeconds);
-            if (craftingProgressFill != null) craftingProgressFill.fillAmount = ratio;
+            elapsed += Time.deltaTime; // Прибавление кадра
+            float ratio = Mathf.Clamp01(elapsed / craftDurationSeconds); // Вычисление процента заполнения
+            if (craftingProgressFill != null) craftingProgressFill.fillAmount = ratio; // Обновление полосы
 
-            float remaining = Mathf.Max(0f, craftDurationSeconds - elapsed);
-            if (craftingTimerText != null) craftingTimerText.text = $"{remaining:F1}s";
+            float remaining = Mathf.Max(0f, craftDurationSeconds - elapsed); // Оставшееся время
+            if (craftingTimerText != null) craftingTimerText.text = $"{remaining:F1}s"; // Обновление таймера на экране
 
-            yield return null;
+            yield return null; // Ожидание следующего кадра
         }
 
-        if (craftingProgressFill != null) craftingProgressFill.fillAmount = 1f;
-        if (craftingTimerText != null) craftingTimerText.text = "0.0s";
+        if (craftingProgressFill != null) craftingProgressFill.fillAmount = 1f; // Полное заполнение полосы
+        if (craftingTimerText != null) craftingTimerText.text = "0.0s"; // Обнуление таймера
 
-        yield return new WaitForSeconds(0.2f);
+        yield return new WaitForSeconds(0.2f); // Небольшая пауза
 
-        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false);
+        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false); // Скрытие шкалы варки
 
-        if (SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(craftCompleteSound);
+        if (SettingsManager.Instance != null) // Если менеджер звуков доступен
+            SettingsManager.Instance.PlaySoundEffect(craftCompleteSound); // Звук успешной варки
 
         // Появляется кнопка 'Забрать'
-        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(true);
+        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(true); // Появление кнопки сбора награды
     }
 
     /// <summary>
     /// Шаг 4: Нажатие 'Забрать' -> скрытие кнопки, плавный вылет кружка опыта (+10 XP) вверх, затем скрытие котла и начисление XP
     /// </summary>
-    public void OnClaimPotionClicked()
+    public void OnClaimPotionClicked() // Сбор готового сваренного зелья и запуск полета значка опыта
     {
-        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false);
-        if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false);
+        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false); // Скрытие кнопки "Забрать"
+        if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false); // Скрытие облачка котика
 
-        StartCoroutine(FlyFloatingXPAndProceed(firstRecipeRewardXP));
+        StartCoroutine(FlyFloatingXPAndProceed(firstRecipeRewardXP)); // Запуск анимации взлета опыта
     }
 
-    private IEnumerator FlyFloatingXPAndProceed(int xpAmount)
+    private IEnumerator FlyFloatingXPAndProceed(int xpAmount) // Корутина плавной анимации взлета кружка опыта вверх и начисления XP
     {
-        GameObject activeFloatingXP = floatingXPPrefab;
-        bool isDynamic = false;
+        GameObject activeFloatingXP = floatingXPPrefab; // Ссылка на объект плашки
+        bool isDynamic = false; // Флаг динамически созданного объекта
 
         // Если префаб/объект не привязан в инспекторе, создаем красивый динамический кружок опыта
-        if (activeFloatingXP == null)
+        if (activeFloatingXP == null) // Если префаб отсутствует
         {
-            Transform parentCanvas = transform;
-            Canvas rootCanvas = GetComponentInParent<Canvas>();
-            if (rootCanvas != null) parentCanvas = rootCanvas.transform;
+            Transform parentCanvas = transform; // Родитель по умолчанию
+            Canvas rootCanvas = GetComponentInParent<Canvas>(); // Поиск корневого холста
+            if (rootCanvas != null) parentCanvas = rootCanvas.transform; // Использование холста как родителя
 
-            activeFloatingXP = new GameObject("Dynamic_Floating_XP", typeof(RectTransform), typeof(CanvasGroup), typeof(Image));
-            activeFloatingXP.transform.SetParent(parentCanvas, false);
-            isDynamic = true;
+            activeFloatingXP = new GameObject("Dynamic_Floating_XP", typeof(RectTransform), typeof(CanvasGroup), typeof(Image)); // Создание объекта плашки
+            activeFloatingXP.transform.SetParent(parentCanvas, false); // Назначение родителя
+            isDynamic = true; // Пометка динамического создания
 
-            RectTransform drt = activeFloatingXP.GetComponent<RectTransform>();
-            drt.sizeDelta = new Vector2(76f, 76f);
-            drt.anchorMin = new Vector2(0.5f, 0.5f);
-            drt.anchorMax = new Vector2(0.5f, 0.5f);
-            drt.pivot = new Vector2(0.5f, 0.5f);
+            RectTransform drt = activeFloatingXP.GetComponent<RectTransform>(); // Компонент RectTransform
+            drt.sizeDelta = new Vector2(76f, 76f); // Размер значка опыта
+            drt.anchorMin = new Vector2(0.5f, 0.5f); // Центровка
+            drt.anchorMax = new Vector2(0.5f, 0.5f); // Центровка
+            drt.pivot = new Vector2(0.5f, 0.5f); // Центровка
 
-            Vector2 spawn = Vector2.zero;
-            if (floatingXPSpawnPoint != null)
-                spawn = floatingXPSpawnPoint.anchoredPosition;
-            else if (tableCauldronObject != null)
+            Vector2 spawn = Vector2.zero; // Стартовая точка
+            if (floatingXPSpawnPoint != null) // Если точка спавна указана
+                spawn = floatingXPSpawnPoint.anchoredPosition; // Координаты точки
+            else if (tableCauldronObject != null) // Иначе над котлом
             {
-                RectTransform crt = tableCauldronObject.GetComponent<RectTransform>();
-                if (crt != null) spawn = crt.anchoredPosition + new Vector2(0f, 60f);
+                RectTransform crt = tableCauldronObject.GetComponent<RectTransform>(); // Координаты котла
+                if (crt != null) spawn = crt.anchoredPosition + new Vector2(0f, 60f); // Смещение вверх на 60 единиц
             }
-            drt.anchoredPosition = spawn;
+            drt.anchoredPosition = spawn; // Установка стартовой позиции
 
-            Image dImg = activeFloatingXP.GetComponent<Image>();
-            Sprite s = GetSpriteForXp(xpAmount);
-            if (s != null)
+            Image dImg = activeFloatingXP.GetComponent<Image>(); // Компонент изображения
+            Sprite s = GetSpriteForXp(xpAmount); // Получение спрайта для количества опыта
+            if (s != null) // Если спрайт найден
             {
-                dImg.sprite = s;
+                dImg.sprite = s; // Установка спрайта
             }
-            else
+            else // Иначе фоновый цвет
             {
-                dImg.color = new Color(0.2f, 0.85f, 0.4f, 1f);
+                dImg.color = new Color(0.2f, 0.85f, 0.4f, 1f); // Зеленый оттенок опыта
             }
 
             // Добавляем красивый текст внутри
-            GameObject textObj = new GameObject("XP_Text", typeof(RectTransform), typeof(TextMeshProUGUI));
-            textObj.transform.SetParent(activeFloatingXP.transform, false);
-            RectTransform trt = textObj.GetComponent<RectTransform>();
-            trt.anchorMin = Vector2.zero;
-            trt.anchorMax = Vector2.one;
-            trt.offsetMin = Vector2.zero;
-            trt.offsetMax = Vector2.zero;
+            GameObject textObj = new GameObject("XP_Text", typeof(RectTransform), typeof(TextMeshProUGUI)); // Создание текста
+            textObj.transform.SetParent(activeFloatingXP.transform, false); // Назначение дочерним
+            RectTransform trt = textObj.GetComponent<RectTransform>(); // RectTransform текста
+            trt.anchorMin = Vector2.zero; // Растягивание по родителю
+            trt.anchorMax = Vector2.one; // Растягивание
+            trt.offsetMin = Vector2.zero; // Нулевые отступы
+            trt.offsetMax = Vector2.zero; // Нулевые отступы
 
-            TextMeshProUGUI txt = textObj.GetComponent<TextMeshProUGUI>();
-            txt.text = $"+{xpAmount} XP";
-            txt.alignment = TextAlignmentOptions.Center;
-            txt.fontSize = 20f;
-            txt.color = Color.white;
-            txt.fontStyle = FontStyles.Bold;
+            TextMeshProUGUI txt = textObj.GetComponent<TextMeshProUGUI>(); // Компонент TMP
+            txt.text = $"+{xpAmount} XP"; // Отображение количества опыта
+            txt.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
+            txt.fontSize = 20f; // Размер шрифта
+            txt.color = Color.white; // Белый цвет текста
+            txt.fontStyle = FontStyles.Bold; // Жирное начертание
         }
 
-        if (activeFloatingXP != null)
+        if (activeFloatingXP != null) // Если объект готов к показу
         {
-            activeFloatingXP.SetActive(true);
+            activeFloatingXP.SetActive(true); // Включение объекта
 
-            Image targetImg = floatingXPImage;
-            if (targetImg == null)
+            Image targetImg = floatingXPImage; // Поиск изображения
+            if (targetImg == null) // Если не привязано
             {
-                targetImg = activeFloatingXP.GetComponent<Image>();
-                if (targetImg == null) targetImg = activeFloatingXP.GetComponentInChildren<Image>(true);
+                targetImg = activeFloatingXP.GetComponent<Image>(); // Поиск на самом объекте
+                if (targetImg == null) targetImg = activeFloatingXP.GetComponentInChildren<Image>(true); // Поиск в дочерних
             }
 
-            if (targetImg != null)
+            if (targetImg != null) // Если изображение найдено
             {
-                targetImg.preserveAspect = true;
-                if (floatingXPImage != null)
+                targetImg.preserveAspect = true; // Сохранение пропорций
+                if (floatingXPImage != null) // Если иконка привязана
                 {
-                    Sprite chosenSprite = GetSpriteForXp(xpAmount);
-                    if (chosenSprite != null) targetImg.sprite = chosenSprite;
+                    Sprite chosenSprite = GetSpriteForXp(xpAmount); // Подбор спрайта опыта
+                    if (chosenSprite != null) targetImg.sprite = chosenSprite; // Назначение спрайта
                 }
             }
 
-            RectTransform rt = activeFloatingXP.GetComponent<RectTransform>();
-            if (rt != null)
+            RectTransform rt = activeFloatingXP.GetComponent<RectTransform>(); // Ссылка на RectTransform
+            if (rt != null) // Если есть
             {
                 // Сохраняем исходные размеры объекта, настроенные пользователем в Inspector
-                rt.localScale = Vector3.one;
+                rt.localScale = Vector3.one; // Базовый масштаб
             }
 
-            CanvasGroup cg = activeFloatingXP.GetComponent<CanvasGroup>();
-            if (cg == null) cg = activeFloatingXP.AddComponent<CanvasGroup>();
+            CanvasGroup cg = activeFloatingXP.GetComponent<CanvasGroup>(); // Ссылка на CanvasGroup
+            if (cg == null) cg = activeFloatingXP.AddComponent<CanvasGroup>(); // Добавление при отсутствии
 
-            Vector2 startPos = rt != null ? rt.anchoredPosition : Vector2.zero;
-            if (floatingXPSpawnPoint != null) startPos = floatingXPSpawnPoint.anchoredPosition;
-            if (rt != null) rt.anchoredPosition = startPos;
+            Vector2 startPos = rt != null ? rt.anchoredPosition : Vector2.zero; // Стартовая позиция
+            if (floatingXPSpawnPoint != null) startPos = floatingXPSpawnPoint.anchoredPosition; // Позиция из точки спавна
+            if (rt != null) rt.anchoredPosition = startPos; // Установка позиции
 
-            float duration = 1.6f;
-            float elapsed = 0f;
+            float duration = 1.6f; // Длительность полета
+            float elapsed = 0f; // Таймер анимации
 
-            while (elapsed < duration)
+            while (elapsed < duration) // Анимационный цикл взлета
             {
-                elapsed += Time.deltaTime;
-                float t = Mathf.Clamp01(elapsed / duration);
+                elapsed += Time.deltaTime; // Прибавление кадра
+                float t = Mathf.Clamp01(elapsed / duration); // Нормализованное время от 0 до 1
 
                 // Плавный взлет вверх с замедлением к концу
-                float easeOut = Mathf.Sin(t * Mathf.PI * 0.5f);
-                if (rt != null)
+                float easeOut = Mathf.Sin(t * Mathf.PI * 0.5f); // Функция плавности взлета
+                if (rt != null) // Если RectTransform есть
                 {
-                    rt.anchoredPosition = startPos + new Vector2(0f, easeOut * 150f);
-                    float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.2f;
-                    rt.localScale = new Vector3(scale, scale, 1f);
+                    rt.anchoredPosition = startPos + new Vector2(0f, easeOut * 150f); // Подъем на 150 пикселей вверх
+                    float scale = 1f + Mathf.Sin(t * Mathf.PI) * 0.2f; // Пульсация масштаба
+                    rt.localScale = new Vector3(scale, scale, 1f); // Обновление масштаба
                 }
 
-                if (cg != null)
+                if (cg != null) // Если есть CanvasGroup
                 {
-                    cg.alpha = (t > 0.6f) ? Mathf.Lerp(1f, 0f, (t - 0.6f) / 0.4f) : 1f;
+                    cg.alpha = (t > 0.6f) ? Mathf.Lerp(1f, 0f, (t - 0.6f) / 0.4f) : 1f; // Растворение в конце полета
                 }
 
-                yield return null;
+                yield return null; // Ожидание следующего кадра
             }
 
-            if (isDynamic)
+            if (isDynamic) // Если объект был динамическим
             {
-                Destroy(activeFloatingXP);
+                Destroy(activeFloatingXP); // Удаление временного объекта
             }
-            else
+            else // Если использовался объект сцены
             {
-                activeFloatingXP.SetActive(false);
-                if (cg != null) cg.alpha = 1f;
-                if (rt != null) rt.anchoredPosition = startPos;
+                activeFloatingXP.SetActive(false); // Скрытие объекта
+                if (cg != null) cg.alpha = 1f; // Восстановление непрозрачности
+                if (rt != null) rt.anchoredPosition = startPos; // Сброс позиции
             }
         }
-        else
+        else // Если плашки не было
         {
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.4f); // Небольшая задержка
         }
 
         // Скрываем котел и помощника только после завершения полета кружка опыта
-        if (tableCauldronObject != null) tableCauldronObject.SetActive(false);
-        if (tableMiniCatObject != null) tableMiniCatObject.SetActive(false);
+        if (tableCauldronObject != null) tableCauldronObject.SetActive(false); // Скрытие котла
+        if (tableMiniCatObject != null) tableMiniCatObject.SetActive(false); // Скрытие котика
 
         // Начисление опыта в профиль (10/10 XP -> повышает уровень до 2 Ур. 0/20 XP)
-        if (Avatar_Manager.Instance != null)
+        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
         {
-            Avatar_Manager.Instance.AddExperience(xpAmount);
+            Avatar_Manager.Instance.AddExperience(xpAmount); // Начисление заработанного опыта
         }
 
         // Запуск финальной фазы диалога с основным котом
-        if (DialogueSystem_Manager.Instance != null)
+        if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов активен
         {
-            DialogueSystem_Manager.Instance.isCraftingInProgress = false;
-            DialogueSystem_Manager.Instance.StartPostCraftChestDialogue();
+            DialogueSystem_Manager.Instance.isCraftingInProgress = false; // Сброс состояния варки
+            DialogueSystem_Manager.Instance.StartPostCraftChestDialogue(); // Запуск диалога о сундуке
         }
     }
 
-    private Sprite GetSpriteForXp(int xp)
+    private Sprite GetSpriteForXp(int xp) // Получение спрайта значка опыта в зависимости от количества начисляемого XP
     {
-        switch (xp)
+        switch (xp) // Выбор значка по числу опыта
         {
-            case 5: return xpBadge5;
-            case 10: return xpBadge10;
-            case 20: return xpBadge20;
-            case 30: return xpBadge30;
-            case 50: return xpBadge50;
-            case 100: return xpBadge100;
-            case 200: return xpBadge200;
-            case 300: return xpBadge300;
-            case 500: return xpBadge500;
-            case 1000: return xpBadge1000;
-            default: return xpBadge10;
+            case 5: return xpBadge5; // +5 XP
+            case 10: return xpBadge10; // +10 XP
+            case 20: return xpBadge20; // +20 XP
+            case 30: return xpBadge30; // +30 XP
+            case 50: return xpBadge50; // +50 XP
+            case 100: return xpBadge100; // +100 XP
+            case 200: return xpBadge200; // +200 XP
+            case 300: return xpBadge300; // +300 XP
+            case 500: return xpBadge500; // +500 XP
+            case 1000: return xpBadge1000; // +1000 XP
+            default: return xpBadge10; // По умолчанию +10 XP
         }
     }
 
     /// <summary>
     /// Шаг 5: Нажатие на сундучок в верхнем левом меню
     /// </summary>
-    public void OnChestButtonClicked()
+    public void OnChestButtonClicked() // Нажатие на иконку сундука в верхнем меню
     {
-        if (SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(chestOpenSound);
+        if (SettingsManager.Instance != null) // Если менеджер настроек активен
+            SettingsManager.Instance.PlaySoundEffect(chestOpenSound); // Звук открытия сундука
 
-        OpenInventory();
+        OpenInventory(); // Открытие панели инвентаря
     }
 
     [ContextMenu("Сбросить Прогресс Крафта и Сундука (Reset Crafting & Chest)")]
-    public void ResetCraftingAndChestProgress()
+    public void ResetCraftingAndChestProgress() // Сброс прогресса первого крафта и колбы сундука для отладки
     {
-        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed");
-        PlayerPrefs.DeleteKey("First_Recipe_Done");
-        PlayerPrefs.DeleteKey("Tutorial_Recipe_Done");
-        PlayerPrefs.Save();
-        isMasteryPotionConsumed = false;
-        if (masteryPotionItemObject != null) masteryPotionItemObject.SetActive(true);
-        if (inventoryCloseButton != null) inventoryCloseButton.interactable = false;
-        Debug.Log("[RecipeCrafting_Manager] Прогресс крафта и колбы сундука успешно сброшен!");
+        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed"); // Удаление флага выпитой колбы
+        PlayerPrefs.DeleteKey("First_Recipe_Done"); // Удаление флага завершения рецепта
+        PlayerPrefs.DeleteKey("Tutorial_Recipe_Done"); // Удаление флага туториала
+        PlayerPrefs.Save(); // Сохранение на диск
+        isMasteryPotionConsumed = false; // Сброс флага
+        if (masteryPotionItemObject != null) masteryPotionItemObject.SetActive(true); // Включение колбы
+        if (inventoryCloseButton != null) inventoryCloseButton.interactable = false; // Блокировка кнопки выхода
+        Debug.Log("[RecipeCrafting_Manager] Прогресс крафта и колбы сундука успешно сброшен!"); // Логирование
     }
 
-    public void OpenInventory()
+    public void OpenInventory() // Открытие панели инвентаря сундука и инициализация слотов
     {
-        if (DialogueSystem_Manager.Instance != null && DialogueSystem_Manager.Instance.dialoguePanel != null)
+        if (DialogueSystem_Manager.Instance != null && DialogueSystem_Manager.Instance.dialoguePanel != null) // Если открыт диалог
         {
-            DialogueSystem_Manager.Instance.dialoguePanel.SetActive(false);
+            DialogueSystem_Manager.Instance.dialoguePanel.SetActive(false); // Скрытие диалога
         }
 
         // Скрываем верхнюю панель ресурсов, чтобы не накладывалась на заголовок сундука
-        HideTopResources();
+        HideTopResources(); // Скрытие верхней панели
 
-        if (inventoryPanel != null)
+        if (inventoryPanel != null) // Если панель инвентаря есть
         {
-            inventoryPanel.SetActive(true);
-            SanitizeInventoryTitle();
+            inventoryPanel.SetActive(true); // Включение окна инвентаря
+            SanitizeInventoryTitle(); // Корректировка заголовка
         }
 
-        EnsureInventorySlots();
+        EnsureInventorySlots(); // Проверка и создание 100 ячеек инвентаря
 
         // Проверяем, выпита ли колба опыта мастерства
-        isMasteryPotionConsumed = PlayerPrefs.GetInt("Mastery_Flask_Consumed", 0) == 1;
+        isMasteryPotionConsumed = PlayerPrefs.GetInt("Mastery_Flask_Consumed", 0) == 1; // Загрузка статуса колбы
 
         // Проверяем/привязываем колбу в 1-м слоте
-        EnsureMasteryPotionInFirstSlot();
+        EnsureMasteryPotionInFirstSlot(); // Создание/поиск колбы мастерства
 
-        if (masteryPotionItemObject != null)
+        if (masteryPotionItemObject != null) // Если объект колбы есть
         {
-            masteryPotionItemObject.SetActive(!isMasteryPotionConsumed);
+            masteryPotionItemObject.SetActive(!isMasteryPotionConsumed); // Видимость колбы зависит от того, выпита ли она
         }
 
         // Если колба еще не выпита - блокируем крестик закрытия. Если выпита - разблокируем
-        if (inventoryCloseButton != null)
+        if (inventoryCloseButton != null) // Если кнопка закрытия есть
         {
-            inventoryCloseButton.interactable = isMasteryPotionConsumed;
+            inventoryCloseButton.interactable = isMasteryPotionConsumed; // Блокировка/разблокировка выхода
         }
     }
 
-    private void HideTopResources()
+    private void HideTopResources() // Скрытие верхней панели ресурсов при открытии полноэкранных окон
     {
-        GameObject topPanel = GameObject.Find("TopPanel");
-        if (topPanel != null) topPanel.SetActive(false);
-        GameObject headerPlate = GameObject.Find("Header_Plate");
-        if (headerPlate != null) headerPlate.SetActive(false);
+        GameObject topPanel = GameObject.Find("TopPanel"); // Поиск верхней панели
+        if (topPanel != null) topPanel.SetActive(false); // Отключение
+        GameObject headerPlate = GameObject.Find("Header_Plate"); // Поиск плашки заголовка
+        if (headerPlate != null) headerPlate.SetActive(false); // Отключение
     }
 
-    private void RestoreTopResources()
+    private void RestoreTopResources() // Восстановление отображения верхней панели ресурсов после закрытия окон
     {
-        GameObject topPanel = GameObject.Find("TopPanel");
-        if (topPanel != null) topPanel.SetActive(true);
-        GameObject headerPlate = GameObject.Find("Header_Plate");
-        if (headerPlate != null) headerPlate.SetActive(true);
+        GameObject topPanel = GameObject.Find("TopPanel"); // Поиск верхней панели
+        if (topPanel != null) topPanel.SetActive(true); // Включение панели
+        GameObject headerPlate = GameObject.Find("Header_Plate"); // Поиск плашки заголовка
+        if (headerPlate != null) headerPlate.SetActive(true); // Включение плашки
     }
 
-    private void SanitizeInventoryTitle()
+    private void SanitizeInventoryTitle() // Очистка и центровка текста заголовка окна сундука
     {
-        if (inventoryPanel == null) return;
-        TextMeshProUGUI[] tmps = inventoryPanel.GetComponentsInChildren<TextMeshProUGUI>(true);
-        foreach (var t in tmps)
+        if (inventoryPanel == null) return; // Пропуск если панели нет
+        TextMeshProUGUI[] tmps = inventoryPanel.GetComponentsInChildren<TextMeshProUGUI>(true); // Все TMP заголовки
+        foreach (var t in tmps) // Перебор текстовых полей
         {
-            if (t.name.Contains("Title") || t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
+            if (t.name.Contains("Title") || t.text.Contains("Инвентарь") || t.text.Contains("Сундук")) // Поиск заголовка
             {
-                t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim();
-                if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика";
-                t.alignment = TextAlignmentOptions.Center;
+                t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim(); // Удаление лишних слов
+                if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика"; // Дефолтный текст
+                t.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
 
-                RectTransform rt = t.GetComponent<RectTransform>();
-                if (rt != null)
+                RectTransform rt = t.GetComponent<RectTransform>(); // RectTransform заголовка
+                if (rt != null) // Настройка якорей
                 {
-                    rt.anchorMin = new Vector2(0.5f, 1f);
-                    rt.anchorMax = new Vector2(0.5f, 1f);
-                    rt.pivot = new Vector2(0.5f, 1f);
-                    rt.anchoredPosition = new Vector2(0f, -22f);
+                    rt.anchorMin = new Vector2(0.5f, 1f); // Верхний центр
+                    rt.anchorMax = new Vector2(0.5f, 1f); // Верхний центр
+                    rt.pivot = new Vector2(0.5f, 1f); // Верхний центр
+                    rt.anchoredPosition = new Vector2(0f, -22f); // Отступ сверху
                 }
             }
         }
-        UnityEngine.UI.Text[] texts = inventoryPanel.GetComponentsInChildren<UnityEngine.UI.Text>(true);
-        foreach (var t in texts)
+        UnityEngine.UI.Text[] texts = inventoryPanel.GetComponentsInChildren<UnityEngine.UI.Text>(true); // Legacy Text поля
+        foreach (var t in texts) // Перебор текстовых полей
         {
-            if (t.name.Contains("Title") || t.text.Contains("Инвентарь") || t.text.Contains("Сундук"))
+            if (t.name.Contains("Title") || t.text.Contains("Инвентарь") || t.text.Contains("Сундук")) // Поиск заголовка
             {
-                t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim();
-                if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика";
-                t.alignment = TextAnchor.MiddleCenter;
+                t.text = t.text.Replace("(Инвентарь)", "").Replace("Инвентарь", "").Trim(); // Удаление лишних слов
+                if (string.IsNullOrEmpty(t.text)) t.text = "Сундук Алхимика"; // Дефолтный текст
+                t.alignment = TextAnchor.MiddleCenter; // Выравнивание по центру
 
-                RectTransform rt = t.GetComponent<RectTransform>();
-                if (rt != null)
+                RectTransform rt = t.GetComponent<RectTransform>(); // RectTransform заголовка
+                if (rt != null) // Настройка якорей
                 {
-                    rt.anchorMin = new Vector2(0.5f, 1f);
-                    rt.anchorMax = new Vector2(0.5f, 1f);
-                    rt.pivot = new Vector2(0.5f, 1f);
-                    rt.anchoredPosition = new Vector2(0f, -22f);
+                    rt.anchorMin = new Vector2(0.5f, 1f); // Верхний центр
+                    rt.anchorMax = new Vector2(0.5f, 1f); // Верхний центр
+                    rt.pivot = new Vector2(0.5f, 1f); // Верхний центр
+                    rt.anchoredPosition = new Vector2(0f, -22f); // Отступ сверху
                 }
             }
         }
     }
 
-    private void EnsureMasteryPotionInFirstSlot()
+    private void EnsureMasteryPotionInFirstSlot() // Создание или привязка объекта колбы опыта мастерства в первом слоте инвентаря
     {
-        if (inventorySlotsContent != null && inventorySlotsContent.childCount > 0)
+        if (inventorySlotsContent != null && inventorySlotsContent.childCount > 0) // Если слоты существуют
         {
-            Transform firstSlot = inventorySlotsContent.GetChild(0);
+            Transform firstSlot = inventorySlotsContent.GetChild(0); // Получение первого слота
 
-            if (masteryPotionItemObject == null)
+            if (masteryPotionItemObject == null) // Если колба еще не привязана
             {
                 // Ищем существующий объект колбы внутри 1-го слота
-                Transform found = firstSlot.Find("Mastery_Potion_Flask");
-                if (found == null) found = firstSlot.Find("Potion_Item");
-                if (found == null) found = firstSlot.Find("Flask");
+                Transform found = firstSlot.Find("Mastery_Potion_Flask"); // Поиск по имени
+                if (found == null) found = firstSlot.Find("Potion_Item"); // Альтернативное имя
+                if (found == null) found = firstSlot.Find("Flask"); // Альтернативное имя
 
-                if (found != null)
+                if (found != null) // Если найден объект
                 {
-                    masteryPotionItemObject = found.gameObject;
+                    masteryPotionItemObject = found.gameObject; // Привязка ссылки
                 }
-                else
+                else // Иначе создаем новую плашку колбы
                 {
                     // Создаем плашку колбы опыта мастерства в первом слоте
-                    GameObject flaskObj = new GameObject("Mastery_Potion_Flask", typeof(RectTransform), typeof(Image), typeof(Button));
-                    flaskObj.transform.SetParent(firstSlot, false);
+                    GameObject flaskObj = new GameObject("Mastery_Potion_Flask", typeof(RectTransform), typeof(Image), typeof(Button)); // Создание объекта
+                    flaskObj.transform.SetParent(firstSlot, false); // Вложение в 1-й слот
 
-                    RectTransform frt = flaskObj.GetComponent<RectTransform>();
-                    frt.anchorMin = Vector2.zero;
-                    frt.anchorMax = Vector2.one;
-                    frt.offsetMin = new Vector2(8, 8);
-                    frt.offsetMax = new Vector2(-8, -8);
+                    RectTransform frt = flaskObj.GetComponent<RectTransform>(); // RectTransform колбы
+                    frt.anchorMin = Vector2.zero; // Растягивание по слоту
+                    frt.anchorMax = Vector2.one; // Растягивание
+                    frt.offsetMin = new Vector2(8, 8); // Отступ
+                    frt.offsetMax = new Vector2(-8, -8); // Отступ
 
-                    Image fImg = flaskObj.GetComponent<Image>();
-                    if (xpBadge100 != null)
+                    Image fImg = flaskObj.GetComponent<Image>(); // Изображение колбы
+                    if (xpBadge100 != null) // Если спрайт +100 XP доступен
                     {
-                        fImg.sprite = xpBadge100;
+                        fImg.sprite = xpBadge100; // Назначение спрайта
                     }
-                    else if (floatingXPImage != null && floatingXPImage.sprite != null)
+                    else if (floatingXPImage != null && floatingXPImage.sprite != null) // Иначе спрайт плашки
                     {
-                        fImg.sprite = floatingXPImage.sprite;
+                        fImg.sprite = floatingXPImage.sprite; // Назначение спрайта
                     }
-                    else
+                    else // Иначе цвет
                     {
-                        fImg.color = new Color(0.2f, 0.9f, 0.6f, 0.95f);
+                        fImg.color = new Color(0.2f, 0.9f, 0.6f, 0.95f); // Бирюзовый оттенок
                     }
 
-                    masteryPotionItemObject = flaskObj;
+                    masteryPotionItemObject = flaskObj; // Сохранение ссылки на колбу
                 }
             }
 
-            if (masteryPotionItemObject != null)
+            if (masteryPotionItemObject != null) // Если колба активна
             {
-                masteryPotionButton = masteryPotionItemObject.GetComponent<Button>();
-                if (masteryPotionButton == null) masteryPotionButton = masteryPotionItemObject.AddComponent<Button>();
-                masteryPotionButton.onClick.RemoveAllListeners();
-                masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked);
+                masteryPotionButton = masteryPotionItemObject.GetComponent<Button>(); // Получение Button
+                if (masteryPotionButton == null) masteryPotionButton = masteryPotionItemObject.AddComponent<Button>(); // Добавление Button
+                masteryPotionButton.onClick.RemoveAllListeners(); // Очистка слушателей
+                masteryPotionButton.onClick.AddListener(OnMasteryPotionClicked); // Привязка клика выпивания
             }
         }
     }
@@ -910,36 +910,36 @@ public class RecipeCrafting_Manager : MonoBehaviour
     /// <summary>
     /// Автоматическая генерация или проверка 100 ячеек инвентаря
     /// </summary>
-    public void EnsureInventorySlots()
+    public void EnsureInventorySlots() // Автоматическая генерация и проверка сетки 100 ячеек инвентаря (5 колонок)
     {
-        if (inventorySlotsContent == null) return;
+        if (inventorySlotsContent == null) return; // Пропуск если контейнер не задан
 
         // Настраиваем сетку (GridLayoutGroup) на 5 колонок если компонент есть
-        GridLayoutGroup grid = inventorySlotsContent.GetComponent<GridLayoutGroup>();
-        if (grid != null)
+        GridLayoutGroup grid = inventorySlotsContent.GetComponent<GridLayoutGroup>(); // Компонент сетки
+        if (grid != null) // Если сетка найдена
         {
-            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = columnsCount;
+            grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; // Фиксированное число колонок
+            grid.constraintCount = columnsCount; // 5 колонок
         }
 
         // Если в инвентаре уже есть дочерние слоты и их меньше 100, дополняем при наличии префаба или клонируя первый слот
-        if (inventorySlotPrefab != null)
+        if (inventorySlotPrefab != null) // Если назначен префаб слота
         {
-            int currentChildCount = inventorySlotsContent.childCount;
-            for (int i = currentChildCount; i < totalSlots; i++)
+            int currentChildCount = inventorySlotsContent.childCount; // Текущее число слотов
+            for (int i = currentChildCount; i < totalSlots; i++) // Досоздание до 100 слотов
             {
-                GameObject newSlot = Instantiate(inventorySlotPrefab, inventorySlotsContent);
-                newSlot.name = $"Inventory_Slot_Hex_{i + 1}";
+                GameObject newSlot = Instantiate(inventorySlotPrefab, inventorySlotsContent); // Создание слота
+                newSlot.name = $"Inventory_Slot_Hex_{i + 1}"; // Имя слота
             }
         }
-        else if (inventorySlotsContent.childCount > 0 && inventorySlotsContent.childCount < totalSlots)
+        else if (inventorySlotsContent.childCount > 0 && inventorySlotsContent.childCount < totalSlots) // Клонирование первого слота
         {
-            GameObject template = inventorySlotsContent.GetChild(0).gameObject;
-            int currentChildCount = inventorySlotsContent.childCount;
-            for (int i = currentChildCount; i < totalSlots; i++)
+            GameObject template = inventorySlotsContent.GetChild(0).gameObject; // Шаблон слота
+            int currentChildCount = inventorySlotsContent.childCount; // Текущее количество слотов
+            for (int i = currentChildCount; i < totalSlots; i++) // Клонирование до 100 слотов
             {
-                GameObject newSlot = Instantiate(template, inventorySlotsContent);
-                newSlot.name = $"Inventory_Slot_Hex_{i + 1}";
+                GameObject newSlot = Instantiate(template, inventorySlotsContent); // Создание клона
+                newSlot.name = $"Inventory_Slot_Hex_{i + 1}"; // Имя слота
             }
         }
     }
@@ -947,67 +947,67 @@ public class RecipeCrafting_Manager : MonoBehaviour
     /// <summary>
     /// Шаг 6: Игрок нажимает на Колбу Опыта Мастерства в 1-м слоте (+100 XP)
     /// </summary>
-    public void OnMasteryPotionClicked()
+    public void OnMasteryPotionClicked() // Нажатие на колбу опыта мастерства (+100 XP) и повышение ранга
     {
-        if (isMasteryPotionConsumed) return;
-        isMasteryPotionConsumed = true;
+        if (isMasteryPotionConsumed) return; // Выход если уже выпита
+        isMasteryPotionConsumed = true; // Установка флага выпивания
 
-        if (potionConsumeSound != null && SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(potionConsumeSound);
-        else if (craftCompleteSound != null && SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(craftCompleteSound);
+        if (potionConsumeSound != null && SettingsManager.Instance != null) // Звук выпивания
+            SettingsManager.Instance.PlaySoundEffect(potionConsumeSound); // Воспроизведение звука
+        else if (craftCompleteSound != null && SettingsManager.Instance != null) // Альтернативный звук
+            SettingsManager.Instance.PlaySoundEffect(craftCompleteSound); // Воспроизведение звука
 
         // Колба пропадает из слота
-        if (masteryPotionItemObject != null)
+        if (masteryPotionItemObject != null) // Если объект колбы есть
         {
-            masteryPotionItemObject.SetActive(false);
+            masteryPotionItemObject.SetActive(false); // Скрытие колбы из слота
         }
 
         // Начисляем 100 опыта мастерства (переход с Новичка на Новичок-травник)
-        if (Avatar_Manager.Instance != null)
+        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
         {
-            Avatar_Manager.Instance.AddMasteryExperience(100);
+            Avatar_Manager.Instance.AddMasteryExperience(100); // Начисление +100 опыта мастерства
         }
 
         // Активируем кнопку-крестик выхода из инвентаря
-        if (inventoryCloseButton != null)
+        if (inventoryCloseButton != null) // Если кнопка закрытия есть
         {
-            inventoryCloseButton.interactable = true;
+            inventoryCloseButton.interactable = true; // Разблокировка кнопки выхода
         }
     }
 
     /// <summary>
     /// Шаг 7: Игрок нажимает крестик выхода из инвентаря -> блокировка сундука, переход к диалогу о Знаниях
     /// </summary>
-    public void OnInventoryCloseClicked()
+    public void OnInventoryCloseClicked() // Закрытие инвентаря, возврат панели ресурсов и переход к диалогу о Знаниях
     {
-        if (inventoryPanel != null)
+        if (inventoryPanel != null) // Если панель инвентаря есть
         {
-            inventoryPanel.SetActive(false);
+            inventoryPanel.SetActive(false); // Скрытие инвентаря
         }
 
         // Восстанавливаем отображение верхней панели ресурсов
-        RestoreTopResources();
+        RestoreTopResources(); // Возврат верхней панели ресурсов
 
-        if (DialogueSystem_Manager.Instance != null)
+        if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов активен
         {
             // Блокируем сундук
-            DialogueSystem_Manager.Instance.SetChestButtonInteractable(false);
+            DialogueSystem_Manager.Instance.SetChestButtonInteractable(false); // Блокировка кнопки сундука
 
             // Запускаем диалог про раздел 'Знания' и повышение до 'Новичок-травник'
-            DialogueSystem_Manager.Instance.StartPostMasteryKnowledgeDialogue();
+            DialogueSystem_Manager.Instance.StartPostMasteryKnowledgeDialogue(); // Запуск диалога
         }
     }
 
     /// <summary>
     /// Добавление зелья или предмета в первый свободный слот инвентаря
     /// </summary>
-    public void AddPotionToFirstEmptySlot(string potionId, string potionTitle)
+    public void AddPotionToFirstEmptySlot(string potionId, string potionTitle) // Сохранение добавленного зелья или предмета в память инвентаря
     {
-        int currentCount = PlayerPrefs.GetInt($"Item_Count_{potionId}", 0);
-        PlayerPrefs.SetInt($"Item_Count_{potionId}", currentCount + 1);
-        PlayerPrefs.SetString($"Item_Name_{potionId}", potionTitle);
-        PlayerPrefs.Save();
-        Debug.Log($"[INVENTORY] Награда {potionTitle} ({potionId}) успешно добавлена в инвентарь (Количество: {currentCount + 1}).");
+        int currentCount = PlayerPrefs.GetInt($"Item_Count_{potionId}", 0); // Текущее количество предмета
+        PlayerPrefs.SetInt($"Item_Count_{potionId}", currentCount + 1); // Увеличение счетчика на 1
+        PlayerPrefs.SetString($"Item_Name_{potionId}", potionTitle); // Сохранение имени предмета
+        PlayerPrefs.Save(); // Запись в реестр PlayerPrefs
+        Debug.Log($"[INVENTORY] Награда {potionTitle} ({potionId}) успешно добавлена в инвентарь (Количество: {currentCount + 1})."); // Логирование
     }
 }

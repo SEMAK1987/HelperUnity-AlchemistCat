@@ -39,108 +39,108 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI cauldronText; // Текстовый индикатор уровня котла
     public Slider xpSlider; // Графическая полоса прогресса опыта (Slider)
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона при загрузке объекта
     {
-        if (Instance != null && Instance != this)
+        if (Instance != null && Instance != this) // Проверка на наличие существующего синглтона
         {
             Destroy(gameObject); // Защита от дубликатов при перезагрузке сцены
-            return;
+            return; // Выход из метода
         }
         Instance = this; // Назначение глобального экземпляра
     }
 
-    private void Start()
+    private void Start() // Стартовая загрузка данных игрока и обновление UI
     {
         LoadResourcesFromPlayerPrefs(); // Загрузка всех сохраненных балансов и уровня
         UpdateUI(); // Обновление числовых показателей на экране
     }
 
-    public void LoadResourcesFromPlayerPrefs()
+    public void LoadResourcesFromPlayerPrefs() // Чтение баланса золота, кристаллов, камней и опыта из PlayerPrefs
     {
-        gold = PlayerPrefs.GetInt("Player_Gold", 5000);
-        crystals = PlayerPrefs.GetInt("Player_Crystals", 0);
-        stones = PlayerPrefs.GetInt("Player_Stones", 10);
-        scrolls = PlayerPrefs.GetInt("Player_Scrolls", 3);
-        currentXP = PlayerPrefs.GetInt("Player_XP", 0);
-        catLevel = PlayerPrefs.GetInt("Player_Level", 1);
+        gold = PlayerPrefs.GetInt("Player_Gold", 5000); // Загрузка золота (по умолчанию 5000)
+        crystals = PlayerPrefs.GetInt("Player_Crystals", 0); // Загрузка кристаллов (по умолчанию 0)
+        stones = PlayerPrefs.GetInt("Player_Stones", 10); // Загрузка камней (по умолчанию 10)
+        scrolls = PlayerPrefs.GetInt("Player_Scrolls", 3); // Загрузка свитков (по умолчанию 3)
+        currentXP = PlayerPrefs.GetInt("Player_XP", 0); // Загрузка текущего опыта (по умолчанию 0)
+        catLevel = PlayerPrefs.GetInt("Player_Level", 1); // Загрузка уровня персонажа (по умолчанию 1)
     }
 
-    public void SaveResourcesToPlayerPrefs()
+    public void SaveResourcesToPlayerPrefs() // Сохранение текущих значений ресурсов и опыта в PlayerPrefs
     {
-        PlayerPrefs.SetInt("Player_Gold", gold);
-        PlayerPrefs.SetInt("Player_Crystals", crystals);
-        PlayerPrefs.SetInt("Player_Stones", stones);
-        PlayerPrefs.SetInt("Player_Scrolls", scrolls);
-        PlayerPrefs.SetInt("Player_XP", currentXP);
-        PlayerPrefs.SetInt("Player_Level", catLevel);
-        PlayerPrefs.Save();
+        PlayerPrefs.SetInt("Player_Gold", gold); // Сохранение золота
+        PlayerPrefs.SetInt("Player_Crystals", crystals); // Сохранение кристаллов
+        PlayerPrefs.SetInt("Player_Stones", stones); // Сохранение камней
+        PlayerPrefs.SetInt("Player_Scrolls", scrolls); // Сохранение свитков
+        PlayerPrefs.SetInt("Player_XP", currentXP); // Сохранение опыта
+        PlayerPrefs.SetInt("Player_Level", catLevel); // Сохранение уровня
+        PlayerPrefs.Save(); // Запись изменений на постоянный накопитель
     }
 
-    public void AddGold(int amount)
+    public void AddGold(int amount) // Добавление золота на счет игрока с автосохранением и синхронизацией
     {
-        gold += amount;
-        SaveResourcesToPlayerPrefs();
-        UpdateUI();
-        if (DialogueSystem_Manager.Instance != null)
+        gold += amount; // Увеличение запаса золота
+        SaveResourcesToPlayerPrefs(); // Сохранение обновленного баланса
+        UpdateUI(); // Обновление числовых данных в интерфейсе
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер активен
         {
-            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources();
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Синхронизация отображения в шапке
         }
     }
 
-    public void AddCrystals(int amount)
+    public void AddCrystals(int amount) // Добавление кристаллов с автосохранением и обновлением
     {
-        crystals += amount;
-        SaveResourcesToPlayerPrefs();
-        UpdateUI();
-        if (DialogueSystem_Manager.Instance != null)
+        crystals += amount; // Увеличение запаса кристаллов
+        SaveResourcesToPlayerPrefs(); // Сохранение обновленного баланса
+        UpdateUI(); // Обновление числовых данных в интерфейсе
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер активен
         {
-            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources();
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Синхронизация отображения в шапке
         }
     }
 
-    public void AddResources(int addGold, int addStones, int addScrolls, int addCrystals)
+    public void AddResources(int addGold, int addStones, int addScrolls, int addCrystals) // Массовое начисление всех видов ресурсов
     {
-        gold += addGold;
-        stones += addStones;
-        scrolls += addScrolls;
-        crystals += addCrystals;
-        SaveResourcesToPlayerPrefs();
-        UpdateUI();
-        if (DialogueSystem_Manager.Instance != null)
+        gold += addGold; // Начисление золота
+        stones += addStones; // Начисление камней
+        scrolls += addScrolls; // Начисление свитков
+        crystals += addCrystals; // Начисление кристаллов
+        SaveResourcesToPlayerPrefs(); // Сохранение всех обновленных ресурсов
+        UpdateUI(); // Обновление числовых данных в интерфейсе
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер активен
         {
-            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources();
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Синхронизация отображения в шапке
         }
     }
 
-    public void AddXP(int amount)
+    public void AddXP(int amount) // Начисление опыта игроку и персонажу с автосохранением
     {
-        currentXP += amount;
-        if (Avatar_Manager.Instance != null)
+        currentXP += amount; // Увеличение накопленного опыта
+        if (Avatar_Manager.Instance != null) // Если менеджер аватаров активен
         {
-            Avatar_Manager.Instance.GainPlayerExperience(amount);
+            Avatar_Manager.Instance.GainPlayerExperience(amount); // Передача опыта в систему аватара
         }
-        SaveResourcesToPlayerPrefs();
-        UpdateUI();
+        SaveResourcesToPlayerPrefs(); // Сохранение опыта в PlayerPrefs
+        UpdateUI(); // Обновление индикаторов уровня и прогресс-бара
     }
 
-    public void UpdateUI()
+    public void UpdateUI() // Обновление текста всех UI-элементов и слайдера опыта
     {
-        if (goldText != null) goldText.text = gold.ToString();
-        if (crystalsText != null) crystalsText.text = crystals.ToString();
-        if (stonesText != null) stonesText.text = stones.ToString();
-        if (scrollsText != null) scrollsText.text = scrolls.ToString();
-        if (levelText != null) levelText.text = catLevel.ToString();
-        if (xpText != null) xpText.text = $"{currentXP}/{xpToNextLevel}";
-        if (xpSlider != null)
+        if (goldText != null) goldText.text = gold.ToString(); // Отображение золота
+        if (crystalsText != null) crystalsText.text = crystals.ToString(); // Отображение кристаллов
+        if (stonesText != null) stonesText.text = stones.ToString(); // Отображение камней
+        if (scrollsText != null) scrollsText.text = scrolls.ToString(); // Отображение свитков
+        if (levelText != null) levelText.text = catLevel.ToString(); // Отображение уровня
+        if (xpText != null) xpText.text = $"{currentXP}/{xpToNextLevel}"; // Отображение дроби опыта
+        if (xpSlider != null) // Если полоса опыта назначена
         {
-            xpSlider.maxValue = xpToNextLevel;
-            xpSlider.value = currentXP;
+            xpSlider.maxValue = xpToNextLevel; // Установка максимума слайдера
+            xpSlider.value = currentXP; // Установка текущего значения слайдера
         }
-        if (cauldronText != null) cauldronText.text = $"Ур. {cauldronLevel}";
+        if (cauldronText != null) cauldronText.text = $"Ур. {cauldronLevel}"; // Отображение уровня котла
     }
 
-    public void SyncUI()
+    public void SyncUI() // Публичный триггер синхронизации UI
     {
-        UpdateUI();
+        UpdateUI(); // Вызов обновления интерфейса
     }
 }

@@ -41,107 +41,107 @@ public class YandexAdsManager : MonoBehaviour
     /// <summary>
     /// Вызов показа вознаграждаемой рекламы (Rewarded Video).
     /// </summary>
-    public void ShowRewarded(Action onSuccess, Action onClose = null)
+    public void ShowRewarded(Action onSuccess, Action onClose = null) // Запуск показа видеорекламы с наградой
     {
-        rewardedSuccessCallback = onSuccess;
-        rewardedCloseCallback = onClose;
+        rewardedSuccessCallback = onSuccess; // Сохранение колбэка награды
+        rewardedCloseCallback = onClose; // Сохранение колбэка закрытия
 
-        Debug.Log("[YANDEX ADS] Запрос на показ Rewarded видео.");
+        Debug.Log("[YANDEX ADS] Запрос на показ Rewarded видео."); // Лог запроса
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        if (!isTestMode)
+        if (!isTestMode) // Если запущен реальный WebGL билд
         {
             try
             {
-                ShowYandexRewarded();
+                ShowYandexRewarded(); // Вызов JavaScript SDK Яндекса
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[YANDEX ADS] Ошибка вызова JS SDK: {ex}");
-                SimulateRewardedSuccess(); // Резервный запуск
+                Debug.LogError($"[YANDEX ADS] Ошибка вызова JS SDK: {ex}"); // Лог ошибки SDK
+                SimulateRewardedSuccess(); // Резервный запуск симулятора
             }
         }
         else
         {
-            SimulateRewardedSuccess();
+            SimulateRewardedSuccess(); // Тестовый режим в браузере
         }
 #else
-        SimulateRewardedSuccess();
+        SimulateRewardedSuccess(); // Режим в редакторе Unity
 #endif
     }
 
     /// <summary>
     /// Вызов показа межстраничной рекламы (Interstitial).
     /// </summary>
-    public void ShowInterstitial(Action onClose = null)
+    public void ShowInterstitial(Action onClose = null) // Запуск полноэкранной рекламы
     {
-        interstitialCloseCallback = onClose;
+        interstitialCloseCallback = onClose; // Сохранение колбэка закрытия
 
-        Debug.Log("[YANDEX ADS] Запрос на показ Interstitial рекламы.");
+        Debug.Log("[YANDEX ADS] Запрос на показ Interstitial рекламы."); // Лог запроса
 
 #if UNITY_WEBGL && !UNITY_EDITOR
-        if (!isTestMode)
+        if (!isTestMode) // Если реальный WebGL
         {
             try
             {
-                ShowYandexInterstitial();
+                ShowYandexInterstitial(); // Вызов JS метода баннера
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[YANDEX ADS] Ошибка вызова JS SDK: {ex}");
-                SimulateInterstitialClose();
+                Debug.LogError($"[YANDEX ADS] Ошибка вызова JS SDK: {ex}"); // Лог ошибки
+                SimulateInterstitialClose(); // Резервное закрытие
             }
         }
         else
         {
-            SimulateInterstitialClose();
+            SimulateInterstitialClose(); // Тестовое закрытие в WebGL
         }
 #else
-        SimulateInterstitialClose();
+        SimulateInterstitialClose(); // Тестовое закрытие в редакторе
 #endif
     }
 
     #region JS Обратные вызовы (Web -> Unity)
     // Эти методы вызываются из index.html / плагина Yandex SDK JS
-    public void OnRewardedSuccess()
+    public void OnRewardedSuccess() // Колбэк при завершении просмотра рекламы
     {
-        Debug.Log("[YANDEX ADS] Видео просмотрено! Начисляем награду.");
-        rewardedSuccessCallback?.Invoke();
-        rewardedSuccessCallback = null;
+        Debug.Log("[YANDEX ADS] Видео просмотрено! Начисляем награду."); // Лог начисления
+        rewardedSuccessCallback?.Invoke(); // Вызов пользовательского действия начисления
+        rewardedSuccessCallback = null; // Сброс ссылки
     }
 
-    public void OnRewardedClosed()
+    public void OnRewardedClosed() // Колбэк при закрытии окна вознаграждаемой рекламы
     {
-        Debug.Log("[YANDEX ADS] Реклама Rewarded закрыта.");
-        rewardedCloseCallback?.Invoke();
-        rewardedCloseCallback = null;
+        Debug.Log("[YANDEX ADS] Реклама Rewarded закрыта."); // Лог закрытия
+        rewardedCloseCallback?.Invoke(); // Вызов действия закрытия
+        rewardedCloseCallback = null; // Сброс ссылки
     }
 
-    public void OnInterstitialClosed()
+    public void OnInterstitialClosed() // Колбэк при закрытии межстраничного баннера
     {
-        Debug.Log("[YANDEX ADS] Межстраничная реклама закрыта.");
-        interstitialCloseCallback?.Invoke();
-        interstitialCloseCallback = null;
+        Debug.Log("[YANDEX ADS] Межстраничная реклама закрыта."); // Лог закрытия
+        interstitialCloseCallback?.Invoke(); // Вызов действия закрытия
+        interstitialCloseCallback = null; // Сброс ссылки
     }
     #endregion
 
     #region Симулятор для Редактора / Тестов
-    private void SimulateRewardedSuccess()
+    private void SimulateRewardedSuccess() // Метод имитации просмотра рекламы для тестирования
     {
-        Debug.Log("[YANDEX ADS] Имитация успешного просмотра рекламы (Тестовый режим).");
+        Debug.Log("[YANDEX ADS] Имитация успешного просмотра рекламы (Тестовый режим)."); // Лог имитации
         // Начисляем в симуляторе +500 золота
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Если игровой менеджер активен
         {
-            GameManager.Instance.AddGold(500);
+            GameManager.Instance.AddGold(500); // Тестовое начисление 500 золота
         }
-        OnRewardedSuccess();
-        OnRewardedClosed();
+        OnRewardedSuccess(); // Вызов успешного колбэка
+        OnRewardedClosed(); // Вызов закрытия окна
     }
 
-    private void SimulateInterstitialClose()
+    private void SimulateInterstitialClose() // Метод имитации закрытия межстраничной рекламы
     {
-        Debug.Log("[YANDEX ADS] Имитация закрытия межстраничной рекламы.");
-        OnInterstitialClosed();
+        Debug.Log("[YANDEX ADS] Имитация закрытия межстраничной рекламы."); // Лог имитации
+        OnInterstitialClosed(); // Вызов закрытия
     }
     #endregion
 }

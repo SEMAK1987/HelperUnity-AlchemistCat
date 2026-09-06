@@ -37,39 +37,39 @@ public class Menu_Game : MonoBehaviour
         }
     }
 
-    public void TransferNewReferences(Menu_Game newInstance)
+    public void TransferNewReferences(Menu_Game newInstance) // Метод обновления ссылок при повторной загрузке сцены
     {
         try
         {
-            this.mainMenuPanel = newInstance.mainMenuPanel;
-            this.settingsPanel = newInstance.settingsPanel;
+            this.mainMenuPanel = newInstance.mainMenuPanel; // Панель главного меню
+            this.settingsPanel = newInstance.settingsPanel; // Панель настроек
 
-            this.startButton = newInstance.startButton;
-            this.settingsButton = newInstance.settingsButton;
-            this.exitButton = newInstance.exitButton;
-            this.settingsBackButton = newInstance.settingsBackButton;
+            this.startButton = newInstance.startButton; // Кнопка старта
+            this.settingsButton = newInstance.settingsButton; // Кнопка настроек
+            this.exitButton = newInstance.exitButton; // Кнопка выхода
+            this.settingsBackButton = newInstance.settingsBackButton; // Кнопка возврата
 
-            this.startButtonPadding = newInstance.startButtonPadding;
-            this.settingsButtonPadding = newInstance.settingsButtonPadding;
-            this.exitButtonPadding = newInstance.exitButtonPadding;
-            this.backButtonPadding = newInstance.backButtonPadding;
+            this.startButtonPadding = newInstance.startButtonPadding; // Отступы клика старта
+            this.settingsButtonPadding = newInstance.settingsButtonPadding; // Отступы клика настроек
+            this.exitButtonPadding = newInstance.exitButtonPadding; // Отступы клика выхода
+            this.backButtonPadding = newInstance.backButtonPadding; // Отступы клика возврата
 
-            this.dayBackgroundImage = newInstance.dayBackgroundImage;
-            this.nightBackgroundImage = newInstance.nightBackgroundImage;
-            this.autoCycleBackgrounds = newInstance.autoCycleBackgrounds;
-            this.dayNightCycleSpeed = newInstance.dayNightCycleSpeed;
-            this.dayNightBlendFactor = newInstance.dayNightBlendFactor;
-            this.cycleType = newInstance.cycleType;
+            this.dayBackgroundImage = newInstance.dayBackgroundImage; // Дневной фон
+            this.nightBackgroundImage = newInstance.nightBackgroundImage; // Ночной фон
+            this.autoCycleBackgrounds = newInstance.autoCycleBackgrounds; // Флаг авто-цикла
+            this.dayNightCycleSpeed = newInstance.dayNightCycleSpeed; // Скорость смены дня/ночи
+            this.dayNightBlendFactor = newInstance.dayNightBlendFactor; // Коэффициент дня/ночи
+            this.cycleType = newInstance.cycleType; // Тип суточного цикла
 
-            this.gameTitleText = newInstance.gameTitleText;
-            this.backgroundLayer = newInstance.backgroundLayer;
-            this.parallaxStrength = newInstance.parallaxStrength;
+            this.gameTitleText = newInstance.gameTitleText; // Логотип игры
+            this.backgroundLayer = newInstance.backgroundLayer; // Слой фона
+            this.parallaxStrength = newInstance.parallaxStrength; // Сила параллакса
 
-            SetupListeners();
+            SetupListeners(); // Повторная привязка обработчиков нажатий
         }
         catch (System.Exception ex)
         {
-            Debug.LogError($"[ALCHEMIST MENU ERROR] Ошибка при автоматическом переносе ссылок: {ex}");
+            Debug.LogError($"[ALCHEMIST MENU ERROR] Ошибка при автоматическом переносе ссылок: {ex}"); // Лог ошибки
         }
     }
 
@@ -275,208 +275,208 @@ public class Menu_Game : MonoBehaviour
         }
     }
 
-    private void SetupListeners()
+    private void SetupListeners() // Настройка слушателей событий кнопок интерфейса
     {
-        if (startButton != null)
+        if (startButton != null) // Кнопка "Играть"
         {
-            startButton.onClick.RemoveAllListeners();
-            startButton.onClick.AddListener(OnStartPressed);
-            SetAlphaHitThreshold(startButton, 0.5f);
+            startButton.onClick.RemoveAllListeners(); // Сброс старых слушателей
+            startButton.onClick.AddListener(OnStartPressed); // Добавление перехода в игру
+            SetAlphaHitThreshold(startButton, 0.5f); // Настройка чувствительности к прозрачности
         }
-        if (settingsButton != null)
+        if (settingsButton != null) // Кнопка "Настройки"
         {
-            settingsButton.onClick.RemoveAllListeners();
-            settingsButton.onClick.AddListener(OnSettingsPressed);
-            SetAlphaHitThreshold(settingsButton, 0.5f);
+            settingsButton.onClick.RemoveAllListeners(); // Сброс старых слушателей
+            settingsButton.onClick.AddListener(OnSettingsPressed); // Добавление открытия настроек
+            SetAlphaHitThreshold(settingsButton, 0.5f); // Настройка чувствительности
         }
-        if (exitButton != null)
+        if (exitButton != null) // Кнопка "Выход"
         {
-            exitButton.onClick.RemoveAllListeners();
-            exitButton.onClick.AddListener(OnExitPressed);
-            SetAlphaHitThreshold(exitButton, 0.5f);
+            exitButton.onClick.RemoveAllListeners(); // Сброс старых слушателей
+            exitButton.onClick.AddListener(OnExitPressed); // Добавление выхода из приложения
+            SetAlphaHitThreshold(exitButton, 0.5f); // Настройка чувствительности
         }
 
         // Автоматический поиск кнопки Назад в панели настроек, если она не задана вручную
-        if (settingsBackButton == null && settingsPanel != null)
+        if (settingsBackButton == null && settingsPanel != null) // Авто-поиск кнопки "Назад"
         {
-            Button[] buttons = settingsPanel.GetComponentsInChildren<Button>(true);
-            foreach (var b in buttons)
+            Button[] buttons = settingsPanel.GetComponentsInChildren<Button>(true); // Поиск дочерних кнопок
+            foreach (var b in buttons) // Перебор кнопок
             {
-                string nameLower = b.name.ToLower();
-                if (nameLower.Contains("back") || nameLower.Contains("назад") || nameLower.Contains("close") || nameLower.Contains("return") || nameLower.Contains("geri"))
+                string nameLower = b.name.ToLower(); // Имя в нижнем регистре
+                if (nameLower.Contains("back") || nameLower.Contains("назад") || nameLower.Contains("close") || nameLower.Contains("return") || nameLower.Contains("geri")) // Поиск по ключевым словам
                 {
-                    settingsBackButton = b;
-                    break;
+                    settingsBackButton = b; // Назначение кнопки
+                    break; // Прерывание поиска
                 }
             }
         }
 
-        if (settingsBackButton != null)
+        if (settingsBackButton != null) // Кнопка "Назад"
         {
-            settingsBackButton.onClick.RemoveAllListeners();
-            settingsBackButton.onClick.AddListener(OnBackPressed);
-            SetAlphaHitThreshold(settingsBackButton, 0.5f);
+            settingsBackButton.onClick.RemoveAllListeners(); // Сброс слушателей
+            settingsBackButton.onClick.AddListener(OnBackPressed); // Возврат в главное меню
+            SetAlphaHitThreshold(settingsBackButton, 0.5f); // Настройка чувствительности
         }
 
         // Применяем отступы кликабельной зоны (Raycast Padding)
-        ApplyRaycastPadding(startButton, startButtonPadding);
-        ApplyRaycastPadding(settingsButton, settingsButtonPadding);
-        ApplyRaycastPadding(exitButton, exitButtonPadding);
-        ApplyRaycastPadding(settingsBackButton, backButtonPadding);
+        ApplyRaycastPadding(startButton, startButtonPadding); // Отступы для кнопки старта
+        ApplyRaycastPadding(settingsButton, settingsButtonPadding); // Отступы для кнопки настроек
+        ApplyRaycastPadding(exitButton, exitButtonPadding); // Отступы для кнопки выхода
+        ApplyRaycastPadding(settingsBackButton, backButtonPadding); // Отступы для кнопки возврата
     }
 
-    private void ApplyRaycastPadding(Button button, Vector4 padding)
+    private void ApplyRaycastPadding(Button button, Vector4 padding) // Метод установки внутренних отступов клика
     {
-        if (button == null) return;
-        Image img = button.GetComponent<Image>();
-        if (img != null)
+        if (button == null) return; // Пропуск если кнопка пуста
+        Image img = button.GetComponent<Image>(); // Получение Image компонента
+        if (img != null) // Если Image найден
         {
             try
             {
-                img.raycastPadding = padding;
+                img.raycastPadding = padding; // Применение внутренних отступов клика
             }
             catch (System.Exception ex)
             {
-                Debug.LogWarning($"[ALCHEMIST MENU] Не удалось установить raycastPadding для {button.name}: {ex.Message}");
+                Debug.LogWarning($"[ALCHEMIST MENU] Не удалось установить raycastPadding для {button.name}: {ex.Message}"); // Предупреждение
             }
         }
     }
 
-    private void SetAlphaHitThreshold(Button button, float threshold)
+    private void SetAlphaHitThreshold(Button button, float threshold) // Настройка порога прозрачности клика по спрайту
     {
-        if (button == null) return;
-        Image img = button.GetComponent<Image>();
-        if (img != null && img.sprite != null)
+        if (button == null) return; // Пропуск пустых ссылок
+        Image img = button.GetComponent<Image>(); // Image компонент
+        if (img != null && img.sprite != null) // Проверка наличия спрайта
         {
             // Пропускаем стандартные спрайты Unity, чтобы избежать ошибки в консоли
-            string spriteName = img.sprite.name;
-            if (spriteName == "UISprite" || spriteName == "Background" || spriteName == "Knob" || spriteName == "Checkmark" || spriteName == "InputPen")
+            string spriteName = img.sprite.name; // Имя спрайта
+            if (spriteName == "UISprite" || spriteName == "Background" || spriteName == "Knob" || spriteName == "Checkmark" || spriteName == "InputPen") // Стандартные системные спрайты
             {
-                return;
+                return; // Пропуск
             }
 
             try
             {
-                img.alphaHitTestMinimumThreshold = threshold;
+                img.alphaHitTestMinimumThreshold = threshold; // Установка порога прозрачности
             }
             catch (System.Exception ex)
             {
                 Debug.LogWarning($"[ALCHEMIST MENU] Не удалось установить alphaHitTestMinimumThreshold для {button.name}. " +
-                                 $"Убедитесь, что в настройках импорта текстуры '{img.sprite.texture.name}' включена галочка 'Read/Write' в Unity Inspector! Ошибка: {ex.Message}");
+                                 $"Убедитесь, что в настройках импорта текстуры '{img.sprite.texture.name}' включена галочка 'Read/Write' в Unity Inspector! Ошибка: {ex.Message}"); // Предупреждение
             }
         }
     }
 
-    private void ShowPanel(GameObject panel)
+    private void ShowPanel(GameObject panel) // Переключение активной панели меню
     {
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(panel == mainMenuPanel);
-        if (settingsPanel != null)
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(panel == mainMenuPanel); // Включение/выключение главного меню
+        if (settingsPanel != null) // Настройки
         {
-            settingsPanel.SetActive(panel == settingsPanel);
-            if (panel == settingsPanel)
+            settingsPanel.SetActive(panel == settingsPanel); // Включение/выключение панели настроек
+            if (panel == settingsPanel) // Если открываются настройки
             {
                 // Адаптивное масштабирование панели настроек под разрешение экрана, чтобы ничего не обрезалось по высоте
-                RectTransform settingsRect = settingsPanel.GetComponent<RectTransform>();
-                if (settingsRect != null)
+                RectTransform settingsRect = settingsPanel.GetComponent<RectTransform>(); // Трансформ панели
+                if (settingsRect != null) // Проверка трансформа
                 {
                     // Проверяем высоту экрана или родительского Canvas
-                    float screenHeight = Screen.height;
-                    Canvas parentCanvas = settingsPanel.GetComponentInParent<Canvas>();
-                    if (parentCanvas != null && parentCanvas.GetComponent<RectTransform>() != null)
+                    float screenHeight = Screen.height; // Высота экрана
+                    Canvas parentCanvas = settingsPanel.GetComponentInParent<Canvas>(); // Родительский Canvas
+                    if (parentCanvas != null && parentCanvas.GetComponent<RectTransform>() != null) // Проверка Canvas
                     {
-                        screenHeight = parentCanvas.GetComponent<RectTransform>().rect.height;
+                        screenHeight = parentCanvas.GetComponent<RectTransform>().rect.height; // Высота Canvas
                     }
 
                     // Если экран ландшафтный (ширина > высоты) или высота экрана меньше 850 пикселей
-                    if (Screen.width > Screen.height || screenHeight < 850f)
+                    if (Screen.width > Screen.height || screenHeight < 850f) // Условие мобильного / компактного экрана
                     {
                         // Подбираем оптимальный масштаб: чем меньше высота экрана, тем меньше масштаб
-                        float targetScale = Mathf.Clamp(screenHeight / 850f, 0.65f, 0.9f);
+                        float targetScale = Mathf.Clamp(screenHeight / 850f, 0.65f, 0.9f); // Расчет масштаба
                         
-                        settingsRect.localScale = new Vector3(targetScale, targetScale, 1f);
+                        settingsRect.localScale = new Vector3(targetScale, targetScale, 1f); // Применение масштаба
                         
                         // Слегка приподнимаем панель, чтобы компенсировать уменьшение размера снизу
-                        settingsRect.anchoredPosition = new Vector2(settingsRect.anchoredPosition.x, 10f);
+                        settingsRect.anchoredPosition = new Vector2(settingsRect.anchoredPosition.x, 10f); // Смещение по Y
                     }
                     else
                     {
-                        settingsRect.localScale = Vector3.one;
-                        settingsRect.anchoredPosition = Vector2.zero;
+                        settingsRect.localScale = Vector3.one; // Стандартный масштаб 1:1
+                        settingsRect.anchoredPosition = Vector2.zero; // Центрирование
                     }
                 }
             }
         }
     }
 
-    private bool isStartingGame = false;
+    private bool isStartingGame = false; // Флаг: игра уже запускается
 
-    public void OnStartPressed()
+    public void OnStartPressed() // Обработчик нажатия кнопки "Играть"
     {
-        if (isStartingGame)
+        if (isStartingGame) // Защита от спама кликов
         {
-            return;
+            return; // Выход
         }
-        isStartingGame = true;
+        isStartingGame = true; // Установка флага старта
 
-        Debug.Log("<color=#FFFF00>[FATE DIAGNOSTIC]</color> НАЖАТА КНОПКА СТАРТ (OnStartPressed) в Menu_Game!");
+        Debug.Log("<color=#FFFF00>[FATE DIAGNOSTIC]</color> НАЖАТА КНОПКА СТАРТ (OnStartPressed) в Menu_Game!"); // Лог нажатия
 
         // Деактивируем кнопку, чтобы избежать повторных нажатий
-        if (startButton != null)
+        if (startButton != null) // Кнопка старта
         {
-            startButton.interactable = false;
+            startButton.interactable = false; // Блокировка кнопки
         }
         
         // Автоматическая загрузка или старт новой игры в единственный слот 0
-        if (PlayerPrefs.HasKey("Alchemist_Slot_Used_0"))
+        if (PlayerPrefs.HasKey("Alchemist_Slot_Used_0")) // Если сохранение уже есть
         {
-            Debug.Log("[FATE DIAGNOSTIC] Найдено существующее сохранение в слоте 0. Загружаем данные без активации сцены...");
-            SaveGameSystem.Load(0, false);
+            Debug.Log("[FATE DIAGNOSTIC] Найдено существующее сохранение в слоте 0. Загружаем данные без активации сцены..."); // Лог
+            SaveGameSystem.Load(0, false); // Загрузка данных без переключения сцены
         }
-        else
+        else // Если это первый запуск
         {
-            Debug.Log("[FATE DIAGNOSTIC] Сохранений нет. Инициализируем новую игру...");
-            SaveGameSystem.DeleteSave(0);
-            SaveGameSystem.CurrentData = new SaveGameSystem.SaveData();
+            Debug.Log("[FATE DIAGNOSTIC] Сохранений нет. Инициализируем новую игру..."); // Лог
+            SaveGameSystem.DeleteSave(0); // Очистка слота 0
+            SaveGameSystem.CurrentData = new SaveGameSystem.SaveData(); // Создание чистого сохранения
             SaveGameSystem.CurrentData.saveName = Translator.GetText9(
                 "Кот-Алхимик", "Alchemist Cat", "Alchemist Cat", "Chat Alchimiste", "Gato Alquimista", "Gato Alquimista", "錬金術師の猫", "연금술사 고양이", "炼金猫"
-            );
-            SaveGameSystem.Save(0);
+            ); // Локализация названия кота
+            SaveGameSystem.Save(0); // Первичное сохранение
         }
 
         // Запуск сцены лаборатории (Индекс 1) с использованием нашего экрана загрузки
-        if (LoadingScreenManager.Instance != null)
+        if (LoadingScreenManager.Instance != null) // Если менеджер загрузки доступен
         {
-            Debug.Log("[FATE DIAGNOSTIC] Найден LoadingScreenManager.Instance! Запускаем сцену 1 асинхронно через него...");
-            LoadingScreenManager.Instance.LoadScene(1);
+            Debug.Log("[FATE DIAGNOSTIC] Найден LoadingScreenManager.Instance! Запускаем сцену 1 асинхронно через него..."); // Лог
+            LoadingScreenManager.Instance.LoadScene(1); // Плавная загрузка сцены 1
         }
         else
         {
-            Debug.LogError("[FATE DIAGNOSTIC] ОШИБКА: LoadingScreenManager.Instance не найден! Загружаем сцену 1 НАПРЯМУЮ и мгновенно.");
-            SceneManager.LoadScene(1);
+            Debug.LogError("[FATE DIAGNOSTIC] ОШИБКА: LoadingScreenManager.Instance не найден! Загружаем сцену 1 НАПРЯМУЮ и мгновенно."); // Лог ошибки
+            SceneManager.LoadScene(1); // Мгновенная загрузка сцены 1
         }
     }
 
-    public void OnSettingsPressed()
+    public void OnSettingsPressed() // Обработчик нажатия кнопки "Настройки"
     {
-        ShowPanel(settingsPanel);
-        if (SettingsManager.Instance != null)
+        ShowPanel(settingsPanel); // Открытие панели настроек
+        if (SettingsManager.Instance != null) // Проверка менеджера настроек
         {
-            SettingsManager.Instance.BindUIElements();
+            SettingsManager.Instance.BindUIElements(); // Привязка ползунков звука к настройкам
         }
     }
 
-    public void OnBackPressed()
+    public void OnBackPressed() // Обработчик нажатия кнопки "Назад"
     {
-        ShowPanel(mainMenuPanel);
-        if (SettingsManager.Instance != null)
+        ShowPanel(mainMenuPanel); // Возврат в главное меню
+        if (SettingsManager.Instance != null) // Проверка менеджера настроек
         {
-            SettingsManager.Instance.PlayClickSound();
+            SettingsManager.Instance.PlayClickSound(); // Воспроизведение звука клика
         }
     }
 
-    public void OnExitPressed()
+    public void OnExitPressed() // Обработчик нажатия кнопки "Выход"
     {
-        Debug.Log("[ALCHEMIST MENU] Выход из игры...");
-        Application.Quit();
+        Debug.Log("[ALCHEMIST MENU] Выход из игры..."); // Лог выхода
+        Application.Quit(); // Закрытие приложения
     }
 }

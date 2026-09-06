@@ -64,10 +64,10 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void Update()
+    private void Update() // Покадровое обновление эффектов главного меню
     {
         // 1. Анимация парения заголовка (Легкое дыхание)
-        if (gameTitleText != null)
+        if (gameTitleText != null) // Проверка компонента логотипа
         {
             titleTimer += Time.deltaTime * titleAnimSpeed; // Наращиваем таймер
             float offset = Mathf.Sin(titleTimer) * 12f; // Вычисляем смещение по синусоиде
@@ -75,88 +75,88 @@ public class MainMenuController : MonoBehaviour
         }
 
         // 2. Интерактивный Параллакс фона за счет наклона мыши
-        if (backgroundLayer != null)
+        if (backgroundLayer != null) // Проверка слоя фона
         {
-            Vector2 mousePos = Vector2.zero;
+            Vector2 mousePos = Vector2.zero; // Позиция мыши
 #if ENABLE_INPUT_SYSTEM
             if (Mouse.current != null)
             {
-                mousePos = Mouse.current.position.ReadValue();
+                mousePos = Mouse.current.position.ReadValue(); // Новая система ввода
             }
             else
             {
-                mousePos = Input.mousePosition;
+                mousePos = Input.mousePosition; // Запасной ввод
             }
 #else
-            mousePos = Input.mousePosition;
+            mousePos = Input.mousePosition; // Старая система ввода
 #endif
 
-            float normX = (mousePos.x / Screen.width) - 0.5f;
-            float normY = (mousePos.y / Screen.height) - 0.5f;
+            float normX = (mousePos.x / Screen.width) - 0.5f; // Нормализованное смещение по X (-0.5 .. +0.5)
+            float normY = (mousePos.y / Screen.height) - 0.5f; // Нормализованное смещение по Y (-0.5 .. +0.5)
 
-            Vector2 targetPos = bgStartPos + new Vector2(normX * parallaxStrength, normY * parallaxStrength);
-            backgroundLayer.anchoredPosition = Vector2.Lerp(backgroundLayer.anchoredPosition, targetPos, Time.deltaTime * 5f);
+            Vector2 targetPos = bgStartPos + new Vector2(normX * parallaxStrength, normY * parallaxStrength); // Целевая точка параллакса
+            backgroundLayer.anchoredPosition = Vector2.Lerp(backgroundLayer.anchoredPosition, targetPos, Time.deltaTime * 5f); // Плавное следование фона
         }
 
         // 3. Плавный цикл смены дня и ночи
-        if (autoCycleBackgrounds)
+        if (autoCycleBackgrounds) // Если активен авто-цикл
         {
-            if (cycleDirectionUp)
+            if (cycleDirectionUp) // Переход в сторону ночи
             {
-                dayNightBlendFactor += Time.deltaTime * dayNightCycleSpeed;
-                if (dayNightBlendFactor >= 1f)
+                dayNightBlendFactor += Time.deltaTime * dayNightCycleSpeed; // Увеличение коэффициента
+                if (dayNightBlendFactor >= 1f) // Достигнута ночь
                 {
-                    dayNightBlendFactor = 1f;
-                    cycleDirectionUp = false;
+                    dayNightBlendFactor = 1f; // Ограничение
+                    cycleDirectionUp = false; // Смена направления в сторону дня
                 }
             }
-            else
+            else // Переход в сторону дня
             {
-                dayNightBlendFactor -= Time.deltaTime * dayNightCycleSpeed;
-                if (dayNightBlendFactor <= 0f)
+                dayNightBlendFactor -= Time.deltaTime * dayNightCycleSpeed; // Уменьшение коэффициента
+                if (dayNightBlendFactor <= 0f) // Достигнут день
                 {
-                    dayNightBlendFactor = 0f;
-                    cycleDirectionUp = true;
+                    dayNightBlendFactor = 0f; // Ограничение
+                    cycleDirectionUp = true; // Смена направления в сторону ночи
                 }
             }
         }
 
-        UpdateBackgroundBlending();
+        UpdateBackgroundBlending(); // Обновление прозрачности слоев
     }
 
     /// <summary>
     /// Обновляет прозрачность дневного и ночного слоев на основе dayNightBlendFactor (0 = чистый день, 1 = чистая ночь)
     /// </summary>
-    public void UpdateBackgroundBlending()
+    public void UpdateBackgroundBlending() // Применение коэффициента прозрачности к слоям
     {
-        if (dayBackgroundImage != null)
+        if (dayBackgroundImage != null) // Дневной фон
         {
-            Color c = dayBackgroundImage.color;
+            Color c = dayBackgroundImage.color; // Текущий цвет
             // Дневной фон плавно затухает от 1 до 0
-            c.a = 1f - dayNightBlendFactor;
-            dayBackgroundImage.color = c;
+            c.a = 1f - dayNightBlendFactor; // Расчет альфы дня
+            dayBackgroundImage.color = c; // Применение
         }
 
-        if (nightBackgroundImage != null)
+        if (nightBackgroundImage != null) // Ночной фон
         {
-            Color c = nightBackgroundImage.color;
+            Color c = nightBackgroundImage.color; // Текущий цвет
             // Ночной фон плавно проявляется от 0 до 1
-            c.a = dayNightBlendFactor;
-            nightBackgroundImage.color = c;
+            c.a = dayNightBlendFactor; // Расчет альфы ночи
+            nightBackgroundImage.color = c; // Применение
         }
     }
 
-    private System.Collections.IEnumerator FadeInMenuCoroutine()
+    private System.Collections.IEnumerator FadeInMenuCoroutine() // Корутина плавного проявления меню
     {
-        float elapsed = 0f;
-        float duration = 1.2f;
+        float elapsed = 0f; // Счетчик времени
+        float duration = 1.2f; // Длительность перехода (сек)
 
-        while (elapsed < duration)
+        while (elapsed < duration) // Цикл фейда
         {
-            elapsed += Time.deltaTime;
-            mainMenuCanvasGroup.alpha = elapsed / duration;
-            yield return null;
+            elapsed += Time.deltaTime; // Прирост времени
+            mainMenuCanvasGroup.alpha = elapsed / duration; // Установка альфа-прозрачности
+            yield return null; // Ожидание кадра
         }
-        mainMenuCanvasGroup.alpha = 1f;
+        mainMenuCanvasGroup.alpha = 1f; // Фиксация 100% видимости
     }
 }

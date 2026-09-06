@@ -29,39 +29,39 @@ public class Mastery_Dust_Manager : MonoBehaviour
         }
     }
 
-    public void UseDivergenceDust()
+    public void UseDivergenceDust() // Использование Пыли Расхождения
     {
-        if (dustDivergenceCount > 0)
+        if (dustDivergenceCount > 0) // Проверка наличия пыли в инвентаре
         {
-            dustDivergenceCount--;
-            Debug.Log("Пыль Расхождения активирована: +20% ускорение варки на 10 минут!");
+            dustDivergenceCount--; // Списание 1 мешочка
+            Debug.Log("Пыль Расхождения активирована: +20% ускорение варки на 10 минут!"); // Оповещение об ускорении
         }
     }
 
-    public void UseResourcesDust()
+    public void UseResourcesDust() // Использование Пыли Ресурсов
     {
-        if (dustResourcesCount > 0)
+        if (dustResourcesCount > 0) // Проверка наличия пыли в инвентаре
         {
-            dustResourcesCount--;
-            Debug.Log("Пыль Ресурсов активирована: x2 награды за следующее действие!");
+            dustResourcesCount--; // Списание 1 мешочка
+            Debug.Log("Пыль Ресурсов активирована: x2 награды за следующее действие!"); // Оповещение об удвоении наград
         }
     }
 
-    public void UseSalesDust()
+    public void UseSalesDust() // Использование Пыли Продаж
     {
-        if (dustSalesCount > 0)
+        if (dustSalesCount > 0) // Проверка наличия пыли в инвентаре
         {
-            dustSalesCount--;
-            Debug.Log("Пыль Продаж активирована: 0% комиссия рынка на 10 минут!");
+            dustSalesCount--; // Списание 1 мешочка
+            Debug.Log("Пыль Продаж активирована: 0% комиссия рынка на 10 минут!"); // Оповещение о нулевой комиссии
         }
     }
 
-    public void UseMasteryDust()
+    public void UseMasteryDust() // Использование Пыли Мастерства
     {
-        if (dustMasteryCount > 0)
+        if (dustMasteryCount > 0) // Проверка наличия пыли в инвентаре
         {
-            dustMasteryCount--;
-            Debug.Log("Пыль Мастерства активирована: x2 опыт зелий!");
+            dustMasteryCount--; // Списание 1 мешочка
+            Debug.Log("Пыль Мастерства активирована: x2 опыт зелий!"); // Оповещение об удвоении опыта
         }
     }
 }

@@ -50,36 +50,36 @@ public class UIButtonSfxBinder : MonoBehaviour
         }
     }
 
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode) // Обработчик завершения загрузки сцены
     {
-        ScanAndBindAllButtons();
+        ScanAndBindAllButtons(); // Запуск автоматической привязки звуков к новым кнопкам
     }
 
     /// <summary>
     /// Сканирует всю сцену и вешает компоненты озвучки на кнопки, у которых их еще нет.
     /// </summary>
-    public void ScanAndBindAllButtons()
+    public void ScanAndBindAllButtons() // Метод сканирования и добавления эффектов
     {
-        Button[] buttons = Resources.FindObjectsOfTypeAll<Button>();
-        int boundCount = 0;
+        Button[] buttons = Resources.FindObjectsOfTypeAll<Button>(); // Поиск всех кнопок в сцене
+        int boundCount = 0; // Счетчик вновь озвученных кнопок
 
-        foreach (Button btn in buttons)
+        foreach (Button btn in buttons) // Перебор всех найденных кнопок
         {
             // Пропускаем префабы в ассетах
-            if (btn.gameObject.scene.name == null) continue;
+            if (btn.gameObject.scene.name == null) continue; // Игнорирование объектов вне сцены
 
             // Проверяем наличие эффекта наведения
-            UIButtonHoverEffect effect = btn.GetComponent<UIButtonHoverEffect>();
-            if (effect == null)
+            UIButtonHoverEffect effect = btn.GetComponent<UIButtonHoverEffect>(); // Проверка существующего компонента
+            if (effect == null) // Если эффекта еще нет на кнопке
             {
                 // Добавляем скрипт hover эффекта
-                effect = btn.gameObject.AddComponent<UIButtonHoverEffect>();
-                effect.playSfxOnHover = true;
-                effect.playSfxOnClick = true;
-                boundCount++;
+                effect = btn.gameObject.AddComponent<UIButtonHoverEffect>(); // Добавление компонента анимации и звука
+                effect.playSfxOnHover = true; // Включение звука наведения
+                effect.playSfxOnClick = true; // Включение звука клика
+                boundCount++; // Увеличение счетчика обработанных кнопок
             }
         }
 
-        Debug.Log($"[ALCHEMIST SFX BINDER] Сканирование завершено. Озвучено новых кнопок: {boundCount}");
+        Debug.Log($"[ALCHEMIST SFX BINDER] Сканирование завершено. Озвучено новых кнопок: {boundCount}"); // Лог результатов
     }
 }

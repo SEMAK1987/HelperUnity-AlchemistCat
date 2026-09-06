@@ -200,225 +200,225 @@ public class Avatar_Manager : MonoBehaviour
     /// Расчет максимального опыта для текущего уровня: 
     /// Ур 1 = 10 XP, Ур 2 = 20 XP, Ур 3 = 30 XP ... Ур 100 = 1000 XP (Формула: Level * 10 XP)
     /// </summary>
-    public static int GetMaxExpForLevel(int level)
+    public static int GetMaxExpForLevel(int level) // Расчет порога опыта кота по формуле
     {
-        return Mathf.Clamp(level, 1, 100) * 10;
+        return Mathf.Clamp(level, 1, 100) * 10; // Опыт = Уровень * 10 (макс 1000)
     }
 
-    private void LoadPlayerProfile()
+    private void LoadPlayerProfile() // Загрузка сохраненных данных профиля игрока
     {
-        currentLevel = PlayerPrefs.GetInt("Player_Level", 1);
-        currentExp = PlayerPrefs.GetInt("Player_Exp", 0);
-        maxExp = GetMaxExpForLevel(currentLevel);
-        selectedAvatarId = PlayerPrefs.GetInt("Selected_Avatar_Id", 0);
-        selectedFrameId = PlayerPrefs.GetInt("Selected_Frame_Id", 0);
+        currentLevel = PlayerPrefs.GetInt("Player_Level", 1); // Текущий уровень кота
+        currentExp = PlayerPrefs.GetInt("Player_Exp", 0); // Текущий опыт кота
+        maxExp = GetMaxExpForLevel(currentLevel); // Максимальный опыт для уровня
+        selectedAvatarId = PlayerPrefs.GetInt("Selected_Avatar_Id", 0); // Выбранный ID аватарки
+        selectedFrameId = PlayerPrefs.GetInt("Selected_Frame_Id", 0); // Выбранный ID рамки
 
         // Защита: стартовая выбранная аватарка по умолчанию должна быть 0 (бесплатная Стартовый Ученик #1)
-        if (selectedAvatarId < 0 || selectedAvatarId > 2)
+        if (selectedAvatarId < 0 || selectedAvatarId > 2) // Если не из стартовых
         {
-            if (PlayerPrefs.GetInt($"Avatar_Unlocked_{selectedAvatarId}", 0) != 1)
+            if (PlayerPrefs.GetInt($"Avatar_Unlocked_{selectedAvatarId}", 0) != 1) // И не куплена
             {
-                selectedAvatarId = 0;
-                PlayerPrefs.SetInt("Selected_Avatar_Id", 0);
+                selectedAvatarId = 0; // Сброс на базовую
+                PlayerPrefs.SetInt("Selected_Avatar_Id", 0); // Сохранение сброса
             }
         }
 
-        if (selectedFrameId != 0)
+        if (selectedFrameId != 0) // Если выбрана не стартовая рамка
         {
-            if (PlayerPrefs.GetInt($"Frame_Unlocked_{selectedFrameId}", 0) != 1)
+            if (PlayerPrefs.GetInt($"Frame_Unlocked_{selectedFrameId}", 0) != 1) // И она не разблокирована
             {
-                selectedFrameId = 0;
-                PlayerPrefs.SetInt("Selected_Frame_Id", 0);
+                selectedFrameId = 0; // Сброс на стандартную рамку
+                PlayerPrefs.SetInt("Selected_Frame_Id", 0); // Сохранение сброса
             }
         }
 
-        currentMasteryRankIndex = PlayerPrefs.GetInt("Player_Mastery_Rank", 0);
-        currentMasteryExp = PlayerPrefs.GetInt("Player_Mastery_Exp", 0);
-        maxMasteryExp = GetMaxExpForMasteryRank(currentMasteryRankIndex);
+        currentMasteryRankIndex = PlayerPrefs.GetInt("Player_Mastery_Rank", 0); // Ранг алхимика
+        currentMasteryExp = PlayerPrefs.GetInt("Player_Mastery_Exp", 0); // Опыт алхимика
+        maxMasteryExp = GetMaxExpForMasteryRank(currentMasteryRankIndex); // Порог опыта для текущего ранга
     }
 
-    public static int GetMaxExpForMasteryRank(int rankIdx)
+    public static int GetMaxExpForMasteryRank(int rankIdx) // Порог опыта мастерства алхимии
     {
-        if (rankIdx >= 0 && rankIdx < MasteryRankThresholds.Length)
-            return MasteryRankThresholds[rankIdx];
-        return 100;
+        if (rankIdx >= 0 && rankIdx < MasteryRankThresholds.Length) // Проверка диапазона
+            return MasteryRankThresholds[rankIdx]; // Возврат значения из таблицы
+        return 100; // Значение по умолчанию
     }
 
-    public void AddExperience(int amount)
+    public void AddExperience(int amount) // Начисление опыта коту и повышение уровня
     {
-        currentExp += amount;
-        while (currentLevel < 100 && currentExp >= maxExp)
+        currentExp += amount; // Прибавление опыта
+        while (currentLevel < 100 && currentExp >= maxExp) // Проверка достижения нового уровня
         {
-            currentExp -= maxExp;
-            currentLevel++;
-            maxExp = GetMaxExpForLevel(currentLevel);
+            currentExp -= maxExp; // Списание опыта текущего уровня
+            currentLevel++; // Повышение уровня кота
+            maxExp = GetMaxExpForLevel(currentLevel); // Расчет порога следующего уровня
 
-            if (levelUpSound != null && SettingsManager.Instance != null)
-                SettingsManager.Instance.PlaySoundEffect(levelUpSound);
+            if (levelUpSound != null && SettingsManager.Instance != null) // Если звук назначен
+                SettingsManager.Instance.PlaySoundEffect(levelUpSound); // Воспроизведение звука левелапа
         }
 
-        if (currentLevel >= 100)
+        if (currentLevel >= 100) // Ограничение максимального 100 уровня
         {
-            currentLevel = 100;
-            maxExp = GetMaxExpForLevel(100);
-            if (currentExp > maxExp) currentExp = maxExp;
+            currentLevel = 100; // Фиксация 100 уровня
+            maxExp = GetMaxExpForLevel(100); // Фиксация макс. опыта
+            if (currentExp > maxExp) currentExp = maxExp; // Ограничение переполнения
         }
 
-        PlayerPrefs.SetInt("Player_Level", currentLevel);
-        PlayerPrefs.SetInt("Player_Exp", currentExp);
-        PlayerPrefs.SetInt("Player_MaxExp", maxExp);
-        PlayerPrefs.Save();
+        PlayerPrefs.SetInt("Player_Level", currentLevel); // Сохранение уровня
+        PlayerPrefs.SetInt("Player_Exp", currentExp); // Сохранение опыта
+        PlayerPrefs.SetInt("Player_MaxExp", maxExp); // Сохранение макс. опыта
+        PlayerPrefs.Save(); // Запись на диск
 
-        UpdateProfileUI();
+        UpdateProfileUI(); // Обновление UI плашки профиля
     }
 
-    public void AddGold(int amount)
+    public void AddGold(int amount) // Начисление монет золота
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Если есть игровой менеджер
         {
-            GameManager.Instance.AddGold(amount);
+            GameManager.Instance.AddGold(amount); // Начисление через менеджер
         }
         else
         {
-            int current = PlayerPrefs.GetInt("Player_Gold", 5000);
-            PlayerPrefs.SetInt("Player_Gold", current + amount);
-            PlayerPrefs.Save();
+            int current = PlayerPrefs.GetInt("Player_Gold", 5000); // Чтение текущего запаса
+            PlayerPrefs.SetInt("Player_Gold", current + amount); // Сохранение нового запаса
+            PlayerPrefs.Save(); // Запись на диск
         }
     }
 
-    public void AddStones(int amount)
+    public void AddStones(int amount) // Начисление камней
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Если есть менеджер игры
         {
-            GameManager.Instance.AddResources(0, amount, 0, 0);
+            GameManager.Instance.AddResources(0, amount, 0, 0); // Начисление ресурса
         }
         else
         {
-            int current = PlayerPrefs.GetInt("Player_Stones", 10);
-            PlayerPrefs.SetInt("Player_Stones", current + amount);
-            PlayerPrefs.Save();
+            int current = PlayerPrefs.GetInt("Player_Stones", 10); // Чтение текущего запаса
+            PlayerPrefs.SetInt("Player_Stones", current + amount); // Прибавление камней
+            PlayerPrefs.Save(); // Запись на диск
         }
     }
 
-    public void AddScrolls(int amount)
+    public void AddScrolls(int amount) // Начисление свитков
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Если есть менеджер игры
         {
-            GameManager.Instance.AddResources(0, 0, amount, 0);
+            GameManager.Instance.AddResources(0, 0, amount, 0); // Начисление ресурса
         }
         else
         {
-            int current = PlayerPrefs.GetInt("Player_Scrolls", 3);
-            PlayerPrefs.SetInt("Player_Scrolls", current + amount);
-            PlayerPrefs.Save();
+            int current = PlayerPrefs.GetInt("Player_Scrolls", 3); // Чтение свитков
+            PlayerPrefs.SetInt("Player_Scrolls", current + amount); // Прибавление свитков
+            PlayerPrefs.Save(); // Запись на диск
         }
     }
 
-    public void AddCrystals(int amount)
+    public void AddCrystals(int amount) // Начисление премиум кристаллов
     {
-        if (GameManager.Instance != null)
+        if (GameManager.Instance != null) // Если менеджер активен
         {
-            GameManager.Instance.AddCrystals(amount);
+            GameManager.Instance.AddCrystals(amount); // Начисление кристаллов
         }
         else
         {
-            int current = PlayerPrefs.GetInt("Player_Crystals", 0);
-            PlayerPrefs.SetInt("Player_Crystals", current + amount);
-            PlayerPrefs.Save();
+            int current = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение текущих кристаллов
+            PlayerPrefs.SetInt("Player_Crystals", current + amount); // Сохранение с кристаллами
+            PlayerPrefs.Save(); // Запись на диск
         }
     }
 
-    public void GainPlayerExperience(int amount)
+    public void GainPlayerExperience(int amount) // Обертка для получения опыта кота
     {
-        AddExperience(amount);
+        AddExperience(amount); // Вызов основного метода начисления
     }
 
-    public void AddMasteryExperience(int amount)
+    public void AddMasteryExperience(int amount) // Начисление опыта мастерства алхимика
     {
-        currentMasteryExp += amount;
-        maxMasteryExp = GetMaxExpForMasteryRank(currentMasteryRankIndex);
+        currentMasteryExp += amount; // Прибавление очков мастерства
+        maxMasteryExp = GetMaxExpForMasteryRank(currentMasteryRankIndex); // Обновление порога
 
-        while (currentMasteryRankIndex < MasteryRankThresholds.Length - 1 && currentMasteryExp >= maxMasteryExp)
+        while (currentMasteryRankIndex < MasteryRankThresholds.Length - 1 && currentMasteryExp >= maxMasteryExp) // Проверка ранга
         {
-            currentMasteryExp -= maxMasteryExp;
-            currentMasteryRankIndex++;
-            maxMasteryExp = GetMaxExpForMasteryRank(currentMasteryRankIndex);
+            currentMasteryExp -= maxMasteryExp; // Списание опыта
+            currentMasteryRankIndex++; // Повышение алхимического ранга
+            maxMasteryExp = GetMaxExpForMasteryRank(currentMasteryRankIndex); // Расчет нового порога
 
-            if (masteryRankUpSound != null && SettingsManager.Instance != null)
-                SettingsManager.Instance.PlaySoundEffect(masteryRankUpSound);
-            else if (levelUpSound != null && SettingsManager.Instance != null)
-                SettingsManager.Instance.PlaySoundEffect(levelUpSound);
+            if (masteryRankUpSound != null && SettingsManager.Instance != null) // Звук повышения ранга
+                SettingsManager.Instance.PlaySoundEffect(masteryRankUpSound); // Воспроизведение звука
+            else if (levelUpSound != null && SettingsManager.Instance != null) // Запасной звук
+                SettingsManager.Instance.PlaySoundEffect(levelUpSound); // Воспроизведение
         }
 
-        PlayerPrefs.SetInt("Player_Mastery_Rank", currentMasteryRankIndex);
-        PlayerPrefs.SetInt("Player_Mastery_Exp", currentMasteryExp);
-        PlayerPrefs.Save();
+        PlayerPrefs.SetInt("Player_Mastery_Rank", currentMasteryRankIndex); // Сохранение ранга
+        PlayerPrefs.SetInt("Player_Mastery_Exp", currentMasteryExp); // Сохранение опыта
+        PlayerPrefs.Save(); // Запись на диск
 
-        UpdateMasteryUI();
+        UpdateMasteryUI(); // Обновление второй шкалы интерфейса
     }
 
     [ContextMenu("Сбросить Прогресс Профиля и Мастерства (Reset Profile & Mastery)")]
-    public void ResetProfileAndMasteryProgress()
+    public void ResetProfileAndMasteryProgress() // Метод сброса профиля для тестирования
     {
-        PlayerPrefs.DeleteKey("Player_Level");
-        PlayerPrefs.DeleteKey("Player_Exp");
-        PlayerPrefs.DeleteKey("Player_MaxExp");
-        PlayerPrefs.DeleteKey("Player_Mastery_Rank");
-        PlayerPrefs.DeleteKey("Player_Mastery_Exp");
-        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed");
-        PlayerPrefs.DeleteKey("Tutorial_Avatar_Chosen");
-        PlayerPrefs.DeleteKey("Selected_Avatar_Id");
-        PlayerPrefs.DeleteKey("Selected_Frame_Id");
-        PlayerPrefs.Save();
+        PlayerPrefs.DeleteKey("Player_Level"); // Удаление ключа уровня
+        PlayerPrefs.DeleteKey("Player_Exp"); // Удаление ключа опыта
+        PlayerPrefs.DeleteKey("Player_MaxExp"); // Удаление макс. опыта
+        PlayerPrefs.DeleteKey("Player_Mastery_Rank"); // Удаление ранга мастерства
+        PlayerPrefs.DeleteKey("Player_Mastery_Exp"); // Удаление опыта мастерства
+        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed"); // Удаление статуса выпитой колбы
+        PlayerPrefs.DeleteKey("Tutorial_Avatar_Chosen"); // Удаление флага выбора аватара
+        PlayerPrefs.DeleteKey("Selected_Avatar_Id"); // Удаление выбранного аватара
+        PlayerPrefs.DeleteKey("Selected_Frame_Id"); // Удаление выбранной рамки
+        PlayerPrefs.Save(); // Сохранение изменений
 
-        currentLevel = 1;
-        currentExp = 0;
-        maxExp = 10;
-        selectedAvatarId = 0;
-        selectedFrameId = 0;
-        currentMasteryRankIndex = 0;
-        currentMasteryExp = 0;
-        maxMasteryExp = 100;
+        currentLevel = 1; // Уровень 1
+        currentExp = 0; // Опыт 0
+        maxExp = 10; // Порог 10
+        selectedAvatarId = 0; // Аватарка #0
+        selectedFrameId = 0; // Рамка #0
+        currentMasteryRankIndex = 0; // Ранг Новичок
+        currentMasteryExp = 0; // Опыт 0
+        maxMasteryExp = 100; // Порог 100
 
-        UpdateProfileUI();
-        UpdateMasteryUI();
-        Debug.Log("[Avatar_Manager] Профиль и мастерство успешно сброшены к начальному состоянию!");
+        UpdateProfileUI(); // Перерисовка профиля
+        UpdateMasteryUI(); // Перерисовка шкалы мастерства
+        Debug.Log("[Avatar_Manager] Профиль и мастерство успешно сброшены к начальному состоянию!"); // Лог сброса
     }
 
-    public void UpdateMasteryUI()
+    public void UpdateMasteryUI() // Обновление текста ранга и шкалы мастерства
     {
-        AutoSanitizeMasteryBarLayout();
+        AutoSanitizeMasteryBarLayout(); // Авто-выравнивание позиции элементов
 
-        string rankTitle = currentMasteryRankIndex < MasteryRankNamesRU.Length ? MasteryRankNamesRU[currentMasteryRankIndex] : "Новичок";
-        if (masteryRankTitleText != null)
+        string rankTitle = currentMasteryRankIndex < MasteryRankNamesRU.Length ? MasteryRankNamesRU[currentMasteryRankIndex] : "Новичок"; // Получение названия ранга
+        if (masteryRankTitleText != null) // Текст ранга
         {
-            masteryRankTitleText.text = rankTitle;
-            if (currentMasteryRankIndex == 0)
+            masteryRankTitleText.text = rankTitle; // Запись названия
+            if (currentMasteryRankIndex == 0) // Начальный ранг
             {
                 masteryRankTitleText.color = noviceTextColor; // Белый #FFFFFF
             }
-            else
+            else // Продвинутые ранги
             {
                 masteryRankTitleText.color = herbalistTextColor; // Травянисто-зеленый #52B788
             }
         }
 
-        if (masteryExpProgressText != null)
+        if (masteryExpProgressText != null) // Текст опыта
         {
-            masteryExpProgressText.text = $"{currentMasteryExp}/{maxMasteryExp} XP";
+            masteryExpProgressText.text = $"{currentMasteryExp}/{maxMasteryExp} XP"; // Формат X/Y XP
         }
 
-        if (masteryExpProgressBar != null)
+        if (masteryExpProgressBar != null) // Заливка полоски
         {
-            float fillRatio = maxMasteryExp > 0 ? Mathf.Clamp01((float)currentMasteryExp / maxMasteryExp) : 0f;
-            masteryExpProgressBar.fillAmount = fillRatio;
+            float fillRatio = maxMasteryExp > 0 ? Mathf.Clamp01((float)currentMasteryExp / maxMasteryExp) : 0f; // Доля заполнения (0..1)
+            masteryExpProgressBar.fillAmount = fillRatio; // Применение к Image
 
             // Переливающийся изумрудно-бирюзовый градиент для мастерства
-            if (fillRatio <= 0.01f)
-                masteryExpProgressBar.color = new Color(0.9f, 0.95f, 0.9f, 1f);
-            else if (fillRatio < 0.5f)
+            if (fillRatio <= 0.01f) // Начало шкалы
+                masteryExpProgressBar.color = new Color(0.9f, 0.95f, 0.9f, 1f); // Беловато-зеленый
+            else if (fillRatio < 0.5f) // До половины
                 masteryExpProgressBar.color = new Color(0.3f, 0.9f, 0.6f, 1f); // Травянисто-зеленый
-            else
+            else // Ближе к максимуму
                 masteryExpProgressBar.color = new Color(0.15f, 0.75f, 0.85f, 1f); // Бирюзово-магический
         }
     }
@@ -426,764 +426,762 @@ public class Avatar_Manager : MonoBehaviour
     /// <summary>
     /// Автоматическая юстировка шкалы мастерства и ее дочерних элементов (текст, заливка, название ранга)
     /// </summary>
-    private void AutoSanitizeMasteryBarLayout()
+    private void AutoSanitizeMasteryBarLayout() // Юстировка координат и размеров шкалы мастерства
     {
         RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
-            ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
+            ? expProgressBar.transform.parent.GetComponent<RectTransform>() // Получение RectTransform фона шкалы кота
             : null;
 
-        float baseX = expBgRect != null ? expBgRect.anchoredPosition.x : 130f;
-        float baseY = expBgRect != null ? expBgRect.anchoredPosition.y : -4f;
-        Vector2 baseSize = expBgRect != null ? expBgRect.sizeDelta : new Vector2(130f, 18f);
+        float baseX = expBgRect != null ? expBgRect.anchoredPosition.x : 130f; // Базовая координата X
+        float baseY = expBgRect != null ? expBgRect.anchoredPosition.y : -4f; // Базовая координата Y
+        Vector2 baseSize = expBgRect != null ? expBgRect.sizeDelta : new Vector2(130f, 18f); // Базовый размер полоски
 
         // 1. Контейнер / Фон шкалы мастерства (Mastery_Exp_Bar_Background)
-        Transform masteryBarTransform = masteryExpProgressBar != null ? masteryExpProgressBar.transform.parent : null;
-        if (masteryBarTransform == null && masteryContainer != null) masteryBarTransform = masteryContainer.transform;
+        Transform masteryBarTransform = masteryExpProgressBar != null ? masteryExpProgressBar.transform.parent : null; // Родительский объект полоски
+        if (masteryBarTransform == null && masteryContainer != null) masteryBarTransform = masteryContainer.transform; // Запасной контейнер
 
-        RectTransform masteryBarBg = masteryBarTransform != null ? masteryBarTransform.GetComponent<RectTransform>() : null;
-        if (masteryBarBg != null)
+        RectTransform masteryBarBg = masteryBarTransform != null ? masteryBarTransform.GetComponent<RectTransform>() : null; // RectTransform фона мастерства
+        if (masteryBarBg != null) // Если фон существует
         {
-            if (masteryBarBg.parent != null && (masteryBarBg.parent.name.Contains("Container") || masteryBarBg.parent.name.Contains("Avatar")))
+            if (masteryBarBg.parent != null && (masteryBarBg.parent.name.Contains("Container") || masteryBarBg.parent.name.Contains("Avatar"))) // Проверка иерархии
             {
-                masteryBarBg.sizeDelta = baseSize;
+                masteryBarBg.sizeDelta = baseSize; // Установка одинакового размера
                 masteryBarBg.anchoredPosition = new Vector2(baseX, baseY - 32f); // Располагается ровно под первой полоской
-                masteryBarBg.localScale = Vector3.one;
+                masteryBarBg.localScale = Vector3.one; // Нормализация масштаба (1,1,1)
             }
         }
 
         // 2. Заливка шкалы мастерства (Mastery_Exp_Fill)
-        if (masteryExpProgressBar != null)
+        if (masteryExpProgressBar != null) // Проверка компонента шкалы
         {
-            RectTransform fillRect = masteryExpProgressBar.GetComponent<RectTransform>();
-            if (fillRect != null)
+            RectTransform fillRect = masteryExpProgressBar.GetComponent<RectTransform>(); // RectTransform заливки
+            if (fillRect != null) // Если найден
             {
-                fillRect.anchorMin = Vector2.zero;
-                fillRect.anchorMax = Vector2.one;
-                fillRect.offsetMin = Vector2.zero;
-                fillRect.offsetMax = Vector2.zero;
-                fillRect.pivot = new Vector2(0.5f, 0.5f);
-                fillRect.localScale = Vector3.one;
+                fillRect.anchorMin = Vector2.zero; // Растяжение по родителю min
+                fillRect.anchorMax = Vector2.one; // Растяжение по родителю max
+                fillRect.offsetMin = Vector2.zero; // Нулевой отступ слева-снизу
+                fillRect.offsetMax = Vector2.zero; // Нулевой отступ справа-сверху
+                fillRect.pivot = new Vector2(0.5f, 0.5f); // Центральный пивот
+                fillRect.localScale = Vector3.one; // Масштаб 1
             }
         }
 
         // 3. Текст опыта ("0/100 XP" / "0/300 XP")
-        if (masteryExpProgressText != null)
+        if (masteryExpProgressText != null) // Текстовый индикатор опыта
         {
-            RectTransform textRect = masteryExpProgressText.GetComponent<RectTransform>();
-            if (textRect != null)
+            RectTransform textRect = masteryExpProgressText.GetComponent<RectTransform>(); // RectTransform текста
+            if (textRect != null) // Если найден
             {
-                textRect.anchorMin = Vector2.zero;
-                textRect.anchorMax = Vector2.one;
-                textRect.offsetMin = Vector2.zero;
-                textRect.offsetMax = Vector2.zero;
-                textRect.anchoredPosition = Vector2.zero;
-                textRect.localScale = Vector3.one;
+                textRect.anchorMin = Vector2.zero; // Привязка по центру/родителю
+                textRect.anchorMax = Vector2.one; // Привязка
+                textRect.offsetMin = Vector2.zero; // Отступ
+                textRect.offsetMax = Vector2.zero; // Отступ
+                textRect.anchoredPosition = Vector2.zero; // Центрирование
+                textRect.localScale = Vector3.one; // Нормальный масштаб
             }
-            masteryExpProgressText.alignment = TextAlignmentOptions.Center;
+            masteryExpProgressText.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
         }
 
         // 4. Текст названия ранга ("Новичок" / "Новичок-травник")
-        if (masteryRankTitleText != null)
+        if (masteryRankTitleText != null) // Текст ранга
         {
-            RectTransform titleRect = masteryRankTitleText.GetComponent<RectTransform>();
-            if (titleRect != null)
+            RectTransform titleRect = masteryRankTitleText.GetComponent<RectTransform>(); // RectTransform заголовка ранга
+            if (titleRect != null) // Если найден
             {
-                Vector2 titleSize = new Vector2(180f, 22f);
-                if (masteryBarBg != null && titleRect.IsChildOf(masteryBarBg))
+                Vector2 titleSize = new Vector2(180f, 22f); // Размер области текста
+                if (masteryBarBg != null && titleRect.IsChildOf(masteryBarBg)) // Если ребенок фона
                 {
                     titleRect.anchoredPosition = new Vector2(0f, 18f); // Прямо над второй полоской
-                    titleRect.sizeDelta = titleSize;
+                    titleRect.sizeDelta = titleSize; // Установка габаритов
                 }
-                else
+                else // Если на одном уровне
                 {
-                    titleRect.anchoredPosition = new Vector2(baseX, baseY - 16f);
-                    titleRect.sizeDelta = titleSize;
+                    titleRect.anchoredPosition = new Vector2(baseX, baseY - 16f); // Смещение по Y
+                    titleRect.sizeDelta = titleSize; // Установка габаритов
                 }
-                titleRect.localScale = Vector3.one;
+                titleRect.localScale = Vector3.one; // Масштаб 1
             }
-            masteryRankTitleText.alignment = TextAlignmentOptions.Center;
+            masteryRankTitleText.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
         }
     }
 
-    public void UpdateProfileUI()
+    public void UpdateProfileUI() // Обновление всей плашки профиля игрока в левом углу
     {
         // Автоматическое позиционирование кольца аватара, уровня и шкал опыта
-        if (autoAlignProfileOffsets)
+        if (autoAlignProfileOffsets) // Если авто-выравнивание включено
         {
-            if (avatarIconButton != null)
+            if (avatarIconButton != null) // Кнопка аватара
             {
-                RectTransform ringRect = avatarIconButton.GetComponent<RectTransform>();
-                if (ringRect != null)
+                RectTransform ringRect = avatarIconButton.GetComponent<RectTransform>(); // RectTransform кнопки
+                if (ringRect != null) // Если найден
                 {
-                    ringRect.anchoredPosition = avatarRingPosition;
-                    ringRect.localScale = new Vector3(avatarRingScale.x, avatarRingScale.y, 1f);
+                    ringRect.anchoredPosition = avatarRingPosition; // Установка позиции
+                    ringRect.localScale = new Vector3(avatarRingScale.x, avatarRingScale.y, 1f); // Установка масштаба
                 }
             }
 
             RectTransform expBgRect = (expProgressBar != null && expProgressBar.transform.parent != null) 
-                ? expProgressBar.transform.parent.GetComponent<RectTransform>() 
+                ? expProgressBar.transform.parent.GetComponent<RectTransform>() // Фон полоски опыта
                 : null;
 
-            if (expBgRect != null)
+            if (expBgRect != null) // Если найден
             {
-                expBgRect.anchoredPosition = expBarPosition;
-                expBgRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f);
+                expBgRect.anchoredPosition = expBarPosition; // Позиция полоски опыта
+                expBgRect.localScale = new Vector3(expBarScale.x, expBarScale.y, 1f); // Масштаб полоски опыта
 
-                if (levelBadgeText != null)
+                if (levelBadgeText != null) // Текст бейджа уровня
                 {
-                    RectTransform lvlRect = levelBadgeText.GetComponent<RectTransform>();
-                    if (lvlRect != null)
+                    RectTransform lvlRect = levelBadgeText.GetComponent<RectTransform>(); // RectTransform бейджа
+                    if (lvlRect != null) // Если найден
                     {
-                        lvlRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y + 22f);
+                        lvlRect.anchoredPosition = new Vector2(expBgRect.anchoredPosition.x, expBgRect.anchoredPosition.y + 22f); // Смещение над полоской
                     }
-                    levelBadgeText.fontSize = levelTextFontSize;
+                    levelBadgeText.fontSize = levelTextFontSize; // Размер шрифта
                 }
             }
 
-            AutoSanitizeMasteryBarLayout();
+            AutoSanitizeMasteryBarLayout(); // Подгонка второй шкалы мастерства
         }
 
-        string lvlPrefix = Translator.GetText(54); // "Ур. " / "Lvl. " / "Seviye "
-        if (levelBadgeText != null)
+        string lvlPrefix = Translator.GetText(54); // Префикс "Ур. " / "Lvl. "
+        if (levelBadgeText != null) // Бейдж уровня
         {
-            levelBadgeText.text = $"{lvlPrefix}{currentLevel}";
+            levelBadgeText.text = $"{lvlPrefix}{currentLevel}"; // Вывод текста уровня
         }
 
-        if (expProgressText != null)
+        if (expProgressText != null) // Текст опыта
         {
-            expProgressText.text = $"{currentExp}/{maxExp} XP";
+            expProgressText.text = $"{currentExp}/{maxExp} XP"; // Формат X/Y XP
         }
 
-        if (expProgressBar != null)
+        if (expProgressBar != null) // Полоска опыта
         {
-            float fillRatio = maxExp > 0 ? Mathf.Clamp01((float)currentExp / maxExp) : 0f;
-            expProgressBar.fillAmount = fillRatio;
+            float fillRatio = maxExp > 0 ? Mathf.Clamp01((float)currentExp / maxExp) : 0f; // Соотношение опыта (0..1)
+            expProgressBar.fillAmount = fillRatio; // Применение к Image
 
             // 4-цветный градиент: Белый -> Зеленый -> Оранжевый -> Красный
-            if (fillRatio <= 0.01f)
+            if (fillRatio <= 0.01f) // 0%
                 expProgressBar.color = new Color(0.95f, 0.95f, 0.95f, 1f); // Белый
-            else if (fillRatio < 0.45f)
+            else if (fillRatio < 0.45f) // До 45%
                 expProgressBar.color = new Color(0.2f, 0.85f, 0.35f, 1f); // Зеленый
-            else if (fillRatio < 0.85f)
+            else if (fillRatio < 0.85f) // До 85%
                 expProgressBar.color = new Color(1f, 0.65f, 0.1f, 1f);   // Оранжевый
-            else
+            else // Выше 85%
                 expProgressBar.color = new Color(0.95f, 0.2f, 0.2f, 1f);  // Красный
         }
 
-        if (currentAvatarDisplayImage != null)
+        if (currentAvatarDisplayImage != null) // Картинка кота в кольце
         {
-            if (allAvatars.Count > 0)
+            if (allAvatars.Count > 0) // Если список инициализирован
             {
-                AvatarData cur = allAvatars.Find(a => a.id == selectedAvatarId);
-                if (cur != null && cur.avatarSprite != null)
+                AvatarData cur = allAvatars.Find(a => a.id == selectedAvatarId); // Поиск выбранного аватара
+                if (cur != null && cur.avatarSprite != null) // Если спрайт задан
                 {
-                    currentAvatarDisplayImage.sprite = cur.avatarSprite;
-                    currentAvatarDisplayImage.enabled = true;
-                    currentAvatarDisplayImage.color = Color.white;
+                    currentAvatarDisplayImage.sprite = cur.avatarSprite; // Установка спрайта
+                    currentAvatarDisplayImage.enabled = true; // Включение отображения
+                    currentAvatarDisplayImage.color = Color.white; // Белый цвет
                 }
-                else if (allAvatars[0].avatarSprite != null)
+                else if (allAvatars[0].avatarSprite != null) // Запасной начальный спрайт
                 {
-                    currentAvatarDisplayImage.sprite = allAvatars[0].avatarSprite;
-                    currentAvatarDisplayImage.enabled = true;
-                    currentAvatarDisplayImage.color = Color.white;
-                }
-            }
-            else
-            {
-                // Если список в коде пуст, проверяем не скрыт ли компонент
-                currentAvatarDisplayImage.enabled = (currentAvatarDisplayImage.sprite != null);
-                if (currentAvatarDisplayImage.enabled) currentAvatarDisplayImage.color = Color.white;
-            }
-        }
-
-        if (currentFrameDisplayImage != null)
-        {
-            if (allFrames.Count > 0)
-            {
-                FrameData curF = allFrames.Find(f => f.id == selectedFrameId);
-                if (curF != null && curF.frameSprite != null)
-                {
-                    currentFrameDisplayImage.sprite = curF.frameSprite;
-                    currentFrameDisplayImage.enabled = true;
-                    currentFrameDisplayImage.color = Color.white;
+                    currentAvatarDisplayImage.sprite = allAvatars[0].avatarSprite; // Установка спрайта по умолчанию
+                    currentAvatarDisplayImage.enabled = true; // Включение отображения
+                    currentAvatarDisplayImage.color = Color.white; // Белый цвет
                 }
             }
-        }
-    }
-
-    public void SetAvatarButtonInteractable(bool interactable)
-    {
-        if (avatarIconButton != null)
-        {
-            avatarIconButton.interactable = interactable;
-        }
-    }
-
-    public void OnAvatarIconClicked()
-    {
-        if (avatarPanel != null && avatarPanel.activeSelf)
-        {
-            return;
-        }
-
-        if (DialogueSystem_Manager.Instance != null && !DialogueSystem_Manager.Instance.CanInteractWithAvatarIcon())
-        {
-            return;
-        }
-        OpenAvatarPanel();
-    }
-
-    public void OpenAvatarPanel()
-    {
-        if (avatarPanel != null)
-        {
-            avatarPanel.SetActive(true);
-
-            bool isAvatarChosen = PlayerPrefs.GetInt("Tutorial_Avatar_Chosen", 0) == 1;
-            if (closeButton != null)
+            else // Если список пуст
             {
-                closeButton.interactable = isAvatarChosen;
-                closeButton.gameObject.SetActive(isAvatarChosen);
+                currentAvatarDisplayImage.enabled = (currentAvatarDisplayImage.sprite != null); // Проверка наличия спрайта
+                if (currentAvatarDisplayImage.enabled) currentAvatarDisplayImage.color = Color.white; // Белый цвет
+            }
+        }
+
+        if (currentFrameDisplayImage != null) // Картинка рамки профиля
+        {
+            if (allFrames.Count > 0) // Если список рамок есть
+            {
+                FrameData curF = allFrames.Find(f => f.id == selectedFrameId); // Поиск выбранной рамки
+                if (curF != null && curF.frameSprite != null) // Если спрайт рамки задан
+                {
+                    currentFrameDisplayImage.sprite = curF.frameSprite; // Установка спрайта рамки
+                    currentFrameDisplayImage.enabled = true; // Включение рамки
+                    currentFrameDisplayImage.color = Color.white; // Белый цвет
+                }
+            }
+        }
+    }
+
+    public void SetAvatarButtonInteractable(bool interactable) // Включение/отключение кликабельности кнопки аватара
+    {
+        if (avatarIconButton != null) // Если кнопка существует
+        {
+            avatarIconButton.interactable = interactable; // Установка свойства interactable
+        }
+    }
+
+    public void OnAvatarIconClicked() // Обработка клика по аватарке игрока
+    {
+        if (avatarPanel != null && avatarPanel.activeSelf) // Если гардероб уже открыт
+        {
+            return; // Выход
+        }
+
+        if (DialogueSystem_Manager.Instance != null && !DialogueSystem_Manager.Instance.CanInteractWithAvatarIcon()) // Проверка блокировки туториалом
+        {
+            return; // Блокировка открытия во время диалога
+        }
+        OpenAvatarPanel(); // Открытие окна гардероба
+    }
+
+    public void OpenAvatarPanel() // Открытие всплывающей панели гардероба
+    {
+        if (avatarPanel != null) // Если панель назначена
+        {
+            avatarPanel.SetActive(true); // Активация окна
+
+            bool isAvatarChosen = PlayerPrefs.GetInt("Tutorial_Avatar_Chosen", 0) == 1; // Проверка прохождения выбора
+            if (closeButton != null) // Кнопка крестика
+            {
+                closeButton.interactable = isAvatarChosen; // Активна только после выбора
+                closeButton.gameObject.SetActive(isAvatarChosen); // Видимость крестика
             }
 
-            if (autoAdaptResolution)
+            if (autoAdaptResolution) // Адаптация размеров окна
             {
-                RectTransform panelRect = avatarPanel.GetComponent<RectTransform>();
-                if (panelRect != null && panelSize.x > 0 && panelSize.y > 0)
+                RectTransform panelRect = avatarPanel.GetComponent<RectTransform>(); // RectTransform панели
+                if (panelRect != null && panelSize.x > 0 && panelSize.y > 0) // Проверка корректности размеров
                 {
-                    panelRect.sizeDelta = panelSize;
+                    panelRect.sizeDelta = panelSize; // Установка размеров
                 }
             }
 
-            BuildAvatarGrid();
-            StartCoroutine(ResetScrollToTopRoutine());
+            BuildAvatarGrid(); // Генерация элементов гардероба
+            StartCoroutine(ResetScrollToTopRoutine()); // Прокрутка списка наверх
         }
     }
 
-    private System.Collections.IEnumerator ResetScrollToTopRoutine()
+    private System.Collections.IEnumerator ResetScrollToTopRoutine() // Корутина сброса скролла к началу
     {
-        // Ожидаем завершения кадра верстки GridLayoutGroup и ContentSizeFitter
-        yield return null;
-        Canvas.ForceUpdateCanvases();
+        yield return null; // Ожидание кадра верстки
+        Canvas.ForceUpdateCanvases(); // Принудительный пересчет позиций
 
-        ScrollRect sr = avatarPanel != null ? avatarPanel.GetComponentInChildren<ScrollRect>() : null;
-        if (sr != null)
+        ScrollRect sr = avatarPanel != null ? avatarPanel.GetComponentInChildren<ScrollRect>() : null; // Поиск ScrollRect
+        if (sr != null) // Если найден
         {
-            sr.verticalNormalizedPosition = 1f;
-            sr.velocity = Vector2.zero;
+            sr.verticalNormalizedPosition = 1f; // Скролл в самый верх (1.0)
+            sr.velocity = Vector2.zero; // Обнуление скорости
         }
 
-        if (scrollContent != null)
+        if (scrollContent != null) // Контент скролла
         {
-            RectTransform crt = scrollContent.GetComponent<RectTransform>();
-            if (crt != null)
+            RectTransform crt = scrollContent.GetComponent<RectTransform>(); // RectTransform контента
+            if (crt != null) // Если существует
             {
-                crt.anchoredPosition = new Vector2(crt.anchoredPosition.x, 0f);
+                crt.anchoredPosition = new Vector2(crt.anchoredPosition.x, 0f); // Сброс позиции Y на 0
             }
         }
     }
 
-    public void CloseAvatarPanel()
+    public void CloseAvatarPanel() // Закрытие всплывающей панели гардероба
     {
-        bool isAvatarChosen = PlayerPrefs.GetInt("Tutorial_Avatar_Chosen", 0) == 1;
-        if (!isAvatarChosen)
+        bool isAvatarChosen = PlayerPrefs.GetInt("Tutorial_Avatar_Chosen", 0) == 1; // Выбран ли уже аватар
+        if (!isAvatarChosen) // Если туториал не завершен
         {
-            if (closeButton != null) closeButton.interactable = false;
-            return;
+            if (closeButton != null) closeButton.interactable = false; // Блокировка крестика
+            return; // Запрет закрытия
         }
 
-        if (avatarPanel != null)
+        if (avatarPanel != null) // Если панель существует
         {
-            avatarPanel.SetActive(false);
+            avatarPanel.SetActive(false); // Скрытие окна гардероба
         }
 
-        if (DialogueSystem_Manager.Instance != null)
+        if (DialogueSystem_Manager.Instance != null) // Уведомление менеджера диалогов
         {
-            DialogueSystem_Manager.Instance.OnAvatarPanelClosed();
+            DialogueSystem_Manager.Instance.OnAvatarPanelClosed(); // Запуск следующего шага туториала
         }
     }
 
-    private void InitDefaultData()
+    private void InitDefaultData() // Инициализация стандартной базы данных рамок и аватарок
     {
         // 14 Рамок профиля (1 Бесплатная, 11 за Золото в магазине, 2 Премиум за Кристаллы)
-        if (allFrames.Count == 0)
+        if (allFrames.Count == 0) // Если список пуст
         {
             // Базовые 7 рамок
-            allFrames.Add(new FrameData { id = 0, frameNameRU = "Стартовая Рамка Ученика", frameNameEN = "Starter Apprentice Frame", frameNameTR = "Başlangıç Çırak Çerçevesi", category = AvatarCategory.Free, isUnlockedByDefault = true });
-            allFrames.Add(new FrameData { id = 1, frameNameRU = "Медная Рамка Лавки", frameNameEN = "Copper Shop Frame", frameNameTR = "Bakır Dükkan Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 5, goldPrice = 3000 });
-            allFrames.Add(new FrameData { id = 2, frameNameRU = "Серебряная Рамка Мастера", frameNameEN = "Silver Master Frame", frameNameTR = "Gümüş Usta Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 5, goldPrice = 6000 });
-            allFrames.Add(new FrameData { id = 3, frameNameRU = "Золотая Рамка Алхимика", frameNameEN = "Golden Alchemist Frame", frameNameTR = "Altın Simyacı Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 5, goldPrice = 10000 });
-            allFrames.Add(new FrameData { id = 4, frameNameRU = "Королевская Изумрудная Рамка", frameNameEN = "Royal Emerald Frame", frameNameTR = "Kraliyet Zümrüt Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 10, goldPrice = 25000 });
-            allFrames.Add(new FrameData { id = 5, frameNameRU = "Астральная Донатная Рамка", frameNameEN = "Astral Premium Frame", frameNameTR = "Astral Özel Çerçeve", category = AvatarCategory.Premium, unlockLevelRequired = 3, crystalPrice = 50 });
-            allFrames.Add(new FrameData { id = 6, frameNameRU = "Божественная Солнечная Рамка", frameNameEN = "Divine Solar Frame", frameNameTR = "İlahi Güneş Çerçevesi", category = AvatarCategory.Premium, unlockLevelRequired = 5, crystalPrice = 100 });
+            allFrames.Add(new FrameData { id = 0, frameNameRU = "Стартовая Рамка Ученика", frameNameEN = "Starter Apprentice Frame", frameNameTR = "Başlangıç Çırak Çerçevesi", category = AvatarCategory.Free, isUnlockedByDefault = true }); // Стартовая рамка #0
+            allFrames.Add(new FrameData { id = 1, frameNameRU = "Медная Рамка Лавки", frameNameEN = "Copper Shop Frame", frameNameTR = "Bakır Dükkan Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 5, goldPrice = 3000 }); // Медная рамка лавки #1
+            allFrames.Add(new FrameData { id = 2, frameNameRU = "Серебряная Рамка Мастера", frameNameEN = "Silver Master Frame", frameNameTR = "Gümüş Usta Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 5, goldPrice = 6000 }); // Серебряная рамка мастера #2
+            allFrames.Add(new FrameData { id = 3, frameNameRU = "Золотая Рамка Алхимика", frameNameEN = "Golden Alchemist Frame", frameNameTR = "Altın Simyacı Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 5, goldPrice = 10000 }); // Золотая рамка алхимика #3
+            allFrames.Add(new FrameData { id = 4, frameNameRU = "Королевская Изумрудная Рамка", frameNameEN = "Royal Emerald Frame", frameNameTR = "Kraliyet Zümrüt Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 10, goldPrice = 25000 }); // Изумрудная рамка #4
+            allFrames.Add(new FrameData { id = 5, frameNameRU = "Астральная Донатная Рамка", frameNameEN = "Astral Premium Frame", frameNameTR = "Astral Özel Çerçeve", category = AvatarCategory.Premium, unlockLevelRequired = 3, crystalPrice = 50 }); // Астральная рамка #5
+            allFrames.Add(new FrameData { id = 6, frameNameRU = "Божественная Солнечная Рамка", frameNameEN = "Divine Solar Frame", frameNameTR = "İlahi Güneş Çerçevesi", category = AvatarCategory.Premium, unlockLevelRequired = 5, crystalPrice = 100 }); // Солнечная рамка #6
 
             // 7 Дополнительных покупных рамок в Магазине (Shop)
-            allFrames.Add(new FrameData { id = 7, frameNameRU = "Аметистовая Рамка Травника", frameNameEN = "Herbalist Amethyst Frame", frameNameTR = "Bitkici Ametist Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 6, goldPrice = 12000 });
-            allFrames.Add(new FrameData { id = 8, frameNameRU = "Рубиновая Рамка Пламени", frameNameEN = "Flame Ruby Frame", frameNameTR = "Alev Yakut Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 7, goldPrice = 15000 });
-            allFrames.Add(new FrameData { id = 9, frameNameRU = "Сапфировая Рамка Мороза", frameNameEN = "Frost Sapphire Frame", frameNameTR = "Buz Safir Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 8, goldPrice = 18000 });
-            allFrames.Add(new FrameData { id = 10, frameNameRU = "Нефритовая Рамка Друида", frameNameEN = "Druid Jade Frame", frameNameTR = "Druid Yeşim Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 9, goldPrice = 22000 });
-            allFrames.Add(new FrameData { id = 11, frameNameRU = "Обсидиановая Рамка Теней", frameNameEN = "Shadow Obsidian Frame", frameNameTR = "Gölge Obsidyen Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 11, goldPrice = 30000 });
-            allFrames.Add(new FrameData { id = 12, frameNameRU = "Небесная Лазурная Рамка", frameNameEN = "Celestial Azure Frame", frameNameTR = "Göksel Azur Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 13, goldPrice = 35000 });
-            allFrames.Add(new FrameData { id = 13, frameNameRU = "Древняя Руническая Рамка", frameNameEN = "Ancient Runic Frame", frameNameTR = "Kadim Rünik Çerçeve", category = AvatarCategory.Shop, unlockLevelRequired = 15, goldPrice = 40000 });
+            allFrames.Add(new FrameData { id = 7, frameNameRU = "Аметистовая Рамка Травника", frameNameEN = "Herbalist Amethyst Frame", frameNameTR = "Bitkici Ametist Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 6, goldPrice = 12000 }); // Аметистовая рамка #7
+            allFrames.Add(new FrameData { id = 8, frameNameRU = "Рубиновая Рамка Пламени", frameNameEN = "Flame Ruby Frame", frameNameTR = "Alev Yakut Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 7, goldPrice = 15000 }); // Рубиновая рамка #8
+            allFrames.Add(new FrameData { id = 9, frameNameRU = "Сапфировая Рамка Мороза", frameNameEN = "Frost Sapphire Frame", frameNameTR = "Buz Safir Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 8, goldPrice = 18000 }); // Сапфировая рамка #9
+            allFrames.Add(new FrameData { id = 10, frameNameRU = "Нефритовая Рамка Друида", frameNameEN = "Druid Jade Frame", frameNameTR = "Druid Yeşim Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 9, goldPrice = 22000 }); // Нефритовая рамка #10
+            allFrames.Add(new FrameData { id = 11, frameNameRU = "Обсидиановая Рамка Теней", frameNameEN = "Shadow Obsidian Frame", frameNameTR = "Gölge Obsidyen Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 11, goldPrice = 30000 }); // Обсидиановая рамка #11
+            allFrames.Add(new FrameData { id = 12, frameNameRU = "Небесная Лазурная Рамка", frameNameEN = "Celestial Azure Frame", frameNameTR = "Göksel Azur Çerçevesi", category = AvatarCategory.Shop, unlockLevelRequired = 13, goldPrice = 35000 }); // Лазурная рамка #12
+            allFrames.Add(new FrameData { id = 13, frameNameRU = "Древняя Руническая Рамка", frameNameEN = "Ancient Runic Frame", frameNameTR = "Kadim Rünik Çerçeve", category = AvatarCategory.Shop, unlockLevelRequired = 15, goldPrice = 40000 }); // Руническая рамка #13
         }
 
         // Коллекция Аватарок
-        if (allAvatars.Count == 0)
+        if (allAvatars.Count == 0) // Если список аватарок пуст
         {
             // Стартовые и уровни 1..20 (16 штук)
-            int[] earlyLevels = new int[] { 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 15, 16, 17, 18, 19, 20 };
-            for (int i = 0; i < earlyLevels.Length; i++)
+            int[] earlyLevels = new int[] { 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 15, 16, 17, 18, 19, 20 }; // Уровни разблокировки начальных аватарок
+            for (int i = 0; i < earlyLevels.Length; i++) // Цикл по начальным обликам
             {
-                allAvatars.Add(new AvatarData
+                allAvatars.Add(new AvatarData // Создание записи аватарки
                 {
-                    id = i,
-                    avatarNameRU = (i < 3) ? $"Стартовый Ученик #{i + 1}" : $"Мастер {earlyLevels[i]} Уровня",
-                    category = AvatarCategory.Free,
-                    isUnlockedByDefault = (i < 3),
-                    unlockLevelRequired = earlyLevels[i]
+                    id = i, // Уникальный ID
+                    avatarNameRU = (i < 3) ? $"Стартовый Ученик #{i + 1}" : $"Мастер {earlyLevels[i]} Уровня", // Название на русском
+                    category = AvatarCategory.Free, // Категория: бесплатная/по уровню
+                    isUnlockedByDefault = (i < 3), // Первые 3 открыты сразу
+                    unlockLevelRequired = earlyLevels[i] // Требуемый уровень
                 });
             }
 
             // Гранд-Мастера: 30, 40, 50, 60, 70, 80, 90, 100 уровни (8 штук)
-            int[] grandLevels = new int[] { 30, 40, 50, 60, 70, 80, 90, 100 };
-            for (int i = 0; i < grandLevels.Length; i++)
+            int[] grandLevels = new int[] { 30, 40, 50, 60, 70, 80, 90, 100 }; // Пороги уровней для гранд-мастеров
+            for (int i = 0; i < grandLevels.Length; i++) // Цикл по гранд-мастерам
             {
-                allAvatars.Add(new AvatarData
+                allAvatars.Add(new AvatarData // Добавление записи
                 {
-                    id = 16 + i,
-                    avatarNameRU = $"Гранд-Алхимик {grandLevels[i]} Уровня",
-                    category = AvatarCategory.Free,
-                    isUnlockedByDefault = false,
-                    unlockLevelRequired = grandLevels[i]
+                    id = 16 + i, // ID в списке
+                    avatarNameRU = $"Гранд-Алхимик {grandLevels[i]} Уровня", // Имя гранд-алхимика
+                    category = AvatarCategory.Free, // Категория: бесплатная по уровню
+                    isUnlockedByDefault = false, // Закрыта до достижения уровня
+                    unlockLevelRequired = grandLevels[i] // Требуемый уровень
                 });
             }
 
             // 5 Покупных аватарок (Обычный магазин с 5 уровня)
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 5; i++) // Цикл магазинных аватарок
             {
-                allAvatars.Add(new AvatarData
+                allAvatars.Add(new AvatarData // Добавление магазинной аватарки
                 {
-                    id = 24 + i,
-                    avatarNameRU = $"Мастер Лавки #{i + 1}",
-                    category = AvatarCategory.Shop,
-                    unlockLevelRequired = 5,
-                    goldPrice = (i + 1) * 5000
+                    id = 24 + i, // ID аватарки
+                    avatarNameRU = $"Мастер Лавки #{i + 1}", // Название аватарки
+                    category = AvatarCategory.Shop, // Категория: Магазин
+                    unlockLevelRequired = 5, // Доступна с 5 уровня
+                    goldPrice = (i + 1) * 5000 // Цена в золоте (5k, 10k, 15k, 20k, 25k)
                 });
             }
 
             // 5 Премиум аватарок (Премиум магазин с 3 уровня)
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < 5; i++) // Цикл премиум аватарок
             {
-                allAvatars.Add(new AvatarData
+                allAvatars.Add(new AvatarData // Добавление премиум аватарки
                 {
-                    id = 29 + i,
-                    avatarNameRU = $"Астральный Архимаг #{i + 1}",
-                    category = AvatarCategory.Premium,
-                    unlockLevelRequired = 3,
-                    crystalPrice = (i + 1) * 20
+                    id = 29 + i, // ID премиум аватарки
+                    avatarNameRU = $"Астральный Архимаг #{i + 1}", // Название на русском
+                    category = AvatarCategory.Premium, // Категория: Премиум
+                    unlockLevelRequired = 3, // Доступна с 3 уровня
+                    crystalPrice = (i + 1) * 20 // Цена в кристаллах (20, 40, 60, 80, 100)
                 });
             }
         }
     }
 
-    private void BuildAvatarGrid()
+    private void BuildAvatarGrid() // Генерация сетки карточек в гардеробе
     {
-        if (scrollContent == null) return;
+        if (scrollContent == null) return; // Если контейнер не найден
 
-        foreach (Transform child in scrollContent)
+        foreach (Transform child in scrollContent) // Очистка старых элементов
         {
-            Destroy(child.gameObject);
+            Destroy(child.gameObject); // Удаление дочернего объекта
         }
 
         // Переводимые заголовки через Translator (ID 58, 59, 60)
-        CreateCategorySection(Translator.GetText(58), AvatarCategory.Free);
-        CreateCategorySection(Translator.GetText(59), AvatarCategory.Shop);
-        CreateCategorySection(Translator.GetText(60), AvatarCategory.Premium);
+        CreateCategorySection(Translator.GetText(58), AvatarCategory.Free); // Секция бесплатных аватарок
+        CreateCategorySection(Translator.GetText(59), AvatarCategory.Shop); // Секция магазинных аватарок
+        CreateCategorySection(Translator.GetText(60), AvatarCategory.Premium); // Секция премиум аватарок
 
         // Секция 14 Волшебных Рамок Профиля (без спецсимволов Юникода для предотвращения предупреждений TextMeshPro)
-        CreateFramesSection("ВОЛШЕБНЫЕ РАМКИ ПРОФИЛЯ");
+        CreateFramesSection("ВОЛШЕБНЫЕ РАМКИ ПРОФИЛЯ"); // Секция рамок
     }
 
-    private void CreateCategorySection(string headerTitle, AvatarCategory cat)
+    private void CreateCategorySection(string headerTitle, AvatarCategory cat) // Создание секции категории аватарок
     {
-        if (categoryHeaderPrefab != null)
+        if (categoryHeaderPrefab != null) // Если префаб заголовка назначен
         {
-            GameObject headerObj = Instantiate(categoryHeaderPrefab, scrollContent);
-            TextMeshProUGUI txt = headerObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (txt != null)
+            GameObject headerObj = Instantiate(categoryHeaderPrefab, scrollContent); // Спавн заголовка категории
+            TextMeshProUGUI txt = headerObj.GetComponentInChildren<TextMeshProUGUI>(); // Поиск текстового поля
+            if (txt != null) // Если найден
             {
-                txt.text = headerTitle;
-                txt.color = categoryHeaderColor;
+                txt.text = headerTitle; // Установка текста заголовка
+                txt.color = categoryHeaderColor; // Установка золотистого цвета
             }
         }
 
-        List<AvatarData> catList = allAvatars.FindAll(a => a.category == cat);
-        if (catList.Count == 0) return;
+        List<AvatarData> catList = allAvatars.FindAll(a => a.category == cat); // Выборка аватарок заданной категории
+        if (catList.Count == 0) return; // Если список пуст, выходим
 
         // Создаем контейнер-сетку с GridLayoutGroup для размещения по 2-3 аватарки по горизонтали
-        GameObject gridContainer = new GameObject($"GridSection_{cat}", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
-        gridContainer.transform.SetParent(scrollContent, false);
+        GameObject gridContainer = new GameObject($"GridSection_{cat}", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter)); // Создание сетки
+        gridContainer.transform.SetParent(scrollContent, false); // Добавление в ScrollContent
 
-        GridLayoutGroup grid = gridContainer.GetComponent<GridLayoutGroup>();
-        grid.cellSize = cellSize;
-        grid.spacing = cellSpacing;
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = Mathf.Max(1, columnsCount);
-        grid.childAlignment = TextAnchor.UpperCenter;
-        grid.padding = new RectOffset(8, 8, 8, 16);
+        GridLayoutGroup grid = gridContainer.GetComponent<GridLayoutGroup>(); // Компонент сетки
+        grid.cellSize = cellSize; // Размер ячейки
+        grid.spacing = cellSpacing; // Отступы между ячейками
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; // Фиксация числа колонок
+        grid.constraintCount = Mathf.Max(1, columnsCount); // Число колонок (по умолчанию 3)
+        grid.childAlignment = TextAnchor.UpperCenter; // Выравнивание по верхнему центру
+        grid.padding = new RectOffset(8, 8, 8, 16); // Отступы от краев
 
-        ContentSizeFitter fitter = gridContainer.GetComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        ContentSizeFitter fitter = gridContainer.GetComponent<ContentSizeFitter>(); // Авто-подгонка высоты
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained; // Без горизонтальной подгонки
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize; // Подгонка по содержимому
 
-        foreach (AvatarData data in catList)
+        foreach (AvatarData data in catList) // Заполнение карточками
         {
-            CreateAvatarCell(data, gridContainer.transform);
+            CreateAvatarCell(data, gridContainer.transform); // Спавн ячейки аватарки
         }
     }
 
-    private void CreateAvatarCell(AvatarData data, Transform parentContainer)
+    private void CreateAvatarCell(AvatarData data, Transform parentContainer) // Создание отдельной карточки аватарки
     {
-        if (avatarItemPrefab == null) return;
+        if (avatarItemPrefab == null) return; // Проверка префаба
 
-        Transform targetParent = parentContainer != null ? parentContainer : scrollContent;
-        GameObject cell = Instantiate(avatarItemPrefab, targetParent);
-        cell.name = $"Avatar_{data.id}";
+        Transform targetParent = parentContainer != null ? parentContainer : scrollContent; // Выбор родителя
+        GameObject cell = Instantiate(avatarItemPrefab, targetParent); // Спавн ячейки
+        cell.name = $"Avatar_{data.id}"; // Именование объекта ячейки
 
-        Image bgImg = cell.GetComponent<Image>();
-        if (bgImg != null)
+        Image bgImg = cell.GetComponent<Image>(); // Фон ячейки
+        if (bgImg != null) // Если компонент есть
         {
-            bgImg.color = cellBackgroundColor;
+            bgImg.color = cellBackgroundColor; // Установка темного фона
         }
 
-        Image iconImg = cell.transform.Find("Avatar_Icon")?.GetComponent<Image>();
-        Image frameImg = cell.transform.Find("Avatar_Frame")?.GetComponent<Image>();
-        GameObject lockObj = cell.transform.Find("Lock_Overlay")?.gameObject;
-        TextMeshProUGUI statusText = cell.transform.Find("Status_Text")?.GetComponent<TextMeshProUGUI>();
-        Button cellBtn = cell.GetComponent<Button>();
+        Image iconImg = cell.transform.Find("Avatar_Icon")?.GetComponent<Image>(); // Слой иконки аватара
+        Image frameImg = cell.transform.Find("Avatar_Frame")?.GetComponent<Image>(); // Слой рамки аватара
+        GameObject lockObj = cell.transform.Find("Lock_Overlay")?.gameObject; // Слой замка блокировки
+        TextMeshProUGUI statusText = cell.transform.Find("Status_Text")?.GetComponent<TextMeshProUGUI>(); // Текст статуса карточки
+        Button cellBtn = cell.GetComponent<Button>(); // Кнопка клика по карточке
 
         // Отключаем лишнюю рамку на карточке аватарки, чтобы она не перекрывала изображение сверху
-        if (frameImg != null)
+        if (frameImg != null) // Если объект рамки есть
         {
-            frameImg.gameObject.SetActive(false);
+            frameImg.gameObject.SetActive(false); // Выключаем рамку на превью
         }
 
-        bool isUnlocked = IsAvatarUnlocked(data);
-        bool isSelected = (selectedAvatarId == data.id);
+        bool isUnlocked = IsAvatarUnlocked(data); // Разблокирована ли аватарка
+        bool isSelected = (selectedAvatarId == data.id); // Выбрана ли сейчас
 
-        if (iconImg != null)
+        if (iconImg != null) // Если слой иконки найден
         {
-            if (data.avatarSprite != null)
+            if (data.avatarSprite != null) // Если спрайт прикреплен
             {
-                iconImg.sprite = data.avatarSprite;
-                iconImg.color = Color.white;
-                iconImg.enabled = true;
+                iconImg.sprite = data.avatarSprite; // Установка спрайта
+                iconImg.color = Color.white; // Белый цвет без затемнения
+                iconImg.enabled = true; // Включение отображения
             }
-            else
+            else // Если спрайта нет
             {
                 // Защита от белого квадрата: если спрайт еще не прикреплен, делаем темный полупрозрачный фон
-                iconImg.sprite = null;
-                iconImg.color = new Color(0.15f, 0.15f, 0.22f, 0.4f);
+                iconImg.sprite = null; // Обнуление спрайта
+                iconImg.color = new Color(0.15f, 0.15f, 0.22f, 0.4f); // Полупрозрачная заглушка
             }
         }
 
-        if (lockObj != null)
+        if (lockObj != null) // Если объект замка существует
         {
-            lockObj.SetActive(!isUnlocked);
-            Image lockImg = lockObj.GetComponent<Image>();
-            if (lockImg != null)
+            lockObj.SetActive(!isUnlocked); // Замок активен, если аватарка заблокирована
+            Image lockImg = lockObj.GetComponent<Image>(); // Image замка
+            if (lockImg != null) // Если есть
             {
-                lockImg.color = Color.white;
+                lockImg.color = Color.white; // Белый цвет иконки замка
             }
         }
 
-        if (statusText != null)
+        if (statusText != null) // Текстовая надпись статуса
         {
-            string hexSelected = ColorUtility.ToHtmlStringRGB(selectedStatusColor);
-            string hexWear = ColorUtility.ToHtmlStringRGB(wearStatusColor);
-            string hexLocked = ColorUtility.ToHtmlStringRGB(levelLockedColor);
-            string hexGold = ColorUtility.ToHtmlStringRGB(shopGoldPriceColor);
-            string hexCrystal = ColorUtility.ToHtmlStringRGB(premiumCrystalColor);
+            string hexSelected = ColorUtility.ToHtmlStringRGB(selectedStatusColor); // HEX цвет выбранного
+            string hexWear = ColorUtility.ToHtmlStringRGB(wearStatusColor); // HEX цвет кнопки Надеть
+            string hexLocked = ColorUtility.ToHtmlStringRGB(levelLockedColor); // HEX цвет блокировки
+            string hexGold = ColorUtility.ToHtmlStringRGB(shopGoldPriceColor); // HEX цвет золотой цены
+            string hexCrystal = ColorUtility.ToHtmlStringRGB(premiumCrystalColor); // HEX цвет кристаллов
 
-            if (isSelected)
+            if (isSelected) // Если аватарка выбрана
             {
                 statusText.text = $"<color=#{hexSelected}><b>{Translator.GetText(55)}</b></color>"; // Выбрано
             }
-            else if (isUnlocked)
+            else if (isUnlocked) // Если открыта, но не надета
             {
                 statusText.text = $"<color=#{hexWear}>{Translator.GetText(56)}</color>"; // Надеть
             }
-            else
+            else // Если заблокирована
             {
-                if (data.category == AvatarCategory.Free)
+                if (data.category == AvatarCategory.Free) // Бесплатная по уровню
                 {
                     statusText.text = $"<color=#{hexLocked}>{Translator.GetText(54)}{data.unlockLevelRequired}</color>"; // Ур. X
                 }
-                else if (data.category == AvatarCategory.Shop)
+                else if (data.category == AvatarCategory.Shop) // Покупная за золото
                 {
                     statusText.text = currentLevel < 5 
                         ? $"<color=#{hexLocked}>{Translator.GetText(62)}</color>" // С 5 Ур.
-                        : $"<color=#{hexGold}>{data.goldPrice} G</color>";
+                        : $"<color=#{hexGold}>{data.goldPrice} G</color>"; // Цена в золоте
                 }
-                else
+                else // Премиум за кристаллы
                 {
                     statusText.text = currentLevel < 3 
                         ? $"<color=#{hexCrystal}>{Translator.GetText(63)}</color>" // С 3 Ур.
-                        : $"<color=#{hexCrystal}>{data.crystalPrice} C</color>";
+                        : $"<color=#{hexCrystal}>{data.crystalPrice} C</color>"; // Цена в кристаллах
                 }
             }
         }
 
-        if (cellBtn != null)
+        if (cellBtn != null) // Если кнопка карточки назначена
         {
-            cellBtn.onClick.AddListener(() => OnSelectAvatar(data));
+            cellBtn.onClick.AddListener(() => OnSelectAvatar(data)); // Назначение выбора аватарки при клике
         }
     }
 
-    private void CreateFramesSection(string headerTitle)
+    private void CreateFramesSection(string headerTitle) // Создание секции волшебных рамок
     {
-        if (allFrames == null || allFrames.Count == 0) return;
+        if (allFrames == null || allFrames.Count == 0) return; // Проверка наличия рамок
 
-        if (categoryHeaderPrefab != null)
+        if (categoryHeaderPrefab != null) // Префаб заголовка
         {
-            GameObject headerObj = Instantiate(categoryHeaderPrefab, scrollContent);
-            TextMeshProUGUI txt = headerObj.GetComponentInChildren<TextMeshProUGUI>();
-            if (txt != null)
+            GameObject headerObj = Instantiate(categoryHeaderPrefab, scrollContent); // Спавн заголовка рамок
+            TextMeshProUGUI txt = headerObj.GetComponentInChildren<TextMeshProUGUI>(); // Поиск текста
+            if (txt != null) // Если найден
             {
-                txt.text = headerTitle;
-                txt.color = categoryHeaderColor;
+                txt.text = headerTitle; // Текст "ВОЛШЕБНЫЕ РАМКИ ПРОФИЛЯ"
+                txt.color = categoryHeaderColor; // Золотой цвет
             }
         }
 
-        GameObject gridContainer = new GameObject("GridSection_Frames", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter));
-        gridContainer.transform.SetParent(scrollContent, false);
+        GameObject gridContainer = new GameObject("GridSection_Frames", typeof(RectTransform), typeof(GridLayoutGroup), typeof(ContentSizeFitter)); // Сетка для рамок
+        gridContainer.transform.SetParent(scrollContent, false); // Привязка к скроллу
 
-        GridLayoutGroup grid = gridContainer.GetComponent<GridLayoutGroup>();
-        grid.cellSize = cellSize;
-        grid.spacing = cellSpacing;
-        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        grid.constraintCount = Mathf.Max(1, columnsCount);
-        grid.childAlignment = TextAnchor.UpperCenter;
-        grid.padding = new RectOffset(8, 8, 8, 16);
+        GridLayoutGroup grid = gridContainer.GetComponent<GridLayoutGroup>(); // Компонент GridLayoutGroup
+        grid.cellSize = cellSize; // Размер ячейки
+        grid.spacing = cellSpacing; // Отступы
+        grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount; // Фиксация числа колонок
+        grid.constraintCount = Mathf.Max(1, columnsCount); // Число колонок
+        grid.childAlignment = TextAnchor.UpperCenter; // Выравнивание
+        grid.padding = new RectOffset(8, 8, 8, 16); // Отступы
 
-        ContentSizeFitter fitter = gridContainer.GetComponent<ContentSizeFitter>();
-        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        ContentSizeFitter fitter = gridContainer.GetComponent<ContentSizeFitter>(); // Авторазмер
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained; // По горизонтали
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize; // По вертикали
 
-        foreach (FrameData frame in allFrames)
+        foreach (FrameData frame in allFrames) // Заполнение рамками
         {
-            CreateFrameCell(frame, gridContainer.transform);
+            CreateFrameCell(frame, gridContainer.transform); // Спавн ячейки рамки
         }
     }
 
-    private void CreateFrameCell(FrameData data, Transform parentContainer)
+    private void CreateFrameCell(FrameData data, Transform parentContainer) // Создание карточки рамки профиля
     {
-        if (avatarItemPrefab == null) return;
+        if (avatarItemPrefab == null) return; // Проверка префаба
 
-        Transform targetParent = parentContainer != null ? parentContainer : scrollContent;
-        GameObject cell = Instantiate(avatarItemPrefab, targetParent);
-        cell.name = $"Frame_{data.id}";
+        Transform targetParent = parentContainer != null ? parentContainer : scrollContent; // Определение родителя
+        GameObject cell = Instantiate(avatarItemPrefab, targetParent); // Спавн карточки
+        cell.name = $"Frame_{data.id}"; // Имя карточки рамки
 
-        Image bgImg = cell.GetComponent<Image>();
-        if (bgImg != null)
+        Image bgImg = cell.GetComponent<Image>(); // Фон ячейки
+        if (bgImg != null) // Если есть
         {
-            bgImg.color = cellBackgroundColor;
+            bgImg.color = cellBackgroundColor; // Установка темного фона
         }
 
-        Image iconImg = cell.transform.Find("Avatar_Icon")?.GetComponent<Image>();
-        Image frameImg = cell.transform.Find("Avatar_Frame")?.GetComponent<Image>();
-        GameObject lockObj = cell.transform.Find("Lock_Overlay")?.gameObject;
-        TextMeshProUGUI statusText = cell.transform.Find("Status_Text")?.GetComponent<TextMeshProUGUI>();
-        Button cellBtn = cell.GetComponent<Button>();
+        Image iconImg = cell.transform.Find("Avatar_Icon")?.GetComponent<Image>(); // Слой иконки
+        Image frameImg = cell.transform.Find("Avatar_Frame")?.GetComponent<Image>(); // Слой рамки
+        GameObject lockObj = cell.transform.Find("Lock_Overlay")?.gameObject; // Слой замка
+        TextMeshProUGUI statusText = cell.transform.Find("Status_Text")?.GetComponent<TextMeshProUGUI>(); // Текст статуса
+        Button cellBtn = cell.GetComponent<Button>(); // Кнопка карточки
 
-        bool isUnlocked = IsFrameUnlocked(data);
-        bool isSelected = (selectedFrameId == data.id);
+        bool isUnlocked = IsFrameUnlocked(data); // Разблокирована ли рамка
+        bool isSelected = (selectedFrameId == data.id); // Выбрана ли эта рамка
 
-        if (iconImg != null)
+        if (iconImg != null) // Иконка превью рамки
         {
-            if (data.frameSprite != null)
+            if (data.frameSprite != null) // Если спрайт рамки задан
             {
-                iconImg.sprite = data.frameSprite;
-                iconImg.color = Color.white;
-                iconImg.enabled = true;
+                iconImg.sprite = data.frameSprite; // Отображение рамки
+                iconImg.color = Color.white; // Белый цвет
+                iconImg.enabled = true; // Включение картинки
             }
-            else
+            else // Если спрайта нет
             {
-                iconImg.sprite = null;
-                iconImg.color = new Color(0.15f, 0.15f, 0.22f, 0.4f);
+                iconImg.sprite = null; // Обнуление спрайта
+                iconImg.color = new Color(0.15f, 0.15f, 0.22f, 0.4f); // Темная заглушка
             }
         }
 
-        if (frameImg != null)
+        if (frameImg != null) // Слой второй рамки
         {
-            frameImg.gameObject.SetActive(false);
+            frameImg.gameObject.SetActive(false); // Отключение лишнего слоя
         }
 
-        if (lockObj != null)
+        if (lockObj != null) // Замок
         {
-            lockObj.SetActive(!isUnlocked);
+            lockObj.SetActive(!isUnlocked); // Включение замка при блокировке
         }
 
-        if (statusText != null)
+        if (statusText != null) // Текст статуса карточки рамки
         {
-            string hexSelected = ColorUtility.ToHtmlStringRGB(selectedStatusColor);
-            string hexWear = ColorUtility.ToHtmlStringRGB(wearStatusColor);
-            string hexLocked = ColorUtility.ToHtmlStringRGB(levelLockedColor);
-            string hexGold = ColorUtility.ToHtmlStringRGB(shopGoldPriceColor);
-            string hexCrystal = ColorUtility.ToHtmlStringRGB(premiumCrystalColor);
+            string hexSelected = ColorUtility.ToHtmlStringRGB(selectedStatusColor); // HEX цвет выбранного
+            string hexWear = ColorUtility.ToHtmlStringRGB(wearStatusColor); // HEX цвет "Надеть"
+            string hexLocked = ColorUtility.ToHtmlStringRGB(levelLockedColor); // HEX цвет блокировки
+            string hexGold = ColorUtility.ToHtmlStringRGB(shopGoldPriceColor); // HEX цвет цены за золото
+            string hexCrystal = ColorUtility.ToHtmlStringRGB(premiumCrystalColor); // HEX цвет кристаллов
 
-            if (isSelected)
+            if (isSelected) // Если рамка надета
             {
                 statusText.text = $"<color=#{hexSelected}><b>{Translator.GetText(55)}</b></color>"; // Выбрано
             }
-            else if (isUnlocked)
+            else if (isUnlocked) // Если открыта
             {
                 statusText.text = $"<color=#{hexWear}>{Translator.GetText(56)}</color>"; // Надеть
             }
-            else
+            else // Если закрыта
             {
-                if (data.category == AvatarCategory.Free)
+                if (data.category == AvatarCategory.Free) // Бесплатная
                 {
-                    statusText.text = $"<color=#{hexLocked}>{Translator.GetText(54)}{data.unlockLevelRequired}</color>";
+                    statusText.text = $"<color=#{hexLocked}>{Translator.GetText(54)}{data.unlockLevelRequired}</color>"; // Ур. X
                 }
-                else if (data.category == AvatarCategory.Shop)
+                else if (data.category == AvatarCategory.Shop) // Магазинная за золото
                 {
                     statusText.text = currentLevel < 5 
-                        ? $"<color=#{hexLocked}>{Translator.GetText(62)}</color>"
-                        : $"<color=#{hexGold}>{data.goldPrice} G</color>";
+                        ? $"<color=#{hexLocked}>{Translator.GetText(62)}</color>" // С 5 Ур.
+                        : $"<color=#{hexGold}>{data.goldPrice} G</color>"; // Цена в золоте
                 }
-                else
+                else // Премиум за кристаллы
                 {
                     statusText.text = currentLevel < 3 
-                        ? $"<color=#{hexCrystal}>{Translator.GetText(63)}</color>"
-                        : $"<color=#{hexCrystal}>{data.crystalPrice} C</color>";
+                        ? $"<color=#{hexCrystal}>{Translator.GetText(63)}</color>" // С 3 Ур.
+                        : $"<color=#{hexCrystal}>{data.crystalPrice} C</color>"; // Цена в кристаллах
                 }
             }
         }
 
-        if (cellBtn != null)
+        if (cellBtn != null) // Кнопка клика по рамке
         {
-            cellBtn.onClick.AddListener(() => OnSelectFrame(data));
+            cellBtn.onClick.AddListener(() => OnSelectFrame(data)); // Обработчик клика
         }
     }
 
-    public bool IsFrameUnlocked(FrameData data)
+    public bool IsFrameUnlocked(FrameData data) // Проверка: открыта ли рамка профиля
     {
-        if (data.isUnlockedByDefault) return true;
-        if (data.id < 1 && data.category == AvatarCategory.Free) return true;
-        if (PlayerPrefs.GetInt($"Frame_Unlocked_{data.id}", 0) == 1) return true;
+        if (data.isUnlockedByDefault) return true; // Разблокирована по умолчанию
+        if (data.id < 1 && data.category == AvatarCategory.Free) return true; // Стартовая рамка всегда открыта
+        if (PlayerPrefs.GetInt($"Frame_Unlocked_{data.id}", 0) == 1) return true; // Куплена или разблокирована ранее
 
-        if (data.category == AvatarCategory.Free && currentLevel >= data.unlockLevelRequired)
+        if (data.category == AvatarCategory.Free && currentLevel >= data.unlockLevelRequired) // Достигнут требуемый уровень
         {
-            return true;
+            return true; // Открыта по уровню
         }
 
-        return false;
+        return false; // Заблокирована
     }
 
-    private void OnSelectFrame(FrameData data)
+    private void OnSelectFrame(FrameData data) // Обработчик выбора рамки профиля
     {
-        if (!IsFrameUnlocked(data))
+        if (!IsFrameUnlocked(data)) // Если рамка заблокирована
         {
-            Debug.Log($"[FRAME] {data.frameNameRU} is locked!");
-            return;
+            Debug.Log($"[FRAME] {data.frameNameRU} is locked!"); // Лог в консоль
+            return; // Запрет выбора
         }
 
-        selectedFrameId = data.id;
-        PlayerPrefs.SetInt("Selected_Frame_Id", selectedFrameId);
-        PlayerPrefs.Save();
+        selectedFrameId = data.id; // Установка выбранного ID рамки
+        PlayerPrefs.SetInt("Selected_Frame_Id", selectedFrameId); // Сохранение выбора в PlayerPrefs
+        PlayerPrefs.Save(); // Запись на диск
 
-        if (selectSound != null && SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(selectSound);
+        if (selectSound != null && SettingsManager.Instance != null) // Звуковой эффект
+            SettingsManager.Instance.PlaySoundEffect(selectSound); // Воспроизведение звука
 
-        UpdateProfileUI();
-        UpdateAllCellStatusTexts();
+        UpdateProfileUI(); // Обновление визуала профиля
+        UpdateAllCellStatusTexts(); // Обновление надписей в гардеробе
     }
 
-    public bool IsAvatarUnlocked(AvatarData data)
+    public bool IsAvatarUnlocked(AvatarData data) // Проверка: открыта ли аватарка кота
     {
-        if (data.isUnlockedByDefault) return true;
+        if (data.isUnlockedByDefault) return true; // Стартовая открыта по умолчанию
         if (data.id < 3 && data.category == AvatarCategory.Free) return true; // Первые 3 стартовые аватарки всегда открыты
-        if (PlayerPrefs.GetInt($"Avatar_Unlocked_{data.id}", 0) == 1) return true;
+        if (PlayerPrefs.GetInt($"Avatar_Unlocked_{data.id}", 0) == 1) return true; // Сохранен статус покупки
 
-        if (data.category == AvatarCategory.Free && currentLevel >= data.unlockLevelRequired)
+        if (data.category == AvatarCategory.Free && currentLevel >= data.unlockLevelRequired) // Достигнут уровень
         {
-            return true;
+            return true; // Открыта по уровню
         }
 
-        return false;
+        return false; // Закрыта
     }
 
-    private void OnSelectAvatar(AvatarData data)
+    private void OnSelectAvatar(AvatarData data) // Обработчик выбора аватарки
     {
-        if (!IsAvatarUnlocked(data))
+        if (!IsAvatarUnlocked(data)) // Если аватарка заблокирована
         {
-            Debug.Log($"[AVATAR] {data.avatarNameRU} is locked!");
-            return;
+            Debug.Log($"[AVATAR] {data.avatarNameRU} is locked!"); // Лог в консоль
+            return; // Запрет выбора
         }
 
-        selectedAvatarId = data.id;
-        PlayerPrefs.SetInt("Selected_Avatar_Id", selectedAvatarId);
-        PlayerPrefs.SetInt("Tutorial_Avatar_Chosen", 1);
-        PlayerPrefs.Save();
+        selectedAvatarId = data.id; // Установка выбранного ID аватарки
+        PlayerPrefs.SetInt("Selected_Avatar_Id", selectedAvatarId); // Сохранение в PlayerPrefs
+        PlayerPrefs.SetInt("Tutorial_Avatar_Chosen", 1); // Флаг: туториал выбора аватарки пройден
+        PlayerPrefs.Save(); // Запись на диск
 
-        if (closeButton != null)
+        if (closeButton != null) // Кнопка закрытия гардероба
         {
-            closeButton.interactable = true;
-            closeButton.gameObject.SetActive(true);
+            closeButton.interactable = true; // Разблокировка кнопки
+            closeButton.gameObject.SetActive(true); // Включение видимости кнопки
         }
 
-        if (selectSound != null && SettingsManager.Instance != null)
-            SettingsManager.Instance.PlaySoundEffect(selectSound);
+        if (selectSound != null && SettingsManager.Instance != null) // Звуковой эффект
+            SettingsManager.Instance.PlaySoundEffect(selectSound); // Воспроизведение клика
 
-        UpdateProfileUI();
-        UpdateAllCellStatusTexts();
+        UpdateProfileUI(); // Обновление визуала профиля
+        UpdateAllCellStatusTexts(); // Обновление надписей во всех карточках
     }
 
     /// <summary>
     /// Быстрое бесшовное обновление надписей "Выбрано / Надеть" без мерцания и без пересоздания GameObjects
     /// </summary>
-    private void UpdateAllCellStatusTexts()
+    private void UpdateAllCellStatusTexts() // Обновление надписей Выбрано/Надеть на карточках
     {
-        if (scrollContent == null) return;
+        if (scrollContent == null) return; // Проверка наличия контента
 
-        string hexSelected = ColorUtility.ToHtmlStringRGB(selectedStatusColor);
-        string hexWear = ColorUtility.ToHtmlStringRGB(wearStatusColor);
+        string hexSelected = ColorUtility.ToHtmlStringRGB(selectedStatusColor); // HEX цвет Выбрано
+        string hexWear = ColorUtility.ToHtmlStringRGB(wearStatusColor); // HEX цвет Надеть
 
-        foreach (Transform section in scrollContent)
+        foreach (Transform section in scrollContent) // Цикл по секциям гардероба
         {
-            if (!section.name.StartsWith("GridSection_")) continue;
+            if (!section.name.StartsWith("GridSection_")) continue; // Пропуск заголовков
 
-            foreach (Transform cell in section)
+            foreach (Transform cell in section) // Цикл по карточкам секции
             {
-                TextMeshProUGUI statusText = cell.Find("Status_Text")?.GetComponent<TextMeshProUGUI>();
-                if (statusText == null) continue;
+                TextMeshProUGUI statusText = cell.Find("Status_Text")?.GetComponent<TextMeshProUGUI>(); // Текст статуса
+                if (statusText == null) continue; // Пропуск карточки, если нет текста
 
-                if (cell.name.StartsWith("Avatar_"))
+                if (cell.name.StartsWith("Avatar_")) // Если карточка аватарки
                 {
-                    if (int.TryParse(cell.name.Replace("Avatar_", ""), out int aId))
+                    if (int.TryParse(cell.name.Replace("Avatar_", ""), out int aId)) // Парсинг ID аватарки
                     {
-                        AvatarData av = allAvatars.Find(a => a.id == aId);
-                        if (av != null && IsAvatarUnlocked(av))
+                        AvatarData av = allAvatars.Find(a => a.id == aId); // Поиск данных аватарки
+                        if (av != null && IsAvatarUnlocked(av)) // Если открыта
                         {
-                            bool isSel = (selectedAvatarId == aId);
+                            bool isSel = (selectedAvatarId == aId); // Выбрана ли сейчас
                             statusText.text = isSel 
-                                ? $"<color=#{hexSelected}><b>{Translator.GetText(55)}</b></color>" 
-                                : $"<color=#{hexWear}>{Translator.GetText(56)}</color>";
+                                ? $"<color=#{hexSelected}><b>{Translator.GetText(55)}</b></color>" // Текст "Выбрано"
+                                : $"<color=#{hexWear}>{Translator.GetText(56)}</color>"; // Текст "Надеть"
                         }
                     }
                 }
-                else if (cell.name.StartsWith("Frame_"))
+                else if (cell.name.StartsWith("Frame_")) // Если карточка рамки
                 {
-                    if (int.TryParse(cell.name.Replace("Frame_", ""), out int fId))
+                    if (int.TryParse(cell.name.Replace("Frame_", ""), out int fId)) // Парсинг ID рамки
                     {
-                        FrameData fr = allFrames.Find(f => f.id == fId);
-                        if (fr != null && IsFrameUnlocked(fr))
+                        FrameData fr = allFrames.Find(f => f.id == fId); // Поиск данных рамки
+                        if (fr != null && IsFrameUnlocked(fr)) // Если открыта
                         {
-                            bool isSel = (selectedFrameId == fId);
+                            bool isSel = (selectedFrameId == fId); // Выбрана ли сейчас
                             statusText.text = isSel 
-                                ? $"<color=#{hexSelected}><b>{Translator.GetText(55)}</b></color>" 
-                                : $"<color=#{hexWear}>{Translator.GetText(56)}</color>";
+                                ? $"<color=#{hexSelected}><b>{Translator.GetText(55)}</b></color>" // Текст "Выбрано"
+                                : $"<color=#{hexWear}>{Translator.GetText(56)}</color>"; // Текст "Надеть"
                         }
                     }
                 }

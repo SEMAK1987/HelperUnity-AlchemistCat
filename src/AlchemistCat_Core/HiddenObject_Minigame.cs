@@ -139,48 +139,48 @@ public class HiddenObject_Minigame : MonoBehaviour
     private List<GameObject> activeClickableItems = new List<GameObject>(); // Список интерактивных предметов на экране
     private Coroutine flickerCoroutine; // Ссылка на корутину мерцания
 
-    private void Awake()
+    private void Awake() // Инициализация синглтона при пробуждении объекта
     {
         if (Instance == null) Instance = this; // Инициализация синглтона
         else Destroy(gameObject); // Уничтожение дубликата
     }
 
-    private void Start()
+    private void Start() // Стартовая настройка конфигурации, кнопок и сохранений
     {
         InitializeDefaultConfigurationsIfEmpty(); // Инициализация локаций и предметов по умолчанию
         SetupButtons(); // Настройка кликов кнопок интерфейса
         LoadCompletionProgress(); // Загрузка сохраненного прогресса прохождения локаций
     }
 
-    private void SetupButtons()
+    private void SetupButtons() // Назначение слушателей событий нажатия на все кнопки интерфейса
     {
-        if (closeGameButton) closeGameButton.onClick.AddListener(CloseGame);
-        if (claimRewardsAndBackButton) claimRewardsAndBackButton.onClick.AddListener(OnClaimRewardsClicked);
-        if (hintCatButton) hintCatButton.onClick.AddListener(UseHint);
+        if (closeGameButton) closeGameButton.onClick.AddListener(CloseGame); // Кнопка закрытия игры
+        if (claimRewardsAndBackButton) claimRewardsAndBackButton.onClick.AddListener(OnClaimRewardsClicked); // Кнопка забрать награды
+        if (hintCatButton) hintCatButton.onClick.AddListener(UseHint); // Кнопка подсказки Кота
 
         // Кнопки сложностей
-        if (buttonEasy) buttonEasy.onClick.AddListener(() => StartGameWithDifficulty(0));
-        if (buttonNormal) buttonNormal.onClick.AddListener(() => StartGameWithDifficulty(1));
-        if (buttonHard) buttonHard.onClick.AddListener(() => StartGameWithDifficulty(2));
+        if (buttonEasy) buttonEasy.onClick.AddListener(() => StartGameWithDifficulty(0)); // Выбор легкой сложности
+        if (buttonNormal) buttonNormal.onClick.AddListener(() => StartGameWithDifficulty(1)); // Выбор обычной сложности
+        if (buttonHard) buttonHard.onClick.AddListener(() => StartGameWithDifficulty(2)); // Выбор сложной сложности
 
         // Кнопки рекордов
-        if (catDialogContinueButton) catDialogContinueButton.onClick.AddListener(OpenRecordModeSelection);
-        if (recordTimeRushButton) recordTimeRushButton.onClick.AddListener(() => StartRecordMode(RecordModeType.TimeRush));
-        if (recordItemSurgeButton) recordItemSurgeButton.onClick.AddListener(() => StartRecordMode(RecordModeType.BigCountSurge));
-        if (recordFlickerSpawnButton) recordFlickerSpawnButton.onClick.AddListener(() => StartRecordMode(RecordModeType.FlickerSpawn));
-        if (closeRecordPopupButton) closeRecordPopupButton.onClick.AddListener(() => {
-            if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false);
-            if (locationSelectPopup) locationSelectPopup.SetActive(true);
+        if (catDialogContinueButton) catDialogContinueButton.onClick.AddListener(OpenRecordModeSelection); // Переход к выбору испытания рекордов
+        if (recordTimeRushButton) recordTimeRushButton.onClick.AddListener(() => StartRecordMode(RecordModeType.TimeRush)); // Старт блиц-испытания
+        if (recordItemSurgeButton) recordItemSurgeButton.onClick.AddListener(() => StartRecordMode(RecordModeType.BigCountSurge)); // Старт лавины предметов
+        if (recordFlickerSpawnButton) recordFlickerSpawnButton.onClick.AddListener(() => StartRecordMode(RecordModeType.FlickerSpawn)); // Старт мерцания
+        if (closeRecordPopupButton) closeRecordPopupButton.onClick.AddListener(() => { // Закрытие окна рекордов
+            if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
+            if (locationSelectPopup) locationSelectPopup.SetActive(true); // Возврат к выбору локаций
         });
 
         // Карточки локаций
-        for (int i = 0; i < locations.Count; i++)
+        for (int i = 0; i < locations.Count; i++) // Перебор списка всех локаций
         {
-            int locIndex = i;
-            if (locations[i].locationCardButton != null)
+            int locIndex = i; // Сохранение индекса локации для замыкания
+            if (locations[i].locationCardButton != null) // Если кнопка карточки локации задана
             {
-                locations[i].locationCardButton.onClick.RemoveAllListeners();
-                locations[i].locationCardButton.onClick.AddListener(() => OpenLocationDifficultySelect(locIndex));
+                locations[i].locationCardButton.onClick.RemoveAllListeners(); // Очистка предыдущих слушателей
+                locations[i].locationCardButton.onClick.AddListener(() => OpenLocationDifficultySelect(locIndex)); // Подписка на клик
             }
         }
     }
@@ -188,234 +188,234 @@ public class HiddenObject_Minigame : MonoBehaviour
     /// <summary>
     /// Открытие окна выбора сложности для выбранной локации
     /// </summary>
-    public void OpenLocationDifficultySelect(int locationIndex)
+    public void OpenLocationDifficultySelect(int locationIndex) // Открытие меню сложности для выбранной локации
     {
-        if (locationIndex < 0 || locationIndex >= locations.Count) return;
-        currentLocation = locations[locationIndex];
+        if (locationIndex < 0 || locationIndex >= locations.Count) return; // Проверка валидности индекса
+        currentLocation = locations[locationIndex]; // Установка текущей локации
 
-        if (difficultyPopupTitleText)
-            difficultyPopupTitleText.text = $"Сложность: {currentLocation.locationName}";
+        if (difficultyPopupTitleText) // Если текстовый заголовок задан
+            difficultyPopupTitleText.text = $"Сложность: {currentLocation.locationName}"; // Установка названия локации
 
-        if (locationSelectPopup) locationSelectPopup.SetActive(false);
-        if (difficultySelectPopup) difficultySelectPopup.SetActive(true);
+        if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие окна локаций
+        if (difficultySelectPopup) difficultySelectPopup.SetActive(true); // Показ окна выбора сложности
     }
 
     /// <summary>
     /// Старт локации с выбранной сложностью (0 - Легкий, 1 - Нормальный, 2 - Сложный)
     /// </summary>
-    public void StartGameWithDifficulty(int difficultyIndex)
+    public void StartGameWithDifficulty(int difficultyIndex) // Запуск игры в локации с выбранной сложностью
     {
-        if (currentLocation == null) return;
-        if (difficultyIndex < 0 || difficultyIndex >= currentLocation.difficulties.Count) return;
+        if (currentLocation == null) return; // Проверка наличия локации
+        if (difficultyIndex < 0 || difficultyIndex >= currentLocation.difficulties.Count) return; // Проверка индекса сложности
 
-        currentDifficulty = currentLocation.difficulties[difficultyIndex];
+        currentDifficulty = currentLocation.difficulties[difficultyIndex]; // Установка параметров сложности
 
-        if (difficultySelectPopup) difficultySelectPopup.SetActive(false);
-        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(true);
+        if (difficultySelectPopup) difficultySelectPopup.SetActive(false); // Скрытие попапа сложности
+        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(true); // Включение главного игрового экрана
 
-        isRecordModeActive = false;
-        currentRoundIndex = 1;
-        availableHints = 3;
+        isRecordModeActive = false; // Отключение режима рекордов
+        currentRoundIndex = 1; // Установка 1-го раунда
+        availableHints = 3; // Выдача 3 подсказок
 
-        StartRound();
+        StartRound(); // Запуск раунда
     }
 
-    private void StartRound()
+    private void StartRound() // Старт очередного раунда поиска предметов
     {
-        itemsFoundInCurrentRound = 0;
-        roundTimer = currentDifficulty.timeLimitPerRound;
-        isGameRunning = true;
+        itemsFoundInCurrentRound = 0; // Сброс найденных предметов
+        roundTimer = currentDifficulty.timeLimitPerRound; // Установка таймера раунда
+        isGameRunning = true; // Активация игрового цикла
 
-        if (backgroundLocationImage && currentLocation.backgroundSprite != null)
+        if (backgroundLocationImage && currentLocation.backgroundSprite != null) // Если фон назначен
         {
-            backgroundLocationImage.sprite = currentLocation.backgroundSprite;
+            backgroundLocationImage.sprite = currentLocation.backgroundSprite; // Установка фона локации
         }
 
-        if (locationTitleText)
+        if (locationTitleText) // Если заголовок задан
         {
-            locationTitleText.text = $"{currentLocation.locationName} — {currentDifficulty.tierName}";
+            locationTitleText.text = $"{currentLocation.locationName} — {currentDifficulty.tierName}"; // Отображение имени локации и сложности
         }
 
-        currentZoom = 1.0f;
-        panOffset = Vector2.zero;
-        ApplyZoomAndPan();
+        currentZoom = 1.0f; // Сброс масштаба к 100%
+        panOffset = Vector2.zero; // Сброс смещения
+        ApplyZoomAndPan(); // Применение трансформаций камеры
 
-        UpdateUI();
-        SpawnTargetItemsForRound();
+        UpdateUI(); // Обновление счетчиков и текстов
+        SpawnTargetItemsForRound(); // Генерация предметов на поле и в панели целей
     }
 
-    private void SpawnTargetItemsForRound()
+    private void SpawnTargetItemsForRound() // Спавн иконок целей и кликабельных предметов на поле
     {
-        ClearActiveItems();
+        ClearActiveItems(); // Очистка старых предметов
 
-        if (targetIconsContainer == null || currentLocation.itemsPool.Count == 0) return;
+        if (targetIconsContainer == null || currentLocation.itemsPool.Count == 0) return; // Проверка пула предметов
 
-        int totalToFind = currentDifficulty.itemsPerRound;
-        for (int i = 0; i < totalToFind; i++)
+        int totalToFind = currentDifficulty.itemsPerRound; // Количество предметов в раунде
+        for (int i = 0; i < totalToFind; i++) // Цикл создания целей
         {
-            Sprite itemSprite = currentLocation.itemsPool[i % currentLocation.itemsPool.Count];
+            Sprite itemSprite = currentLocation.itemsPool[i % currentLocation.itemsPool.Count]; // Получение спрайта предмета
 
             // Создание иконки цели в нижней панели
-            GameObject slotUi = null;
-            if (targetItemSlotPrefab != null)
+            GameObject slotUi = null; // Ссылка на UI-слот
+            if (targetItemSlotPrefab != null) // Если префаб слота назначен
             {
-                slotUi = Instantiate(targetItemSlotPrefab, targetIconsContainer);
-                Image img = slotUi.GetComponentInChildren<Image>();
-                if (img) img.sprite = itemSprite;
+                slotUi = Instantiate(targetItemSlotPrefab, targetIconsContainer); // Инстанцирование слота в панели целей
+                Image img = slotUi.GetComponentInChildren<Image>(); // Поиск Image внутри слота
+                if (img) img.sprite = itemSprite; // Назначение спрайта цели
             }
 
             // Спавн кликабельного предмета на фоне
-            SpawnClickableItemOnBackground(itemSprite, slotUi);
+            SpawnClickableItemOnBackground(itemSprite, slotUi); // Создание интерактивного предмета на сцене
         }
     }
 
-    private void SpawnClickableItemOnBackground(Sprite itemSprite, GameObject slotUi)
+    private void SpawnClickableItemOnBackground(Sprite itemSprite, GameObject slotUi) // Размещение кликабельного предмета на фоне локации
     {
-        if (backgroundContentRoot == null) return;
+        if (backgroundContentRoot == null) return; // Проверка корневого контейнера фона
 
-        GameObject clickable = new GameObject("HiddenItem_" + itemSprite.name, typeof(RectTransform), typeof(Image), typeof(Button));
-        clickable.transform.SetParent(backgroundContentRoot, false);
-        activeClickableItems.Add(clickable);
+        GameObject clickable = new GameObject("HiddenItem_" + itemSprite.name, typeof(RectTransform), typeof(Image), typeof(Button)); // Создание объекта предмета
+        clickable.transform.SetParent(backgroundContentRoot, false); // Размещение внутри контейнера фона
+        activeClickableItems.Add(clickable); // Добавление в список активных предметов
 
-        RectTransform rt = clickable.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(75, 75);
+        RectTransform rt = clickable.GetComponent<RectTransform>(); // Получение RectTransform
+        rt.sizeDelta = new Vector2(75, 75); // Установка размеров предмета 75x75
 
         // Случайные координаты в пределах фоновой сцены
-        float posX = UnityEngine.Random.Range(-550f, 550f);
-        float posY = UnityEngine.Random.Range(-320f, 320f);
-        rt.anchoredPosition = new Vector2(posX, posY);
+        float posX = UnityEngine.Random.Range(-550f, 550f); // Случайная координата X
+        float posY = UnityEngine.Random.Range(-320f, 320f); // Случайная координата Y
+        rt.anchoredPosition = new Vector2(posX, posY); // Установка позиции предмета
 
-        Image img = clickable.GetComponent<Image>();
-        img.sprite = itemSprite;
-        img.preserveAspect = true;
+        Image img = clickable.GetComponent<Image>(); // Компонент Image
+        img.sprite = itemSprite; // Установка спрайта предмета
+        img.preserveAspect = true; // Сохранение пропорций
 
-        Button btn = clickable.GetComponent<Button>();
-        btn.onClick.AddListener(() =>
+        Button btn = clickable.GetComponent<Button>(); // Компонент Button для клика
+        btn.onClick.AddListener(() => // Подписка на нажатие
         {
-            activeClickableItems.Remove(clickable);
-            Destroy(clickable);
-            if (slotUi != null) Destroy(slotUi);
-            OnItemFound();
+            activeClickableItems.Remove(clickable); // Удаление из активного списка
+            Destroy(clickable); // Уничтожение объекта на сцене
+            if (slotUi != null) Destroy(slotUi); // Уничтожение слота из панели целей
+            OnItemFound(); // Обработка нахождения предмета
         });
     }
 
-    private void OnItemFound()
+    private void OnItemFound() // Обработка нахождения одного предмета игроком
     {
-        itemsFoundInCurrentRound++;
-        UpdateUI();
+        itemsFoundInCurrentRound++; // Увеличение счетчика найденных предметов
+        UpdateUI(); // Обновление текста интерфейса
 
-        if (isRecordModeActive)
+        if (isRecordModeActive) // Если активен режим рекордов
         {
-            if (itemsFoundInCurrentRound >= recordTargetCount)
+            if (itemsFoundInCurrentRound >= recordTargetCount) // Если набрано нужное количество в рекорде
             {
-                CompleteRecordModeVictory();
+                CompleteRecordModeVictory(); // Завершение рекордного испытания победой
             }
-            return;
+            return; // Выход
         }
 
-        if (itemsFoundInCurrentRound >= currentDifficulty.itemsPerRound)
+        if (itemsFoundInCurrentRound >= currentDifficulty.itemsPerRound) // Если все предметы раунда найдены
         {
-            if (currentRoundIndex < currentDifficulty.roundsRequired)
+            if (currentRoundIndex < currentDifficulty.roundsRequired) // Если остались еще раунды
             {
-                currentRoundIndex++;
-                StartRound();
+                currentRoundIndex++; // Переход к следующему раунду
+                StartRound(); // Запуск следующего раунда
             }
-            else
+            else // Если все раунды этапа завершены
             {
-                CompleteCurrentDifficultyStage();
+                CompleteCurrentDifficultyStage(); // Фиксация победы в локации
             }
         }
     }
 
-    private void CompleteCurrentDifficultyStage()
+    private void CompleteCurrentDifficultyStage() // Завершение этапа сложности с выдачей наград
     {
-        isGameRunning = false;
+        isGameRunning = false; // Остановка игрового цикла
 
-        if (currentDifficulty.tier == DifficultyTier.Easy) currentLocation.isEasyCompleted = true;
-        if (currentDifficulty.tier == DifficultyTier.Normal) currentLocation.isNormalCompleted = true;
-        if (currentDifficulty.tier == DifficultyTier.Hard) currentLocation.isHardCompleted = true;
+        if (currentDifficulty.tier == DifficultyTier.Easy) currentLocation.isEasyCompleted = true; // Отметка легкого уровня
+        if (currentDifficulty.tier == DifficultyTier.Normal) currentLocation.isNormalCompleted = true; // Отметка нормального уровня
+        if (currentDifficulty.tier == DifficultyTier.Hard) currentLocation.isHardCompleted = true; // Отметка сложного уровня
 
-        SaveCompletionProgress();
-        GrantRewards();
+        SaveCompletionProgress(); // Сохранение прогресса на диск
+        GrantRewards(); // Выдача наград в инвентарь и профиль
 
-        if (victoryPopupPanel)
+        if (victoryPopupPanel) // Если панель победы задана
         {
-            victoryPopupPanel.SetActive(true);
-            if (victoryTitleText)
-                victoryTitleText.text = $"Победа: {currentLocation.locationName} ({currentDifficulty.tierName})!";
+            victoryPopupPanel.SetActive(true); // Показ окна победы
+            if (victoryTitleText) // Если заголовок победы есть
+                victoryTitleText.text = $"Победа: {currentLocation.locationName} ({currentDifficulty.tierName})!"; // Текст победы
 
-            if (victoryRewardsText)
+            if (victoryRewardsText) // Если текстовый блок наград назначен
             {
-                string rewardsSummary = "";
-                if (currentDifficulty.rewardStones > 0) rewardsSummary += $"💎 Камни: +{currentDifficulty.rewardStones}  ";
-                if (currentDifficulty.rewardScrolls > 0) rewardsSummary += $"📜 Свитки: +{currentDifficulty.rewardScrolls}\n";
-                if (currentDifficulty.rewardExpPotion100 > 0) rewardsSummary += $"🧪 Зелье Опыта (+100 XP): x{currentDifficulty.rewardExpPotion100}\n";
-                if (currentDifficulty.rewardExpPotion500 > 0) rewardsSummary += $"🧪 Зелье Опыта (+500 XP): x{currentDifficulty.rewardExpPotion500}\n";
-                if (currentDifficulty.rewardMasteryPotion100 > 0) rewardsSummary += $"✨ Зелье Мастерства (+100 XP): x{currentDifficulty.rewardMasteryPotion100}\n";
-                if (currentDifficulty.rewardMasteryPotion500 > 0) rewardsSummary += $"✨ Зелье Мастерства (+500 XP): x{currentDifficulty.rewardMasteryPotion500}\n";
+                string rewardsSummary = ""; // Формирование списка наград
+                if (currentDifficulty.rewardStones > 0) rewardsSummary += $"💎 Камни: +{currentDifficulty.rewardStones}  "; // Камни
+                if (currentDifficulty.rewardScrolls > 0) rewardsSummary += $"📜 Свитки: +{currentDifficulty.rewardScrolls}\n"; // Свитки
+                if (currentDifficulty.rewardExpPotion100 > 0) rewardsSummary += $"🧪 Зелье Опыта (+100 XP): x{currentDifficulty.rewardExpPotion100}\n"; // Зелье опыта 100
+                if (currentDifficulty.rewardExpPotion500 > 0) rewardsSummary += $"🧪 Зелье Опыта (+500 XP): x{currentDifficulty.rewardExpPotion500}\n"; // Зелье опыта 500
+                if (currentDifficulty.rewardMasteryPotion100 > 0) rewardsSummary += $"✨ Зелье Мастерства (+100 XP): x{currentDifficulty.rewardMasteryPotion100}\n"; // Зелье мастерства 100
+                if (currentDifficulty.rewardMasteryPotion500 > 0) rewardsSummary += $"✨ Зелье Мастерства (+500 XP): x{currentDifficulty.rewardMasteryPotion500}\n"; // Зелье мастерства 500
 
-                victoryRewardsText.text = rewardsSummary;
+                victoryRewardsText.text = rewardsSummary; // Применение текста наград
             }
         }
     }
 
-    private void GrantRewards()
+    private void GrantRewards() // Начисление камней, свитков, золота и зелий игроку
     {
-        if (Avatar_Manager.Instance != null)
+        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
         {
-            if (currentDifficulty.rewardStones > 0) Avatar_Manager.Instance.AddStones(currentDifficulty.rewardStones);
-            if (currentDifficulty.rewardScrolls > 0) Avatar_Manager.Instance.AddScrolls(currentDifficulty.rewardScrolls);
-            if (currentDifficulty.rewardGold > 0) Avatar_Manager.Instance.AddGold(currentDifficulty.rewardGold);
+            if (currentDifficulty.rewardStones > 0) Avatar_Manager.Instance.AddStones(currentDifficulty.rewardStones); // Начисление камней
+            if (currentDifficulty.rewardScrolls > 0) Avatar_Manager.Instance.AddScrolls(currentDifficulty.rewardScrolls); // Начисление свитков
+            if (currentDifficulty.rewardGold > 0) Avatar_Manager.Instance.AddGold(currentDifficulty.rewardGold); // Начисление золота
         }
 
-        if (Inventory_Manager.Instance != null)
+        if (Inventory_Manager.Instance != null) // Если менеджер инвентаря активен
         {
-            if (currentDifficulty.rewardExpPotion100 > 0)
+            if (currentDifficulty.rewardExpPotion100 > 0) // Выдача зелья опыта +100
                 Inventory_Manager.Instance.AddItem("pot_exp_100", "Зелье Опыта (+100 XP)", currentDifficulty.rewardExpPotion100, 100, expPotion100Sprite, Color.cyan);
-            if (currentDifficulty.rewardExpPotion500 > 0)
+            if (currentDifficulty.rewardExpPotion500 > 0) // Выдача зелья опыта +500
                 Inventory_Manager.Instance.AddItem("pot_exp_500", "Зелье Опыта (+500 XP)", currentDifficulty.rewardExpPotion500, 500, expPotion500Sprite, Color.magenta);
-            if (currentDifficulty.rewardMasteryPotion100 > 0)
+            if (currentDifficulty.rewardMasteryPotion100 > 0) // Выдача зелья мастерства +100
                 Inventory_Manager.Instance.AddItem("pot_mastery_100", "Зелье Мастерства (+100 XP)", currentDifficulty.rewardMasteryPotion100, 100, masteryPotion100Sprite, Color.green);
-            if (currentDifficulty.rewardMasteryPotion500 > 0)
+            if (currentDifficulty.rewardMasteryPotion500 > 0) // Выдача зелья мастерства +500
                 Inventory_Manager.Instance.AddItem("pot_mastery_500", "Зелье Мастерства (+500 XP)", currentDifficulty.rewardMasteryPotion500, 500, masteryPotion500Sprite, Color.yellow);
         }
     }
 
-    private void OnClaimRewardsClicked()
+    private void OnClaimRewardsClicked() // Обработка закрытия окна победы и проверка открытия эндгейм-режима
     {
-        if (victoryPopupPanel) victoryPopupPanel.SetActive(false);
-        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false);
+        if (victoryPopupPanel) victoryPopupPanel.SetActive(false); // Скрытие окна победы
+        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false); // Скрытие игрового поля
 
         // Проверка: пройдены ли все 3 локации на всех сложностях?
-        bool allCompleted = true;
-        foreach (var loc in locations)
+        bool allCompleted = true; // Флаг полной зачистки
+        foreach (var loc in locations) // Перебор локаций
         {
-            if (!loc.IsFullyCompleted) { allCompleted = false; break; }
+            if (!loc.IsFullyCompleted) { allCompleted = false; break; } // Если хоть одна не завершена
         }
 
-        if (allCompleted)
+        if (allCompleted) // Если зачищены все локации на всех сложностях
         {
-            bool recordDialogShown = PlayerPrefs.GetInt("CatRecordDialogShown", 0) == 1;
-            if (!recordDialogShown)
+            bool recordDialogShown = PlayerPrefs.GetInt("CatRecordDialogShown", 0) == 1; // Проверка показа диалога Кота
+            if (!recordDialogShown) // Если еще не показывали
             {
-                PlayerPrefs.SetInt("CatRecordDialogShown", 1);
-                PlayerPrefs.Save();
-                TriggerCatRecordUnlockDialog();
-                return;
+                PlayerPrefs.SetInt("CatRecordDialogShown", 1); // Сохранение факта показа
+                PlayerPrefs.Save(); // Запись на диск
+                TriggerCatRecordUnlockDialog(); // Запуск диалога открытия рекордов
+                return; // Выход
             }
         }
 
-        if (locationSelectPopup) locationSelectPopup.SetActive(true);
+        if (locationSelectPopup) locationSelectPopup.SetActive(true); // Возврат к выбору локации
     }
 
-    private void TriggerCatRecordUnlockDialog()
+    private void TriggerCatRecordUnlockDialog() // Отображение диалогового окна Кота об открытии режима рекордов
     {
-        if (catRecordUnlockedDialog)
+        if (catRecordUnlockedDialog) // Если диалоговое окно задано
         {
-            catRecordUnlockedDialog.SetActive(true);
-            if (catSpeechText)
+            catRecordUnlockedDialog.SetActive(true); // Включение окна
+            if (catSpeechText) // Если текст речи Кота есть
             {
-                catSpeechText.text =
+                catSpeechText.text = // Реплика Кота
                     "Мяу! Невероятно, Мастер! Ты блестяще преодолел все три локации на всех сложностях!\n\n" +
                     "Теперь тебе открывается высшее испытание: «Становление Рекорда»!\n" +
                     "Испытай свои силы: Блиц-поиск на время, Лавина предметов (20-30 шт) и Мерцающие вспышки с наградами от 1 до 10 Кристаллов раз в месяц!";
@@ -423,347 +423,347 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
     }
 
-    public void OpenRecordModeSelection()
+    public void OpenRecordModeSelection() // Открытие меню выбора испытания рекордов
     {
-        if (catRecordUnlockedDialog) catRecordUnlockedDialog.SetActive(false);
-        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(true);
+        if (catRecordUnlockedDialog) catRecordUnlockedDialog.SetActive(false); // Скрытие диалога Кота
+        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(true); // Включение меню испытаний
     }
 
-    public void StartRecordMode(RecordModeType mode)
+    public void StartRecordMode(RecordModeType mode) // Запуск выбранного испытания из режима «Становление Рекорда»
     {
-        isRecordModeActive = true;
-        currentRecordMode = mode;
+        isRecordModeActive = true; // Активация флага рекордов
+        currentRecordMode = mode; // Сохранение типа испытания
 
-        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false);
-        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(true);
+        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false); // Скрытие попапа выбора
+        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(true); // Включение игрового поля
 
-        ClearActiveItems();
-        itemsFoundInCurrentRound = 0;
-        isGameRunning = true;
+        ClearActiveItems(); // Очистка предметов
+        itemsFoundInCurrentRound = 0; // Сброс счетчика найденных
+        isGameRunning = true; // Запуск игры
 
-        if (locations.Count > 0 && locations[0].backgroundSprite != null)
-            backgroundLocationImage.sprite = locations[UnityEngine.Random.Range(0, locations.Count)].backgroundSprite;
+        if (locations.Count > 0 && locations[0].backgroundSprite != null) // Если есть фон
+            backgroundLocationImage.sprite = locations[UnityEngine.Random.Range(0, locations.Count)].backgroundSprite; // Случайный фон
 
-        switch (mode)
+        switch (mode) // Ветвление по режимам испытаний
         {
-            case RecordModeType.TimeRush:
-                recordTargetCount = 15;
-                roundTimer = 40f; // Экстремальное время на 15 предметов
-                if (locationTitleText) locationTitleText.text = "★ СТАНОВЛЕНИЕ РЕКОРДА: БЛИЦ ★";
-                SpawnRecordItems(recordTargetCount);
-                break;
+            case RecordModeType.TimeRush: // Испытание: Блиц-поиск на время
+                recordTargetCount = 15; // 15 предметов
+                roundTimer = 40f; // Экстремальное время на 15 предметов (40 секунд)
+                if (locationTitleText) locationTitleText.text = "★ СТАНОВЛЕНИЕ РЕКОРДА: БЛИЦ ★"; // Заголовок блица
+                SpawnRecordItems(recordTargetCount); // Спавн предметов
+                break; // Выход
 
-            case RecordModeType.BigCountSurge:
-                recordTargetCount = UnityEngine.Random.Range(20, 31);
-                roundTimer = 150f;
-                if (locationTitleText) locationTitleText.text = $"★ СТАНОВЛЕНИЕ РЕКОРДА: ЛАВИНА ({recordTargetCount} шт) ★";
-                SpawnRecordItems(recordTargetCount);
-                break;
+            case RecordModeType.BigCountSurge: // Испытание: Лавина предметов
+                recordTargetCount = UnityEngine.Random.Range(20, 31); // 20-30 предметов
+                roundTimer = 150f; // 150 секунд
+                if (locationTitleText) locationTitleText.text = $"★ СТАНОВЛЕНИЕ РЕКОРДА: ЛАВИНА ({recordTargetCount} шт) ★"; // Заголовок лавины
+                SpawnRecordItems(recordTargetCount); // Спавн предметов
+                break; // Выход
 
-            case RecordModeType.FlickerSpawn:
-                recordTargetCount = UnityEngine.Random.Range(20, 31);
-                roundTimer = 180f;
-                if (locationTitleText) locationTitleText.text = $"★ СТАНОВЛЕНИЕ РЕКОРДА: МЕРЦАНИЕ ({recordTargetCount} шт) ★";
-                if (flickerCoroutine != null) StopCoroutine(flickerCoroutine);
-                flickerCoroutine = StartCoroutine(FlickerSpawnRoutine(recordTargetCount));
-                break;
+            case RecordModeType.FlickerSpawn: // Испытание: Мерцающее появление
+                recordTargetCount = UnityEngine.Random.Range(20, 31); // 20-30 предметов
+                roundTimer = 180f; // 180 секунд
+                if (locationTitleText) locationTitleText.text = $"★ СТАНОВЛЕНИЕ РЕКОРДА: МЕРЦАНИЕ ({recordTargetCount} шт) ★"; // Заголовок мерцания
+                if (flickerCoroutine != null) StopCoroutine(flickerCoroutine); // Остановка старого мерцания
+                flickerCoroutine = StartCoroutine(FlickerSpawnRoutine(recordTargetCount)); // Запуск корутины мерцания
+                break; // Выход
         }
 
-        UpdateUI();
+        UpdateUI(); // Обновление счетчиков UI
     }
 
-    private void SpawnRecordItems(int count)
+    private void SpawnRecordItems(int count) // Генерация предметов для рекордных испытаний из общего пула всех локаций
     {
-        List<Sprite> combinedPool = new List<Sprite>();
-        foreach (var loc in locations) combinedPool.AddRange(loc.itemsPool);
-        if (combinedPool.Count == 0) return;
+        List<Sprite> combinedPool = new List<Sprite>(); // Объединенный пул спрайтов
+        foreach (var loc in locations) combinedPool.AddRange(loc.itemsPool); // Сбор всех спрайтов предметов
+        if (combinedPool.Count == 0) return; // Проверка на пустоту
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < count; i++) // Спавн нужного числа предметов
         {
-            Sprite itemSprite = combinedPool[i % combinedPool.Count];
-            GameObject slotUi = null;
-            if (targetItemSlotPrefab != null)
+            Sprite itemSprite = combinedPool[i % combinedPool.Count]; // Выбор спрайта
+            GameObject slotUi = null; // Слот цели
+            if (targetItemSlotPrefab != null) // Если префаб назначен
             {
-                slotUi = Instantiate(targetItemSlotPrefab, targetIconsContainer);
-                Image img = slotUi.GetComponentInChildren<Image>();
-                if (img) img.sprite = itemSprite;
+                slotUi = Instantiate(targetItemSlotPrefab, targetIconsContainer); // Инстанцирование слота в панели целей
+                Image img = slotUi.GetComponentInChildren<Image>(); // Компонент Image
+                if (img) img.sprite = itemSprite; // Назначение спрайта цели
             }
-            SpawnClickableItemOnBackground(itemSprite, slotUi);
+            SpawnClickableItemOnBackground(itemSprite, slotUi); // Спавн на поле
         }
     }
 
-    private IEnumerator FlickerSpawnRoutine(int targetCount)
+    private IEnumerator FlickerSpawnRoutine(int targetCount) // Корутина последовательного появления и исчезновения мерцающих предметов
     {
-        List<Sprite> combinedPool = new List<Sprite>();
-        foreach (var loc in locations) combinedPool.AddRange(loc.itemsPool);
-        if (combinedPool.Count == 0) yield break;
+        List<Sprite> combinedPool = new List<Sprite>(); // Объединенный пул спрайтов
+        foreach (var loc in locations) combinedPool.AddRange(loc.itemsPool); // Сбор всех предметов
+        if (combinedPool.Count == 0) yield break; // Проверка пула
 
-        for (int i = 0; i < targetCount; i++)
+        for (int i = 0; i < targetCount; i++) // Поочередный спавн предметов
         {
-            if (!isGameRunning || !isRecordModeActive) yield break;
+            if (!isGameRunning || !isRecordModeActive) yield break; // Прерывание если игра остановлена
 
-            yield return new WaitForSeconds(UnityEngine.Random.Range(0.8f, 1.8f));
+            yield return new WaitForSeconds(UnityEngine.Random.Range(0.8f, 1.8f)); // Случайная пауза перед появлением
 
-            Sprite itemSprite = combinedPool[UnityEngine.Random.Range(0, combinedPool.Count)];
-            GameObject clickable = new GameObject("FlickerItem_" + i, typeof(RectTransform), typeof(Image), typeof(Button));
-            clickable.transform.SetParent(backgroundContentRoot, false);
-            activeClickableItems.Add(clickable);
+            Sprite itemSprite = combinedPool[UnityEngine.Random.Range(0, combinedPool.Count)]; // Случайный спрайт предмета
+            GameObject clickable = new GameObject("FlickerItem_" + i, typeof(RectTransform), typeof(Image), typeof(Button)); // Создание объекта
+            clickable.transform.SetParent(backgroundContentRoot, false); // Размещение на фоне
+            activeClickableItems.Add(clickable); // Добавление в список активных
 
-            RectTransform rt = clickable.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(75, 75);
-            rt.anchoredPosition = new Vector2(UnityEngine.Random.Range(-550f, 550f), UnityEngine.Random.Range(-320f, 320f));
+            RectTransform rt = clickable.GetComponent<RectTransform>(); // RectTransform
+            rt.sizeDelta = new Vector2(75, 75); // Размеры 75x75
+            rt.anchoredPosition = new Vector2(UnityEngine.Random.Range(-550f, 550f), UnityEngine.Random.Range(-320f, 320f)); // Случайная позиция
 
-            Image img = clickable.GetComponent<Image>();
-            img.sprite = itemSprite;
-            img.preserveAspect = true;
+            Image img = clickable.GetComponent<Image>(); // Image
+            img.sprite = itemSprite; // Спрайт
+            img.preserveAspect = true; // Пропорции
 
-            Button btn = clickable.GetComponent<Button>();
-            btn.onClick.AddListener(() =>
+            Button btn = clickable.GetComponent<Button>(); // Button
+            btn.onClick.AddListener(() => // Подписка на клик
             {
-                activeClickableItems.Remove(clickable);
-                Destroy(clickable);
-                OnItemFound();
+                activeClickableItems.Remove(clickable); // Удаление из активных
+                Destroy(clickable); // Уничтожение
+                OnItemFound(); // Обработка нахождения
             });
 
             // Предмет исчезает через 1.2 секунды
-            StartCoroutine(DisappearAfterTime(clickable, 1.2f));
+            StartCoroutine(DisappearAfterTime(clickable, 1.2f)); // Запуск авто-исчезновения
         }
     }
 
-    private IEnumerator DisappearAfterTime(GameObject obj, float delay)
+    private IEnumerator DisappearAfterTime(GameObject obj, float delay) // Корутина исчезновения ненайденного мерцающего предмета
     {
-        yield return new WaitForSeconds(delay);
-        if (obj != null)
+        yield return new WaitForSeconds(delay); // Пауза жизни предмета
+        if (obj != null) // Если объект еще не был нажат игроком
         {
-            activeClickableItems.Remove(obj);
-            Destroy(obj);
+            activeClickableItems.Remove(obj); // Удаление из активного списка
+            Destroy(obj); // Уничтожение объекта
         }
     }
 
-    private void CompleteRecordModeVictory()
+    private void CompleteRecordModeVictory() // Завершение рекордного испытания с начислением кристаллов
     {
-        isGameRunning = false;
-        int crystalsReward = 1;
+        isGameRunning = false; // Остановка таймера
+        int crystalsReward = 1; // Базовая награда кристаллами
 
-        switch (currentRecordMode)
+        switch (currentRecordMode) // Расчет кристаллов по типу рекорда
         {
-            case RecordModeType.TimeRush:
-                crystalsReward = 1;
-                break;
-            case RecordModeType.BigCountSurge:
-                crystalsReward = UnityEngine.Random.Range(1, 6);
-                break;
-            case RecordModeType.FlickerSpawn:
-                crystalsReward = UnityEngine.Random.Range(1, 11);
-                break;
+            case RecordModeType.TimeRush: // Блиц-поиск
+                crystalsReward = 1; // +1 Кристалл
+                break; // Выход
+            case RecordModeType.BigCountSurge: // Лавина предметов
+                crystalsReward = UnityEngine.Random.Range(1, 6); // +1..5 Кристаллов
+                break; // Выход
+            case RecordModeType.FlickerSpawn: // Мерцание
+                crystalsReward = UnityEngine.Random.Range(1, 11); // +1..10 Кристаллов
+                break; // Выход
         }
 
-        if (Avatar_Manager.Instance != null)
+        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
         {
-            Avatar_Manager.Instance.AddCrystals(crystalsReward);
+            Avatar_Manager.Instance.AddCrystals(crystalsReward); // Начисление кристаллов игроку
         }
 
-        if (victoryPopupPanel)
+        if (victoryPopupPanel) // Если окно победы задано
         {
-            victoryPopupPanel.SetActive(true);
-            if (victoryTitleText) victoryTitleText.text = "★ ВЕЛИКИЙ РЕКОРД УСТАНОВЛЕН! ★";
-            if (victoryRewardsText)
+            victoryPopupPanel.SetActive(true); // Включение окна победы
+            if (victoryTitleText) victoryTitleText.text = "★ ВЕЛИКИЙ РЕКОРД УСТАНОВЛЕН! ★"; // Заголовок победы рекорда
+            if (victoryRewardsText) // Текст наград
             {
-                victoryRewardsText.text = $"Вы одолели тяжелейшее испытание месяца!\n💎 Получено Кристаллов: +{crystalsReward}";
+                victoryRewardsText.text = $"Вы одолели тяжелейшее испытание месяца!\n💎 Получено Кристаллов: +{crystalsReward}"; // Описание полученных кристаллов
             }
         }
     }
 
-    private void Update()
+    private void Update() // Покадровый таймер и обработка зумирования/перемещения камеры
     {
-        if (!isGameRunning) return;
+        if (!isGameRunning) return; // Пропуск если игра не активна
 
-        roundTimer -= Time.deltaTime;
-        if (timerText)
+        roundTimer -= Time.deltaTime; // Отсчет времени раунда
+        if (timerText) // Если текст таймера назначен
         {
-            int min = Mathf.FloorToInt(Mathf.Max(0, roundTimer) / 60f);
-            int sec = Mathf.FloorToInt(Mathf.Max(0, roundTimer) % 60f);
-            timerText.text = $"⏳ {min:00}:{sec:00}";
+            int min = Mathf.FloorToInt(Mathf.Max(0, roundTimer) / 60f); // Минуты
+            int sec = Mathf.FloorToInt(Mathf.Max(0, roundTimer) % 60f); // Секунды
+            timerText.text = $"⏳ {min:00}:{sec:00}"; // Отображение времени раунда
         }
 
-        if (roundTimer <= 0)
+        if (roundTimer <= 0) // Если время вышло
         {
-            GameOverTimeout();
+            GameOverTimeout(); // Завершение раунда по таймауту
         }
 
-        HandleTouchAndMouseZoomPan();
+        HandleTouchAndMouseZoomPan(); // Обработка жестов зума и мыши
     }
 
-    private void GameOverTimeout()
+    private void GameOverTimeout() // Обработка окончания времени на поиск предметов
     {
-        isGameRunning = false;
-        if (flickerCoroutine != null) StopCoroutine(flickerCoroutine);
-        ClearActiveItems();
+        isGameRunning = false; // Остановка игры
+        if (flickerCoroutine != null) StopCoroutine(flickerCoroutine); // Остановка корутины мерцания
+        ClearActiveItems(); // Очистка предметов
 
-        if (victoryPopupPanel)
+        if (victoryPopupPanel) // Если окно уведомления задано
         {
-            victoryPopupPanel.SetActive(true);
-            if (victoryTitleText) victoryTitleText.text = "Время вышло!";
-            if (victoryRewardsText) victoryRewardsText.text = "Попробуйте снова преодолеть это испытание!";
-        }
-    }
-
-    private void UseHint()
-    {
-        if (availableHints <= 0 || activeClickableItems.Count == 0) return;
-        availableHints--;
-        if (hintCountText) hintCountText.text = availableHints.ToString();
-
-        GameObject itemToHighlight = activeClickableItems[0];
-        if (itemToHighlight != null)
-        {
-            StartCoroutine(PulseHintEffect(itemToHighlight));
+            victoryPopupPanel.SetActive(true); // Показ окна
+            if (victoryTitleText) victoryTitleText.text = "Время вышло!"; // Заголовок проигрыша
+            if (victoryRewardsText) victoryRewardsText.text = "Попробуйте снова преодолеть это испытание!"; // Описание
         }
     }
 
-    private IEnumerator PulseHintEffect(GameObject obj)
+    private void UseHint() // Использование подсказки Кота для подсветки предмета
     {
-        Transform t = obj.transform;
-        Vector3 originalScale = t.localScale;
-        for (int i = 0; i < 3; i++)
+        if (availableHints <= 0 || activeClickableItems.Count == 0) return; // Проверка остатка подсказок и предметов
+        availableHints--; // Уменьшение счетчика подсказок
+        if (hintCountText) hintCountText.text = availableHints.ToString(); // Обновление счетчика на кнопке
+
+        GameObject itemToHighlight = activeClickableItems[0]; // Выбор первого активного предмета
+        if (itemToHighlight != null) // Если предмет доступен
         {
-            if (obj == null) yield break;
-            t.localScale = originalScale * 1.5f;
-            yield return new WaitForSeconds(0.2f);
-            t.localScale = originalScale;
-            yield return new WaitForSeconds(0.2f);
+            StartCoroutine(PulseHintEffect(itemToHighlight)); // Запуск эффекта пульсации
         }
     }
 
-    private void HandleTouchAndMouseZoomPan()
+    private IEnumerator PulseHintEffect(GameObject obj) // Корутина 3-кратной пульсации подсказанного предмета
     {
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (Mathf.Abs(scroll) > 0.01f)
+        Transform t = obj.transform; // Трансформ объекта
+        Vector3 originalScale = t.localScale; // Запоминание базового масштаба
+        for (int i = 0; i < 3; i++) // 3 пульсирующих цикла
         {
-            currentZoom = Mathf.Clamp(currentZoom + scroll * zoomSpeed * 3f, minZoom, maxZoom);
-            ApplyZoomAndPan();
-        }
-
-        if (Input.touchCount == 2)
-        {
-            Touch touchZero = Input.GetTouch(0);
-            Touch touchOne = Input.GetTouch(1);
-
-            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition;
-            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition;
-
-            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude;
-            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude;
-
-            float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag;
-            currentZoom = Mathf.Clamp(currentZoom - deltaMagnitudeDiff * 0.005f, minZoom, maxZoom);
-            ApplyZoomAndPan();
+            if (obj == null) yield break; // Проверка на уничтожение
+            t.localScale = originalScale * 1.5f; // Увеличение в 1.5 раза
+            yield return new WaitForSeconds(0.2f); // Пауза 0.2 сек
+            t.localScale = originalScale; // Возврат в норму
+            yield return new WaitForSeconds(0.2f); // Пауза 0.2 сек
         }
     }
 
-    private void ApplyZoomAndPan()
+    private void HandleTouchAndMouseZoomPan() // Обработка колесика мыши и мультитач-жестов для приближения сцены
     {
-        if (backgroundContentRoot)
+        float scroll = Input.GetAxis("Mouse ScrollWheel"); // Колесико мыши
+        if (Mathf.Abs(scroll) > 0.01f) // Если колесико крутится
         {
-            backgroundContentRoot.localScale = new Vector3(currentZoom, currentZoom, 1f);
-            backgroundContentRoot.anchoredPosition = panOffset;
+            currentZoom = Mathf.Clamp(currentZoom + scroll * zoomSpeed * 3f, minZoom, maxZoom); // Ограничение зума
+            ApplyZoomAndPan(); // Применение зума
+        }
+
+        if (Input.touchCount == 2) // Если 2 пальца на экране (Pinch-to-zoom)
+        {
+            Touch touchZero = Input.GetTouch(0); // Первый палец
+            Touch touchOne = Input.GetTouch(1); // Второй палец
+
+            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition; // Прошлая позиция пальца 1
+            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition; // Прошлая позиция пальца 2
+
+            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude; // Прошлое расстояние
+            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude; // Текущее расстояние
+
+            float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag; // Разница расстояний
+            currentZoom = Mathf.Clamp(currentZoom - deltaMagnitudeDiff * 0.005f, minZoom, maxZoom); // Корректировка зума
+            ApplyZoomAndPan(); // Применение зума
         }
     }
 
-    private void UpdateUI()
+    private void ApplyZoomAndPan() // Применение параметров масштабирования и панорамирования к корневому объекту сцены
     {
-        if (itemsRemainingText)
+        if (backgroundContentRoot) // Если корневой контейнер назначен
         {
-            int total = isRecordModeActive ? recordTargetCount : (currentDifficulty != null ? currentDifficulty.itemsPerRound : 0);
-            itemsRemainingText.text = $"Осталось: {Mathf.Max(0, total - itemsFoundInCurrentRound)}";
+            backgroundContentRoot.localScale = new Vector3(currentZoom, currentZoom, 1f); // Установка масштаба
+            backgroundContentRoot.anchoredPosition = panOffset; // Установка смещения
         }
-
-        if (currentRoundText)
-        {
-            if (isRecordModeActive)
-                currentRoundText.text = "Рекордный раунд";
-            else if (currentDifficulty != null)
-                currentRoundText.text = $"Этап {currentRoundIndex} из {currentDifficulty.roundsRequired}";
-        }
-
-        if (hintCountText)
-            hintCountText.text = $"💡 Подсказка: {availableHints}";
     }
 
-    private void ClearActiveItems()
+    private void UpdateUI() // Обновление счетчиков оставшихся предметов, раундов и подсказок в интерфейсе
     {
-        foreach (var item in activeClickableItems)
+        if (itemsRemainingText) // Если текст остатка задан
         {
-            if (item != null) Destroy(item);
+            int total = isRecordModeActive ? recordTargetCount : (currentDifficulty != null ? currentDifficulty.itemsPerRound : 0); // Общее число
+            itemsRemainingText.text = $"Осталось: {Mathf.Max(0, total - itemsFoundInCurrentRound)}"; // Отображение остатка
         }
-        activeClickableItems.Clear();
 
-        if (targetIconsContainer != null)
+        if (currentRoundText) // Если текст раунда задан
         {
-            foreach (Transform child in targetIconsContainer)
+            if (isRecordModeActive) // В режиме рекордов
+                currentRoundText.text = "Рекордный раунд"; // Текст рекорда
+            else if (currentDifficulty != null) // В обычном режиме
+                currentRoundText.text = $"Этап {currentRoundIndex} из {currentDifficulty.roundsRequired}"; // Номер раунда
+        }
+
+        if (hintCountText) // Если текст подсказок есть
+            hintCountText.text = $"💡 Подсказка: {availableHints}"; // Количество подсказок
+    }
+
+    private void ClearActiveItems() // Очистка всех созданных интерактивных предметов и иконок целей
+    {
+        foreach (var item in activeClickableItems) // Перебор активных предметов
+        {
+            if (item != null) Destroy(item); // Уничтожение каждого предмета
+        }
+        activeClickableItems.Clear(); // Очистка списка
+
+        if (targetIconsContainer != null) // Если контейнер иконок целей назначен
+        {
+            foreach (Transform child in targetIconsContainer) // Перебор всех дочерних слотов
             {
-                Destroy(child.gameObject);
+                Destroy(child.gameObject); // Уничтожение каждого слота
             }
         }
     }
 
-    public void CloseGame()
+    public void CloseGame() // Закрытие игрового окна и возврат к выбору локаций
     {
-        isGameRunning = false;
-        if (flickerCoroutine != null) StopCoroutine(flickerCoroutine);
-        ClearActiveItems();
+        isGameRunning = false; // Остановка игрового процесса
+        if (flickerCoroutine != null) StopCoroutine(flickerCoroutine); // Остановка корутины мерцания
+        ClearActiveItems(); // Удаление активных предметов
 
-        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false);
-        if (difficultySelectPopup) difficultySelectPopup.SetActive(false);
-        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false);
-        if (locationSelectPopup) locationSelectPopup.SetActive(true);
+        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false); // Скрытие игрового экрана
+        if (difficultySelectPopup) difficultySelectPopup.SetActive(false); // Скрытие окна сложностей
+        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
+        if (locationSelectPopup) locationSelectPopup.SetActive(true); // Включение окна выбора локации
     }
 
-    private void SaveCompletionProgress()
+    private void SaveCompletionProgress() // Сохранение статуса прохождения 3 локаций и сложностей в PlayerPrefs
     {
-        for (int i = 0; i < locations.Count; i++)
+        for (int i = 0; i < locations.Count; i++) // Перебор всех локаций
         {
-            PlayerPrefs.SetInt($"Loc_{i}_Easy", locations[i].isEasyCompleted ? 1 : 0);
-            PlayerPrefs.SetInt($"Loc_{i}_Norm", locations[i].isNormalCompleted ? 1 : 0);
-            PlayerPrefs.SetInt($"Loc_{i}_Hard", locations[i].isHardCompleted ? 1 : 0);
+            PlayerPrefs.SetInt($"Loc_{i}_Easy", locations[i].isEasyCompleted ? 1 : 0); // Сохранение легкой сложности
+            PlayerPrefs.SetInt($"Loc_{i}_Norm", locations[i].isNormalCompleted ? 1 : 0); // Сохранение нормальной сложности
+            PlayerPrefs.SetInt($"Loc_{i}_Hard", locations[i].isHardCompleted ? 1 : 0); // Сохранение сложной сложности
         }
-        PlayerPrefs.Save();
+        PlayerPrefs.Save(); // Запись на диск
     }
 
-    private void LoadCompletionProgress()
+    private void LoadCompletionProgress() // Загрузка статуса завершения локаций из PlayerPrefs
     {
-        for (int i = 0; i < locations.Count; i++)
+        for (int i = 0; i < locations.Count; i++) // Перебор всех локаций
         {
-            locations[i].isEasyCompleted = PlayerPrefs.GetInt($"Loc_{i}_Easy", 0) == 1;
-            locations[i].isNormalCompleted = PlayerPrefs.GetInt($"Loc_{i}_Norm", 0) == 1;
-            locations[i].isHardCompleted = PlayerPrefs.GetInt($"Loc_{i}_Hard", 0) == 1;
+            locations[i].isEasyCompleted = PlayerPrefs.GetInt($"Loc_{i}_Easy", 0) == 1; // Загрузка легкой сложности
+            locations[i].isNormalCompleted = PlayerPrefs.GetInt($"Loc_{i}_Norm", 0) == 1; // Загрузка нормальной сложности
+            locations[i].isHardCompleted = PlayerPrefs.GetInt($"Loc_{i}_Hard", 0) == 1; // Загрузка сложной сложности
         }
     }
 
-    public void InitializeDefaultConfigurationsIfEmpty()
+    public void InitializeDefaultConfigurationsIfEmpty() // Инициализация 3 локаций по умолчанию, если список в инспекторе пуст
     {
-        if (locations.Count == 0)
+        if (locations.Count == 0) // Если локации еще не созданы
         {
             // 1. Локация: Лавка Алхимика
-            LocationConfig shop = new LocationConfig { locationId = "Shop", locationName = "Лавка Алхимика" };
-            shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 5, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 3, rewardScrolls = 1 });
-            shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 10, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 6, rewardScrolls = 3, rewardExpPotion100 = 1 });
-            shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 10, roundsRequired = 5, timeLimitPerRound = 90f, rewardStones = 15, rewardScrolls = 10, rewardExpPotion500 = 1, rewardMasteryPotion100 = 1 });
-            locations.Add(shop);
+            LocationConfig shop = new LocationConfig { locationId = "Shop", locationName = "Лавка Алхимика" }; // Создание лавки
+            shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 5, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 3, rewardScrolls = 1 }); // Легкая сложность
+            shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 10, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 6, rewardScrolls = 3, rewardExpPotion100 = 1 }); // Нормальная сложность
+            shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 10, roundsRequired = 5, timeLimitPerRound = 90f, rewardStones = 15, rewardScrolls = 10, rewardExpPotion500 = 1, rewardMasteryPotion100 = 1 }); // Сложная сложность
+            locations.Add(shop); // Добавление лавки
 
             // 2. Локация: Дом Алхимика
-            LocationConfig house = new LocationConfig { locationId = "House", locationName = "Дом Алхимика" };
-            house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 6, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 5, rewardScrolls = 1 });
-            house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 12, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 9, rewardScrolls = 3, rewardExpPotion100 = 2 });
-            house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardStones = 20, rewardScrolls = 12, rewardExpPotion500 = 2, rewardMasteryPotion100 = 1 });
-            locations.Add(house);
+            LocationConfig house = new LocationConfig { locationId = "House", locationName = "Дом Алхимика" }; // Создание дома
+            house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 6, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 5, rewardScrolls = 1 }); // Легкая сложность
+            house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 12, roundsRequired = 3, timeLimitPerRound = 90f, rewardStones = 9, rewardScrolls = 3, rewardExpPotion100 = 2 }); // Нормальная сложность
+            house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardStones = 20, rewardScrolls = 12, rewardExpPotion500 = 2, rewardMasteryPotion100 = 1 }); // Сложная сложность
+            locations.Add(house); // Добавление дома
 
             // 3. Локация: Магический Рынок
-            LocationConfig market = new LocationConfig { locationId = "Market", locationName = "Магический Рынок" };
-            market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 6, roundsRequired = 3, timeLimitPerRound = 90f, rewardExpPotion100 = 3 });
-            market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 12, roundsRequired = 3, timeLimitPerRound = 90f, rewardExpPotion100 = 6, rewardMasteryPotion100 = 3 });
-            market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardExpPotion500 = 3, rewardMasteryPotion500 = 1 });
-            locations.Add(market);
+            LocationConfig market = new LocationConfig { locationId = "Market", locationName = "Магический Рынок" }; // Создание рынка
+            market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 6, roundsRequired = 3, timeLimitPerRound = 90f, rewardExpPotion100 = 3 }); // Легкая сложность
+            market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 12, roundsRequired = 3, timeLimitPerRound = 90f, rewardExpPotion100 = 6, rewardMasteryPotion100 = 3 }); // Нормальная сложность
+            market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardExpPotion500 = 3, rewardMasteryPotion500 = 1 }); // Сложная сложность
+            locations.Add(market); // Добавление рынка
         }
     }
 }

@@ -29,19 +29,19 @@ public class Transtable_Text : MonoBehaviour
         }
     }
 
-    private void OnEnable()
+    private void OnEnable() // Событие включения объекта в иерархии
     {
-        Translator.Add(this);
-        UpdateText();
+        Translator.Add(this); // Регистрация компонента в базе переводчика
+        UpdateText(); // Немедленное обновление локализованного текста
     }
 
-    private void OnDisable()
+    private void OnDisable() // Событие выключения объекта
     {
-        Translator.Delete(this);
+        Translator.Delete(this); // Удаление из списка активных текстов переводчика
     }
 
-    public void UpdateText()
+    public void UpdateText() // Метод принудительного обновления текста
     {
-        Translator.FormatText(this);
+        Translator.FormatText(this); // Форматирование и применение перевода
     }
 }

@@ -64,96 +64,96 @@ public class TimeOfDaySystem : MonoBehaviour
     /// <summary>
     /// Проверяет системное время игрока и плавно или мгновенно применяет фон.
     /// </summary>
-    public void CheckAndApplyTimeOfDay(bool instant = false)
+    public void CheckAndApplyTimeOfDay(bool instant = false) // Проверка и применение освещения по часам
     {
-        if (manualOverride) return;
+        if (manualOverride) return; // Пропуск при включенном ручном режиме
 
-        if (useRealTime)
+        if (useRealTime) // Если включен режим реального времени
         {
             // Получаем местный час из системы устройства игрока
-            int currentHour = DateTime.Now.Hour;
+            int currentHour = DateTime.Now.Hour; // Получение текущего часа из ОС
             
             // Если час между днем и ночью -> День, иначе -> Ночь
-            bool shouldBeNight = false;
-            if (dayStartHour < nightStartHour)
+            bool shouldBeNight = false; // Флаг: должна ли сейчас быть ночь
+            if (dayStartHour < nightStartHour) // Стандартный суточный интервал
             {
-                shouldBeNight = (currentHour < dayStartHour || currentHour >= nightStartHour);
+                shouldBeNight = (currentHour < dayStartHour || currentHour >= nightStartHour); // Определение ночного времени
             }
             else
             {
                 // Нестандартный диапазон через полночь
-                shouldBeNight = (currentHour >= nightStartHour && currentHour < dayStartHour);
+                shouldBeNight = (currentHour >= nightStartHour && currentHour < dayStartHour); // Ночь через полночь
             }
 
-            SetDayNightState(shouldBeNight, instant);
+            SetDayNightState(shouldBeNight, instant); // Применение состояния дня/ночи
         }
     }
 
-    private IEnumerator PeriodicTimeCheck()
+    private IEnumerator PeriodicTimeCheck() // Периодический таймер проверки времени
     {
-        while (true)
+        while (true) // Бесконечный цикл проверки
         {
-            yield return new WaitForSeconds(30f); // Проверяем каждые 30 секунд
-            if (!manualOverride && useRealTime)
+            yield return new WaitForSeconds(30f); // Пауза 30 секунд между проверками
+            if (!manualOverride && useRealTime) // Если активен авто-режим
             {
-                CheckAndApplyTimeOfDay(instant: false);
+                CheckAndApplyTimeOfDay(instant: false); // Плавное обновление освещения
             }
         }
     }
 
-    public void SetDayNightState(bool night, bool instant)
+    public void SetDayNightState(bool night, bool instant) // Установка режима день/ночь
     {
-        isNight = night;
+        isNight = night; // Обновление переменной состояния
 
         if (dayRoomImage != null)
-            dayRoomImage.gameObject.SetActive(true);
+            dayRoomImage.gameObject.SetActive(true); // Активация дневного слоя
         if (nightRoomImage != null)
-            nightRoomImage.gameObject.SetActive(true);
+            nightRoomImage.gameObject.SetActive(true); // Активация ночного слоя
 
-        float targetNightAlpha = night ? 1f : 0f;
+        float targetNightAlpha = night ? 1f : 0f; // Целевая прозрачность ночного фона (1 = ночь, 0 = день)
 
-        if (instant)
+        if (instant) // Мгновенная смена
         {
-            ApplyBlendDirect(targetNightAlpha);
+            ApplyBlendDirect(targetNightAlpha); // Мгновенное применение прозрачности
         }
-        else
+        else // Плавная анимация
         {
-            if (blendCoroutine != null) StopCoroutine(blendCoroutine);
-            blendCoroutine = StartCoroutine(BlendTransition(targetNightAlpha, transitionDuration));
+            if (blendCoroutine != null) StopCoroutine(blendCoroutine); // Остановка предыдущего перехода
+            blendCoroutine = StartCoroutine(BlendTransition(targetNightAlpha, transitionDuration)); // Запуск плавного перехода
         }
     }
 
-    private void ApplyBlendDirect(float nightAlpha)
+    private void ApplyBlendDirect(float nightAlpha) // Прямая установка прозрачности слоев
     {
-        if (dayRoomImage != null)
+        if (dayRoomImage != null) // Обновление дневного слоя
         {
-            Color dColor = dayRoomImage.color;
-            dColor.a = 1f - nightAlpha;
-            dayRoomImage.color = dColor;
+            Color dColor = dayRoomImage.color; // Текущий цвет
+            dColor.a = 1f - nightAlpha; // Инвертированная прозрачность дня
+            dayRoomImage.color = dColor; // Применение цвета
         }
 
-        if (nightRoomImage != null)
+        if (nightRoomImage != null) // Обновление ночного слоя
         {
-            Color nColor = nightRoomImage.color;
-            nColor.a = nightAlpha;
-            nightRoomImage.color = nColor;
+            Color nColor = nightRoomImage.color; // Текущий цвет
+            nColor.a = nightAlpha; // Прямая прозрачность ночи
+            nightRoomImage.color = nColor; // Применение цвета
         }
     }
 
-    private IEnumerator BlendTransition(float targetNightAlpha, float duration)
+    private IEnumerator BlendTransition(float targetNightAlpha, float duration) // Корутина плавного фейда освещения
     {
-        float startNightAlpha = nightRoomImage != null ? nightRoomImage.color.a : (isNight ? 0f : 1f);
-        float elapsed = 0f;
+        float startNightAlpha = nightRoomImage != null ? nightRoomImage.color.a : (isNight ? 0f : 1f); // Начальная прозрачность
+        float elapsed = 0f; // Счетчик прошедшего времени
 
-        while (elapsed < duration)
+        while (elapsed < duration) // Цикл интерполяции
         {
-            elapsed += Time.deltaTime;
-            float t = elapsed / duration;
-            float currentAlpha = Mathf.Lerp(startNightAlpha, targetNightAlpha, t);
-            ApplyBlendDirect(currentAlpha);
-            yield return null;
+            elapsed += Time.deltaTime; // Прирост времени кадра
+            float t = elapsed / duration; // Нормализованный прогресс от 0 до 1
+            float currentAlpha = Mathf.Lerp(startNightAlpha, targetNightAlpha, t); // Плавное вычисление прозрачности
+            ApplyBlendDirect(currentAlpha); // Применение прозрачности на экран
+            yield return null; // Ожидание следующего кадра
         }
 
-        ApplyBlendDirect(targetNightAlpha);
+        ApplyBlendDirect(targetNightAlpha); // Фиксация финальной прозрачности
     }
 }
