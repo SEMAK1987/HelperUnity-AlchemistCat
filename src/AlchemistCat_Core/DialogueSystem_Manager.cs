@@ -318,22 +318,43 @@ public class DialogueSystem_Manager : MonoBehaviour
         localMusicSource.Play(); // Старт проигрывания
     }
 
-    public void OnNextStepClicked() // Обработчик нажатия кнопки 'Далее' в диалоге Кота
+    private void Update() // Обработка горячих клавиш и кликов для быстрого пропуска диалогов
+    {
+        if (isTyping) // Если текст в данный момент печатается
+        {
+            // При нажатии Пробела, Enter или клика ЛКМ в любом месте экрана (если не активен ввод имени)
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0)) // Проверка нажатия клавиш или мыши
+            {
+                if (nameInputField == null || !nameInputField.isFocused) // Исключение фокуса поля ввода имени
+                {
+                    SkipTypingAnimation(); // Мгновенный вывод полного текста реплики
+                }
+            }
+        }
+    }
+
+    public void SkipTypingAnimation() // Метод мгновенного раскрытия полного текста диалога
+    {
+        if (!isTyping) return; // Если печать не идет, выходим
+        if (typingCoroutine != null) StopCoroutine(typingCoroutine); // Остановка корутины посимвольного вывода
+        isTyping = false; // Сброс флага активной печати
+        if (dialogueBodyText != null) // Если текстовый компонент существует
+        {
+            dialogueBodyText.text = activeFullText; // Вывод полного форматированного текста
+            dialogueBodyText.maxVisibleCharacters = 99999; // Раскрытие всех видимых символов
+        }
+        OnTypingFinished(); // Завершение шага и переключение кнопки на актуальное действие
+    }
+
+    public void OnNextStepClicked() // Обработчик нажатия кнопки 'Далее' / 'Пропустить' в диалоге Кота
     {
         if (buttonClickSound != null && SettingsManager.Instance != null) // Если звук клика задан
             SettingsManager.Instance.PlaySoundEffect(buttonClickSound); // Проигрывание звукового эффекта
 
         if (isTyping) // Если текст реплики еще печатается
         {
-            if (typingCoroutine != null) StopCoroutine(typingCoroutine); // Прерывание эффекта печатной машинки
-            isTyping = false; // Сброс флага печати
-            if (dialogueBodyText != null) // Если текстовое поле доступно
-            {
-                dialogueBodyText.text = activeFullText; // Мгновенный вывод полного текста
-                dialogueBodyText.maxVisibleCharacters = 99999; // Раскрытие всех символов
-            }
-            OnTypingFinished(); // Завершение шага печати
-            return; // Выход
+            SkipTypingAnimation(); // Мгновенный вывод полного текста реплики
+            return; // Выход (следующее нажатие уже перейдет к следующему действию)
         }
 
         if (currentStepIndex < 0 || currentStepIndex >= dialogueSteps.Count) return; // Проверка диапазона шагов
@@ -430,10 +451,30 @@ public class DialogueSystem_Manager : MonoBehaviour
     {
         if (index < 0 || index >= dialogueSteps.Count) return; // Проверка валидности индекса
 
-        if (nameInputContainer != null) nameInputContainer.SetActive(false); // Скрытие поля ввода имени
-        if (nextStepButton != null) nextStepButton.gameObject.SetActive(false); // Скрытие кнопки 'Далее' до завершения печати
-
         DialogStep step = dialogueSteps[index]; // Текущий шаг данных
+
+        if (nameInputContainer != null) nameInputContainer.SetActive(false); // Скрытие поля ввода имени до соответствующего шага
+
+        if (nextStepButton != null) // Настройка кнопки диалога
+        {
+            if (step.isNameInputStep) // Если текущий шаг - ввод имени игрока
+            {
+                nextStepButton.gameObject.SetActive(false); // Скрываем кнопку, пока имя не введено
+            }
+            else // Для всех обычных шагов диалога
+            {
+                nextStepButton.gameObject.SetActive(true); // Показываем кнопку сразу для возможности быстрого пропуска
+                nextStepButton.interactable = true; // Разрешаем взаимодействие
+                if (nextStepButtonText != null) // Если текст кнопки задан
+                {
+                    nextStepButtonText.enableAutoSizing = true; // Автоматическое масштабирование размера шрифта
+                    nextStepButtonText.fontSizeMin = 14; // Минимальный кегль
+                    nextStepButtonText.fontSizeMax = 22; // Максимальный кегль
+                    nextStepButtonText.textWrappingMode = TextWrappingModes.NoWrap; // Отключение переноса строк
+                    nextStepButtonText.text = "Пропустить"; // Отображение текста 'Пропустить' во время эффекта печатной машинки
+                }
+            }
+        }
 
         HandleResourceReveal(step.revealResourceIndex); // Поэтапное раскрытие ресурсов в шапке
 
