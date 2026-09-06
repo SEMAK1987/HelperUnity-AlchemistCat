@@ -176,15 +176,7 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (testModeResetOnStart)
         {
-            PlayerPrefs.DeleteKey("Player_Gold");
-            PlayerPrefs.DeleteKey("Player_Stones");
-            PlayerPrefs.DeleteKey("Player_Scrolls");
-            PlayerPrefs.DeleteKey("Player_Crystals");
-            PlayerPrefs.DeleteKey("Alchemist_Player_Name");
-            PlayerPrefs.DeleteKey("Player_Level");
-            PlayerPrefs.DeleteKey("Player_Exp");
-            PlayerPrefs.DeleteKey("Player_MaxExp");
-            PlayerPrefs.Save();
+            ResetAllManagersAndGameState(); // Полный сброс всех менеджеров, параметров, мастерства и рангов до нуля при тест-старте
         }
 
         currentGold = PlayerPrefs.GetInt("Player_Gold", 0);
