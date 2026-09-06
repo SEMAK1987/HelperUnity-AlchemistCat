@@ -450,6 +450,13 @@ public class DialogueSystem_Manager : MonoBehaviour
             return; // Выход
         }
 
+        // Если это шаг подтверждения Алхимической Рыбалки
+        if (currentStep.isConfirmFishingStep) // Проверка шага рыбалки
+        {
+            OpenFishingUI(); // Открытие окна Алхимической Рыбалки
+            return; // Выход
+        }
+
         currentStepIndex++; // Переход к следующему индексу реплики
         if (currentStepIndex < dialogueSteps.Count) // Если есть следующий шаг
         {
@@ -1142,6 +1149,37 @@ public class DialogueSystem_Manager : MonoBehaviour
         {
             GameObject foundPanel = GameObject.Find("MinigamesPanel");
             if (foundPanel != null) foundPanel.SetActive(true);
+        }
+    }
+
+    public void OpenFishingUI()
+    {
+        if (buttonClickSound != null && SettingsManager.Instance != null)
+            SettingsManager.Instance.PlaySoundEffect(buttonClickSound);
+
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+
+        if (AlchemyFishing_Minigame.Instance != null)
+        {
+            AlchemyFishing_Minigame.Instance.ShowDifficultySelection();
+        }
+        else
+        {
+            AlchemyFishing_Minigame fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
+            if (fishing != null)
+            {
+                fishing.ShowDifficultySelection();
+            }
+            else
+            {
+                GameObject foundFishing = GameObject.Find("AlchemyFishing_Panel");
+                if (foundFishing != null)
+                {
+                    foundFishing.SetActive(true);
+                    AlchemyFishing_Minigame comp = foundFishing.GetComponent<AlchemyFishing_Minigame>();
+                    if (comp != null) comp.ShowDifficultySelection();
+                }
+            }
         }
     }
 
