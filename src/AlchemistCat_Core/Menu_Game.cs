@@ -13,18 +13,18 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class Menu_Game : MonoBehaviour
 {
-    public static Menu_Game Instance { get; private set; }
+    public static Menu_Game Instance { get; private set; } // Статический синглтон главного меню игры
 
     private void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;
+            Instance = this; // Инициализация синглтона при первом запуске
         }
         else if (Instance != this)
         {
-            Instance.TransferNewReferences(this);
-            Destroy(gameObject);
+            Instance.TransferNewReferences(this); // Автоматический перенос ссылок на новый инстанс
+            Destroy(gameObject); // Уничтожение лишнего объекта
             return;
         }
     }
@@ -33,7 +33,7 @@ public class Menu_Game : MonoBehaviour
     {
         if (Instance == this)
         {
-            Instance = null;
+            Instance = null; // Очистка синглтона при уничтожении
         }
     }
 
@@ -75,93 +75,93 @@ public class Menu_Game : MonoBehaviour
 
     public enum DayNightCycleType
     {
-        AutomaticPingPong, // Бесконечный цикл туда-обратно (как сейчас)
-        RealTimeClock,     // Привязка к часам реального компьютера (00:00 - пик ночи 1.0, 12:00 - пик дня 0.0)
-        Manual             // Полностью ручное управление (например, через ползунок или внешние скрипты)
+        AutomaticPingPong, // Бесконечный цикл туда-обратно
+        RealTimeClock, // Привязка к реальному времени компьютера (00:00 - ночь, 12:00 - день)
+        Manual // Ручное управление через ползунок или внешние скрипты
     }
 
     [Header("Панели Меню")]
     [Tooltip("Основная панель главного меню")]
-    public GameObject mainMenuPanel;
+    public GameObject mainMenuPanel; // Основная панель главного меню
     [Tooltip("Панель настроек")]
-    public GameObject settingsPanel;
+    public GameObject settingsPanel; // Панель настроек звука и графики
 
     [Header("Кнопки Меню")]
     [Tooltip("Кнопка запуска/продолжения игры (Играть)")]
-    public Button startButton;
+    public Button startButton; // Кнопка "Играть"
     [Tooltip("Кнопка открытия настроек")]
-    public Button settingsButton;
+    public Button settingsButton; // Кнопка "Настройки"
     [Tooltip("Кнопка выхода")]
-    public Button exitButton;
+    public Button exitButton; // Кнопка "Выход"
     [Tooltip("Кнопка возврата из настроек в главное меню (Назад)")]
-    public Button settingsBackButton;
+    public Button settingsBackButton; // Кнопка "Назад" в настройках
 
     [Header("Ограничение Клик-Зоны (Raycast Padding)")]
     [Tooltip("Отступы внутрь для клик-зоны Кнопки ИГРАТЬ (X=Слева, Y=Снизу, Z=Справа, W=Сверху)")]
-    public Vector4 startButtonPadding = new Vector4(0f, 0f, 0f, 0f);
+    public Vector4 startButtonPadding = new Vector4(0f, 0f, 0f, 0f); // Отступы клика кнопки Старт
     [Tooltip("Отступы внутрь для клик-зоны Кнопки НАСТРОЙКИ (X=Слева, Y=Снизу, Z=Справа, W=Сверху)")]
-    public Vector4 settingsButtonPadding = new Vector4(0f, 0f, 0f, 0f);
+    public Vector4 settingsButtonPadding = new Vector4(0f, 0f, 0f, 0f); // Отступы клика кнопки Настройки
     [Tooltip("Отступы внутрь для клик-зоны Кнопки ВЫХОД (X=Слева, Y=Снизу, Z=Справа, W=Сверху)")]
-    public Vector4 exitButtonPadding = new Vector4(0f, 0f, 0f, 0f);
+    public Vector4 exitButtonPadding = new Vector4(0f, 0f, 0f, 0f); // Отступы клика кнопки Выход
     [Tooltip("Отступы внутрь для клик-зоны Кнопки НАЗАД (X=Слева, Y=Снизу, Z=Справа, W=Сверху)")]
-    public Vector4 backButtonPadding = new Vector4(0f, 0f, 0f, 0f);
+    public Vector4 backButtonPadding = new Vector4(0f, 0f, 0f, 0f); // Отступы клика кнопки Назад
 
     [Header("Настройки Дня и Ночи (Day/Night Blending)")]
     [Tooltip("Режим смены дня и ночи:\n- AutomaticPingPong: Плавное качание туда-обратно\n- RealTimeClock: Привязка к реальному времени компьютера\n- Manual: Смена происходит вручную (из инспектора или внешних скриптов)")]
-    public DayNightCycleType cycleType = DayNightCycleType.AutomaticPingPong;
+    public DayNightCycleType cycleType = DayNightCycleType.AutomaticPingPong; // Тип смены дня и ночи
     [Tooltip("Картинка Дневного Фона (Day Background Image)")]
-    public Image dayBackgroundImage;
+    public Image dayBackgroundImage; // Изображение дневного фона
     [Tooltip("Картинка Ночного Фона (Night Background Image)")]
-    public Image nightBackgroundImage;
+    public Image nightBackgroundImage; // Изображение ночного фона
     [Tooltip("Включить автоматическую плавную смену суток в меню (Устаревшее, используйте cycleType)")]
-    public bool autoCycleBackgrounds = true;
+    public bool autoCycleBackgrounds = true; // Авто-смена суток
     [Tooltip("Скорость перехода (чем выше, тем быстрее меняются день и ночь)")]
-    public float dayNightCycleSpeed = 0.15f;
+    public float dayNightCycleSpeed = 0.15f; // Скорость смены времени суток
     [Tooltip("Ручное смешивание (0 - чистый день, 1 - чистая ночь)")]
     [Range(0f, 1f)]
-    public float dayNightBlendFactor = 0f;
+    public float dayNightBlendFactor = 0f; // Коэффициент смешивания дня и ночи (0..1)
 
     [Header("Элементы Анимации и Параллакса")]
     [Tooltip("Объект названия игры (для эффекта парения)")]
-    public RectTransform gameTitleText;
+    public RectTransform gameTitleText; // Трансформ заголовка для эффекта парения
     [Tooltip("Слой заднего фона для параллакса")]
-    public RectTransform backgroundLayer;
+    public RectTransform backgroundLayer; // Слой фона для параллакса
     [Tooltip("Сила параллакса")]
-    public float parallaxStrength = 20f;
+    public float parallaxStrength = 20f; // Сила смещения параллакса
     [Tooltip("Скорость плавного парения заголовка")]
-    public float titleAnimSpeed = 3f;
+    public float titleAnimSpeed = 3f; // Скорость колебания заголовка
 
-    private Vector2 bgStartPos;
-    private float titleTimer = 0f;
-    private float titleStartY = 0f;
-    private bool cycleDirectionUp = true;
+    private Vector2 bgStartPos; // Начальная позиция фона
+    private float titleTimer = 0f; // Таймер анимации заголовка
+    private float titleStartY = 0f; // Начальная высота Y заголовка
+    private bool cycleDirectionUp = true; // Направление перехода цикла дня/ночи
 
     private void Start()
     {
         // Поддержка совместимости со старыми сценами
         if (!autoCycleBackgrounds && cycleType == DayNightCycleType.AutomaticPingPong)
         {
-            cycleType = DayNightCycleType.Manual;
+            cycleType = DayNightCycleType.Manual; // Переключение в ручной режим
         }
 
         if (backgroundLayer != null)
         {
-            bgStartPos = backgroundLayer.anchoredPosition;
+            bgStartPos = backgroundLayer.anchoredPosition; // Запоминаем исходную позицию фона
         }
 
         if (gameTitleText != null)
         {
-            titleStartY = gameTitleText.anchoredPosition.y;
+            titleStartY = gameTitleText.anchoredPosition.y; // Запоминаем исходную высоту заголовка
         }
 
-        UpdateBackgroundBlending();
-        SetupListeners();
-        ShowPanel(mainMenuPanel);
+        UpdateBackgroundBlending(); // Обновление прозрачности дня и ночи
+        SetupListeners(); // Привязка обработчиков нажатий на кнопки
+        ShowPanel(mainMenuPanel); // Открытие главного экрана меню
 
         // Автоматически запускаем музыку меню через SettingsManager
         if (SettingsManager.Instance != null)
         {
-            SettingsManager.Instance.PlayThemeForActiveScene();
+            SettingsManager.Instance.PlayThemeForActiveScene(); // Запуск фоновой музыки для меню
         }
     }
 
@@ -170,9 +170,9 @@ public class Menu_Game : MonoBehaviour
         // 1. Анимация парения заголовка (Легкое дыхание)
         if (gameTitleText != null)
         {
-            titleTimer += Time.deltaTime * titleAnimSpeed;
-            float offset = Mathf.Sin(titleTimer) * 12f;
-            gameTitleText.anchoredPosition = new Vector2(gameTitleText.anchoredPosition.x, titleStartY + offset);
+            titleTimer += Time.deltaTime * titleAnimSpeed; // Инкремент таймера парения
+            float offset = Mathf.Sin(titleTimer) * 12f; // Синусоидальное смещение по высоте
+            gameTitleText.anchoredPosition = new Vector2(gameTitleText.anchoredPosition.x, titleStartY + offset); // Применение смещения
         }
 
         // 2. Интерактивный Параллакс фона за счет наклона мыши

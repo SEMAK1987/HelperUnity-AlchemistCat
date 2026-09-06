@@ -8,27 +8,27 @@ using UnityEngine.EventSystems;
 public class UIButtonHoverEffect : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     [Header("Настройки анимации")]
-    public float hoverScaleMultiplier = 1.05f;
-    public float animationSpeed = 15f;
+    public float hoverScaleMultiplier = 1.05f; // Множитель увеличения кнопки при наведении мыши (например, 105%)
+    public float animationSpeed = 15f; // Скорость сглаживания анимации масштабирования
 
     [Header("Звуковые эффекты")]
-    public bool playSfxOnHover = true;
-    public bool playSfxOnClick = true;
+    public bool playSfxOnHover = true; // Проигрывать ли звуковой эффект при наведении курсора
+    public bool playSfxOnClick = true; // Проигрывать ли звуковой эффект при клике по кнопке
 
-    private Vector3 originalScale;
-    private Vector3 targetScale;
-    private bool isHovered = false;
+    private Vector3 originalScale; // Исходный локальный масштаб кнопки
+    private Vector3 targetScale; // Целевой масштаб для плавной интерполяции
+    private bool isHovered = false; // Флаг: находится ли курсор над кнопкой
 
     private void Start()
     {
-        originalScale = transform.localScale;
-        targetScale = originalScale;
+        originalScale = transform.localScale; // Запоминаем базовый размер кнопки
+        targetScale = originalScale; // Устанавливаем целевой размер равным базовому
     }
 
     private void Update()
     {
         // Плавная интерполяция размера для предотвращения резкого дергания
-        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * animationSpeed);
+        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * animationSpeed); // Плавный переход к targetScale
     }
 
     public void OnPointerEnter(PointerEventData eventData)

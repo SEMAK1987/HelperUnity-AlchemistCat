@@ -15,96 +15,96 @@ using TMPro;
 /// </summary>
 public class CatchMouse_Minigame : MonoBehaviour
 {
-    public static CatchMouse_Minigame Instance;
+    public static CatchMouse_Minigame Instance; // Статический синглтон мини-игры "Поймай мышь"
 
-    public enum DifficultyLevel { Easy, Normal, Hard }
+    public enum DifficultyLevel { Easy, Normal, Hard } // Уровни сложности (Легкий, Обычный, Сложный)
 
     [Header("Главная панель мини-игры")]
-    public GameObject gamePanel;                // CatchMouse_Game_Panel
-    public Button closeButton;                  // Close_Button
+    public GameObject gamePanel; // CatchMouse_Game_Panel: Главная панель игры
+    public Button closeButton; // Close_Button: Кнопка выхода из мини-игры
 
     [Header("Меню выбора сложности (Перед игрой)")]
-    public GameObject difficultySelectionPanel; // Difficulty_Selection_Panel
-    public Button easyDifficultyButton;         // Easy_Button
-    public Button normalDifficultyButton;       // Normal_Button
-    public Button hardDifficultyButton;         // Hard_Button
+    public GameObject difficultySelectionPanel; // Difficulty_Selection_Panel: Панель выбора сложности
+    public Button easyDifficultyButton; // Easy_Button: Кнопка легкой сложности
+    public Button normalDifficultyButton; // Normal_Button: Кнопка обычной сложности
+    public Button hardDifficultyButton; // Hard_Button: Кнопка сложной сложности
 
     [Header("Верхняя плашка цели (Задание)")]
-    public Image targetMouseDisplayImage;       // Target_Mouse_Image
-    public TextMeshProUGUI targetTitleText;     // Target_Title_Text
-    public TextMeshProUGUI instructionBannerText;// Инструкция/предупреждение
-    public TextMeshProUGUI progressCounterText; // Progress_Counter_Text
-    public TextMeshProUGUI timerText;           // Timer_Text
-    public float roundTime = 15f;               // Время на фазу (Round Time в Inspector)
+    public Image targetMouseDisplayImage; // Target_Mouse_Image: Иконка целевой мыши
+    public TextMeshProUGUI targetTitleText; // Target_Title_Text: Текст текущей цели
+    public TextMeshProUGUI instructionBannerText; // Текст инструкции/предупреждения
+    public TextMeshProUGUI progressCounterText; // Progress_Counter_Text: Текст счетчика пойманных мышей
+    public TextMeshProUGUI timerText; // Timer_Text: Текст обратного отсчета времени
+    public float roundTime = 15f; // Время на раунд/фазу в секундах
 
     [Header("Центральное уведомление перехода фаз")]
-    public GameObject centralPhaseNoticePanel;  // Central_Phase_Notice_Panel
-    public TextMeshProUGUI centralNoticeTitle;  // Notice_Title
-    public TextMeshProUGUI centralNoticeBody;   // Notice_Body
+    public GameObject centralPhaseNoticePanel; // Central_Phase_Notice_Panel: Баннер смены фазы
+    public TextMeshProUGUI centralNoticeTitle; // Notice_Title: Заголовок уведомления
+    public TextMeshProUGUI centralNoticeBody; // Notice_Body: Текст уведомления
 
     [Header("Одиночные Спрайты Мышек (Статика/Фоллбэк)")]
-    public Sprite goldenMouseSprite;            // Золотая мышь (Золотая Мышка)
-    public Sprite silverMouseSprite;            // Серебряная мышь (Серебряная Мышка)
-    public Sprite blackMouseSprite;             // Черная мышь (Черная Теневая Мышка)
+    public Sprite goldenMouseSprite; // Спрайт Золотой Мышки
+    public Sprite silverMouseSprite; // Спрайт Серебряной Мышки
+    public Sprite blackMouseSprite; // Спрайт Черной Теневой Мышки
 
     [Header("Кадры бега Мышек (Spritesheet Frames)")]
-    public Sprite[] goldenMouseFrames;          // Golden Mouse Frames (18)
-    public Sprite[] silverMouseFrames;          // Silver Mouse Frames (17)
-    public Sprite[] shadowMouseFrames;          // Shadow Mouse Frames (14)
-    public float animationFps = 12f;            // Animation Fps (12)
+    public Sprite[] goldenMouseFrames; // Golden Mouse Frames (18 кадров)
+    public Sprite[] silverMouseFrames; // Silver Mouse Frames (17 кадров)
+    public Sprite[] shadowMouseFrames; // Shadow Mouse Frames (14 кадров)
+    public float animationFps = 12f; // Частота смены кадров анимации бега
 
     [Header("Спрайт Норки и Дорожки")]
-    public Sprite holeSprite;                   // Норка Арка выхода мышей
-    public Sprite roadSprite;                   // Дорожка перед норками
+    public Sprite holeSprite; // Спрайт норки-арки
+    public Sprite roadSprite; // Спрайт беговой дорожки
 
     [Header("5 Норок и Дорожка")]
-    public RectTransform[] holes;               // Holes (5 элементов: Hole_1 .. Hole_5)
-    public RectTransform roadTrack;             // Road_Track
-    public RectTransform miceRunningLayer;      // Mice_Running_Layer
+    public RectTransform[] holes; // Массив трансформов 5 норок (Hole_1 .. Hole_5)
+    public RectTransform roadTrack; // Road_Track: Трансформ дорожки
+    public RectTransform miceRunningLayer; // Mice_Running_Layer: Слой бега мышей
 
     [Header("3D-Перспектива и Настройка Дорожки (Road_Track)")]
-    public bool autoApplyRoadPerspective = true;
+    public bool autoApplyRoadPerspective = true; // Автоматическое применение угла наклона
     public float roadPerspectiveTiltAngle = -126.083f; // Точный угол наклона дорожки
-    public float roadYOffset = -18f;                   // Смещение дорожки по высоте (скриншот 2: Pos Y = -18)
-    public float roadWidth = 960f;                     // Длина дорожки 960 для всех экранов 4K и телефонов
-    public float roadHeight = 120f;                    // Высота дорожки
-    public float mouseRunYOffset = 0f;                 // Тонкая подстройка высоты бега мышек по кромке дорожки
+    public float roadYOffset = -18f; // Смещение дорожки по высоте Y
+    public float roadWidth = 960f; // Базовая ширина дорожки под все разрешения
+    public float roadHeight = 120f; // Высота дорожки
+    public float mouseRunYOffset = 0f; // Подстройка высоты бега мышек
 
     [Header("Окно Победы и Награды")]
-    public GameObject rewardPopupPanel;         // Reward_Popup_Panel
-    public Image potionRewardIcon;              // Potion_Icon
-    public TextMeshProUGUI rewardDescriptionText; // Reward_Description_Text
-    public Button claimRewardButton;            // Claim_Reward_Button
+    public GameObject rewardPopupPanel; // Reward_Popup_Panel: Окно победы
+    public Image potionRewardIcon; // Potion_Icon: Иконка зелья в награде
+    public TextMeshProUGUI rewardDescriptionText; // Reward_Description_Text: Описание награды
+    public Button claimRewardButton; // Claim_Reward_Button: Кнопка забрать награду
 
     [Header("Звуки")]
-    public AudioClip winFanfareSound;           // Win
-    public AudioClip phaseCompleteSound;        // Phase complete
-    public AudioClip wrongMouseSound;           // Wrong Mouse Sound
-    public AudioClip mouseRunSound;             // Mouse Run Sound
-    public AudioClip catchMouseSound;           // Catch Mouse Sound
-    public AudioClip clickSound;                // Click Sound
+    public AudioClip winFanfareSound; // Звук победы и фанфар
+    public AudioClip phaseCompleteSound; // Звук успешного прохождения фазы
+    public AudioClip wrongMouseSound; // Звук ловли неправильной мыши (ошибка)
+    public AudioClip mouseRunSound; // Звук шороха бега мышей
+    public AudioClip catchMouseSound; // Звук успешного клика/ловли мыши
+    public AudioClip clickSound; // Звук нажатия на кнопки
 
     // Внутреннее состояние игры
-    public enum MouseType { Golden, Silver, Black }
+    public enum MouseType { Golden, Silver, Black } // Типы мышей
 
-    private DifficultyLevel selectedDifficulty = DifficultyLevel.Normal;
-    private int currentPhase = 1;               // 1 = Золотые (5), 2 = Серебряные (10), 3 = Черные (20)
-    private int miceCaughtInPhase = 0;
-    private int targetMiceForCurrentPhase = 5;
-    private MouseType currentTargetType = MouseType.Golden;
+    private DifficultyLevel selectedDifficulty = DifficultyLevel.Normal; // Выбранная сложность
+    private int currentPhase = 1; // Номер текущей фазы (1, 2, 3)
+    private int miceCaughtInPhase = 0; // Поймано мышей в текущей фазе
+    private int targetMiceForCurrentPhase = 5; // Целевое количество мышей
+    private MouseType currentTargetType = MouseType.Golden; // Текущий тип целевой мыши
 
-    private float currentTimer;
-    private bool isGameActive = false;
-    private bool isGameWon = false;
-    private bool isPhaseTransitioning = false;
+    private float currentTimer; // Текущий таймер раунда
+    private bool isGameActive = false; // Флаг: активна ли игра
+    private bool isGameWon = false; // Флаг: выиграна ли игра
+    private bool isPhaseTransitioning = false; // Флаг: идет ли анимация перехода между фазами
 
     // Пул активных бегущих мышек
-    private List<GameObject> activeMice = new List<GameObject>();
-    private Coroutine spawnCoroutine;
+    private List<GameObject> activeMice = new List<GameObject>(); // Список мышей на экране
+    private Coroutine spawnCoroutine; // Ссылка на корутину спавна мышей
 
     private void Awake()
     {
-        Instance = this;
+        Instance = this; // Инициализация синглтона при старте
     }
 
     private void Start()

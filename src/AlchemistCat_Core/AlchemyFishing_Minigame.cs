@@ -6,9 +6,9 @@ using TMPro;
 
 public enum FishingDifficulty
 {
-    Easy,   // +3000 Золота, 3 Камня, 1 Свиток (Зона 4: 35%, Скорость x1.0)
-    Medium, // +5000 Золота, 5 Камней, 2 Свитка (Зона 4: 22%, Скорость x1.4)
-    Hard    // +10000 Золота, 10 Камней, 5 Свитков, 1 Зелье Мастерства (+100 XP) (Зона 4: 12%, Скорость x1.9)
+    Easy, // Легкий уровень: +3000 Золота, 3 Камня, 1 Свиток (Зона 4: 35%, Скорость x1.0)
+    Medium, // Средний уровень: +5000 Золота, 5 Камней, 2 Свитка (Зона 4: 22%, Скорость x1.4)
+    Hard // Сложный уровень: +10000 Золота, 10 Камней, 5 Свитков, 1 Зелье Мастерства (+100 XP)
 }
 
 /// <summary>
@@ -18,115 +18,115 @@ public enum FishingDifficulty
 /// </summary>
 public class AlchemyFishing_Minigame : MonoBehaviour
 {
-    public static AlchemyFishing_Minigame Instance;
+    public static AlchemyFishing_Minigame Instance; // Синглтон мини-игры рыбалки
 
     [Header("=== Главные панели ===")]
-    public GameObject difficultySelectPanel;
-    public GameObject activeFishingStagePanel;
-    public GameObject resultSummaryPopupPanel;
-    public Button closeButton; // Крестик сверху слева (возврат в меню выбора)
+    public GameObject difficultySelectPanel; // Панель выбора сложности (Легко / Средне / Сложно)
+    public GameObject activeFishingStagePanel; // Основная игровая панель процесса рыбалки
+    public GameObject resultSummaryPopupPanel; // Итоговое окно подсчета улова после 10 попыток
+    public Button closeButton; // Кнопка возврата в главное меню / закрытия
 
     [Header("=== Кнопки выбора сложности ===")]
-    public Button easyButton;
-    public Button mediumButton;
-    public Button hardButton;
+    public Button easyButton; // Кнопка выбора легкой сложности
+    public Button mediumButton; // Кнопка выбора средней сложности
+    public Button hardButton; // Кнопка выбора сложной сложности
 
     [Header("=== Счетчик попыток и ресурсов ===")]
-    public TextMeshProUGUI attemptsCounterText; // "Попытка: 1 / 10"
-    public TextMeshProUGUI totalSessionXpText;
-    private int currentAttempt = 1;
-    private const int MAX_ATTEMPTS = 10;
-    private FishingDifficulty currentDifficulty = FishingDifficulty.Medium;
+    public TextMeshProUGUI attemptsCounterText; // Текст счетчика попыток ("Попытка: 1 / 10")
+    public TextMeshProUGUI totalSessionXpText; // Текст суммарного набранного опыта
+    private int currentAttempt = 1; // Текущий номер попытки из 10
+    private const int MAX_ATTEMPTS = 10; // Максимальное количество попыток за сессию
+    private FishingDifficulty currentDifficulty = FishingDifficulty.Medium; // Текущая выбранная сложность
 
     [Header("=== Удочка (FishRod_Visual в правом нижнем углу) ===")]
-    public Button fishRodButton;
-    public RectTransform fishRodTransform;
-    public Image fishRodImage;
-    public RectTransform bobberTransform;
+    public Button fishRodButton; // Кнопка удочки в нижнем углу экрана
+    public RectTransform fishRodTransform; // Трансформ спрайта удочки для анимации взмаха
+    public Image fishRodImage; // Изображение удочки
+    public RectTransform bobberTransform; // Поплавок на водной глади
 
     [Header("=== Вертикальная шкала заброса (Шкала 1: 4 Сектора и 3 разделителя) ===")]
-    public GameObject verticalBarContainer;
-    public RectTransform verticalBarBg;
-    public RectTransform verticalSliderArrow;
-    public RectTransform delimiterZone4; // Линия границы сектора 4 (динамическая высота)
-    public RectTransform delimiterZone3; // Линия границы сектора 3
-    public RectTransform delimiterZone2; // Линия границы сектора 2
-    public float baseVerticalSpeed = 3.5f;
+    public GameObject verticalBarContainer; // Контейнер вертикальной шкалы заброса
+    public RectTransform verticalBarBg; // Фон вертикальной шкалы
+    public RectTransform verticalSliderArrow; // Бегунок-стрелка вертикальной шкалы
+    public RectTransform delimiterZone4; // Линия разделителя 4-го сектора (золотая зона)
+    public RectTransform delimiterZone3; // Линия разделителя 3-го сектора
+    public RectTransform delimiterZone2; // Линия разделителя 2-го сектора
+    public float baseVerticalSpeed = 3.5f; // Базовая скорость движения вертикального бегунка
 
     [Header("=== Горизонтальная шкала поклевки (Шкала 2: 2 расходящихся луча) ===")]
-    public GameObject horizontalBarContainer;
-    public RectTransform horizontalBarBg;
-    public RectTransform leftMovingBeam;  // Луч от центра к левому краю
-    public RectTransform rightMovingBeam; // Луч от центра к правому краю
-    public float baseHorizontalSpeed = 4.0f;
+    public GameObject horizontalBarContainer; // Контейнер горизонтальной шкалы поклевки
+    public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
+    public RectTransform leftMovingBeam; // Левый луч, движущийся от центра
+    public RectTransform rightMovingBeam; // Правый луч, движущийся от центра
+    public float baseHorizontalSpeed = 4.0f; // Базовая скорость расхождения лучей
 
     [Header("=== Кнопка действия ===")]
-    public Button actionButton;
-    public TextMeshProUGUI actionButtonText;
+    public Button actionButton; // Большая кнопка "Подсечь!" / "Тянуть!"
+    public TextMeshProUGUI actionButtonText; // Текст на кнопке действия
 
     [Header("=== Итоговое окно 10 попыток (Result_Summary_Popup_Panel) ===")]
-    public Transform summaryLootContainer;
-    public GameObject summaryItemPrefab;
-    public TextMeshProUGUI summaryGoldText;
-    public TextMeshProUGUI summaryStonesText;
-    public TextMeshProUGUI summaryScrollsText;
-    public TextMeshProUGUI summaryPotionBonusText;
-    public Button claimAllToBackpackButton;
+    public Transform summaryLootContainer; // Контейнер иконок пойманного лута
+    public GameObject summaryItemPrefab; // Префаб ячейки лута в окне итогов
+    public TextMeshProUGUI summaryGoldText; // Текст итогового золота
+    public TextMeshProUGUI summaryStonesText; // Текст итоговых камней
+    public TextMeshProUGUI summaryScrollsText; // Текст итоговых свитков
+    public TextMeshProUGUI summaryPotionBonusText; // Текст бонусных зелий
+    public Button claimAllToBackpackButton; // Кнопка "Забрать все в рюкзак"
 
     [Header("=== Спрайты наград ===")]
-    public Sprite trashBottleSprite;
-    public Sprite duckweedSprite;
-    public Sprite runeStoneSprite;
-    public Sprite potion10Sprite;
-    public Sprite potion50Sprite;
-    public Sprite potion100Sprite;
-    public Sprite potion300Sprite;
-    public Sprite potion500Sprite;
-    public Sprite potion1000Sprite;
-    public Sprite potion3000Sprite; // Драконье зелье
+    public Sprite trashBottleSprite; // Спрайт старой бутылки (мусор)
+    public Sprite duckweedSprite; // Спрайт ряски
+    public Sprite runeStoneSprite; // Спрайт рунного камня
+    public Sprite potion10Sprite; // Зелье +10 XP
+    public Sprite potion50Sprite; // Зелье +50 XP
+    public Sprite potion100Sprite; // Зелье +100 XP
+    public Sprite potion300Sprite; // Зелье +300 XP
+    public Sprite potion500Sprite; // Зелье +500 XP
+    public Sprite potion1000Sprite; // Зелье +1000 XP
+    public Sprite potion3000Sprite; // Зелье Дракона +3000 XP
 
     // Внутренние состояния
-    public enum GamePhase { Idle, VerticalCasting, HorizontalCatching, Splashing, SingleResultToast, Finished }
-    private GamePhase currentPhase = GamePhase.Idle;
+    public enum GamePhase { Idle, VerticalCasting, HorizontalCatching, Splashing, SingleResultToast, Finished } // Фазы рыбалки
+    private GamePhase currentPhase = GamePhase.Idle; // Текущая фаза
 
-    private float verticalValue = 0.5f;
-    private float horizontalSpread = 0f;
-    private int verticalDirection = 1;
-    private int horizontalDirection = 1;
+    private float verticalValue = 0.5f; // Текущее положение вертикального бегунка (0..1)
+    private float horizontalSpread = 0f; // Текущее расхождение горизонтальных лучей (0..1)
+    private int verticalDirection = 1; // Направление движения бегунка по вертикали
+    private int horizontalDirection = 1; // Направление расхождения лучей
 
-    private float lockedVertical = 0f;
-    private float lockedHorizontal = 0f;
+    private float lockedVertical = 0f; // Зафиксированное значение вертикальной шкалы
+    private float lockedHorizontal = 0f; // Зафиксированное значение горизонтальной шкалы
 
-    private List<LootResult> caughtSessionLoot = new List<LootResult>();
-    private int totalSessionXpGained = 0;
+    private List<LootResult> caughtSessionLoot = new List<LootResult>(); // Список наград за текущую сессию
+    private int totalSessionXpGained = 0; // Суммарно набранный опыт за 10 попыток
 
     [System.Serializable]
     public struct LootResult
     {
-        public string itemId;
-        public string itemName;
-        public int xp;
-        public Sprite sprite;
-        public Color rarityColor;
+        public string itemId; // Идентификатор предмета
+        public string itemName; // Русское название предмета
+        public int xp; // Опыт за предмет
+        public Sprite sprite; // Спрайт иконки
+        public Color rarityColor; // Цвет рамки редкости
     }
 
     private void Awake()
     {
-        Instance = this;
+        Instance = this; // Инициализация синглтона
     }
 
     private void Start()
     {
-        if (easyButton) easyButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Easy));
-        if (mediumButton) mediumButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Medium));
-        if (hardButton) hardButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Hard));
+        if (easyButton) easyButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Easy)); // Выбор легкого уровня
+        if (mediumButton) mediumButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Medium)); // Выбор среднего уровня
+        if (hardButton) hardButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Hard)); // Выбор сложного уровня
 
-        if (closeButton) closeButton.onClick.AddListener(HandleCloseClicked);
-        if (fishRodButton) fishRodButton.onClick.AddListener(OnRodOrActionButtonClicked);
-        if (actionButton) actionButton.onClick.AddListener(OnRodOrActionButtonClicked);
-        if (claimAllToBackpackButton) claimAllToBackpackButton.onClick.AddListener(ClaimAllAndProceedToQuest);
+        if (closeButton) closeButton.onClick.AddListener(HandleCloseClicked); // Закрытие окна
+        if (fishRodButton) fishRodButton.onClick.AddListener(OnRodOrActionButtonClicked); // Клик по удочке
+        if (actionButton) actionButton.onClick.AddListener(OnRodOrActionButtonClicked); // Клик по кнопке действия
+        if (claimAllToBackpackButton) claimAllToBackpackButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Забрать лут
 
-        ShowDifficultySelection();
+        ShowDifficultySelection(); // Открываем меню выбора сложности на старте
     }
 
     public void ShowDifficultySelection()

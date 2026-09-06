@@ -13,54 +13,54 @@ using UnityEngine.InputSystem;
 public class MainMenuController : MonoBehaviour
 {
     [Header("Элементы Анимации Главного Экрана")]
-    public RectTransform gameTitleText;
-    public CanvasGroup mainMenuCanvasGroup;
+    public RectTransform gameTitleText; // Логотип / Название игры для эффекта парения
+    public CanvasGroup mainMenuCanvasGroup; // Прозрачность всего главного меню для плавного появления
 
     [Header("Параллакс Фонового Рисунка")]
-    public RectTransform backgroundLayer;
-    public float parallaxStrength = 20f;
+    public RectTransform backgroundLayer; // Слой фонового арта с параллакс-сдвигом
+    public float parallaxStrength = 20f; // Сила отклонения фона при движении курсора
 
     [Header("Настройки Дня и Ночи (Day/Night Blending)")]
     [Tooltip("Картинка Дневного Фона (Day Background Image)")]
-    public Image dayBackgroundImage;
+    public Image dayBackgroundImage; // Слой дневного пейзажа (солнце, светлая палитра)
     [Tooltip("Картинка Ночного Фона (Night Background Image)")]
-    public Image nightBackgroundImage;
+    public Image nightBackgroundImage; // Слой ночного пейзажа (луна, темная палитра)
     [Tooltip("Включить автоматическую плавную смену суток в меню")]
-    public bool autoCycleBackgrounds = true;
+    public bool autoCycleBackgrounds = true; // Флаг плавного перетекания дня и ночи
     [Tooltip("Скорость перехода (чем выше, тем быстрее меняются день и ночь)")]
-    public float dayNightCycleSpeed = 0.5f;
+    public float dayNightCycleSpeed = 0.5f; // Скорость смены суток
     [Tooltip("Ручное смешивание (0 - чистый день, 1 - чистая ночь)")]
     [Range(0f, 1f)]
-    public float dayNightBlendFactor = 0f;
+    public float dayNightBlendFactor = 0f; // Коэффициент смешивания (0 = день, 1 = ночь)
 
     [Header("Настройки")]
-    public float titleAnimSpeed = 3f;
+    public float titleAnimSpeed = 3f; // Скорость анимации покачивания названия
 
-    private Vector2 bgStartPos;
-    private float titleTimer = 0f;
-    private bool cycleDirectionUp = true;
+    private Vector2 bgStartPos; // Начальные координаты фона
+    private float titleTimer = 0f; // Таймер синусоиды для покачивания
+    private bool cycleDirectionUp = true; // Направление перехода дня/ночи
 
     private void Start()
     {
         if (backgroundLayer != null)
         {
-            bgStartPos = backgroundLayer.anchoredPosition;
+            bgStartPos = backgroundLayer.anchoredPosition; // Запоминаем исходную позицию фона
         }
 
         // Инициализация прозрачности фонов на старте
-        UpdateBackgroundBlending();
+        UpdateBackgroundBlending(); // Применяем начальные цвета и альфа-каналы фонов
 
         // Плавное проявление меню
         if (mainMenuCanvasGroup != null)
         {
-            mainMenuCanvasGroup.alpha = 0f;
-            StartCoroutine(FadeInMenuCoroutine());
+            mainMenuCanvasGroup.alpha = 0f; // Делаем меню невидимым
+            StartCoroutine(FadeInMenuCoroutine()); // Запускаем корутину плавного появления
         }
 
         // Автоматически запускаем музыку меню через SettingsManager
         if (SettingsManager.Instance != null)
         {
-            SettingsManager.Instance.PlayThemeForActiveScene();
+            SettingsManager.Instance.PlayThemeForActiveScene(); // Включаем музыкальную тему главного меню
         }
     }
 
@@ -69,9 +69,9 @@ public class MainMenuController : MonoBehaviour
         // 1. Анимация парения заголовка (Легкое дыхание)
         if (gameTitleText != null)
         {
-            titleTimer += Time.deltaTime * titleAnimSpeed;
-            float offset = Mathf.Sin(titleTimer) * 12f;
-            gameTitleText.anchoredPosition = new Vector2(gameTitleText.anchoredPosition.x, offset);
+            titleTimer += Time.deltaTime * titleAnimSpeed; // Наращиваем таймер
+            float offset = Mathf.Sin(titleTimer) * 12f; // Вычисляем смещение по синусоиде
+            gameTitleText.anchoredPosition = new Vector2(gameTitleText.anchoredPosition.x, offset); // Применяем новую высоту
         }
 
         // 2. Интерактивный Параллакс фона за счет наклона мыши

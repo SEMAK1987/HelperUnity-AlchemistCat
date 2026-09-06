@@ -13,26 +13,26 @@ public class Transtable_Dropdown : MonoBehaviour
     public struct DropdownOptionTranslation
     {
         [Tooltip("Массив ID строк из Translator для каждой опции выпадающего списка")]
-        public int[] optionTextIDs;
+        public int[] optionTextIDs; // Массив идентификаторов строк локализации для вариантов
     }
 
-    public DropdownOptionTranslation translations;
+    public DropdownOptionTranslation translations; // Конфигурация переводов выпадающего списка
 
     [Tooltip("Принудительно делать текст жирным (Bold) для русского языка")]
-    public bool boldForRussian = true;
+    public bool boldForRussian = true; // Делать ли жирным шрифт для русской версии
 
-    private TMP_Dropdown dropdown;
-    private TMP_FontAsset originalCaptionFont;
-    private TMP_FontAsset originalItemFont;
-    private bool isLocalUpdating = false;
+    private TMP_Dropdown dropdown; // Ссылка на компонент TMP_Dropdown
+    private TMP_FontAsset originalCaptionFont; // Исходный шрифт заголовка списка
+    private TMP_FontAsset originalItemFont; // Исходный шрифт элементов списка
+    private bool isLocalUpdating = false; // Флаг: выполняется ли локальное обновление
 
     private void Awake()
     {
-        dropdown = GetComponent<TMP_Dropdown>();
+        dropdown = GetComponent<TMP_Dropdown>(); // Получение компонента Dropdown
         if (dropdown != null)
         {
-            if (dropdown.captionText != null) originalCaptionFont = dropdown.captionText.font;
-            if (dropdown.itemText != null) originalItemFont = dropdown.itemText.font;
+            if (dropdown.captionText != null) originalCaptionFont = dropdown.captionText.font; // Сохранение шрифта заголовка
+            if (dropdown.itemText != null) originalItemFont = dropdown.itemText.font; // Сохранение шрифта элементов
         }
     }
 

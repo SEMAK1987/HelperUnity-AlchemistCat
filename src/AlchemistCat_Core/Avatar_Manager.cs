@@ -17,52 +17,52 @@ public class Avatar_Manager : MonoBehaviour
     public static Avatar_Manager Instance { get; private set; }
 
     [Header("UI Панель Аватарок и Рамок")]
-    public GameObject avatarPanel;
-    public Button closeButton;
-    public Transform scrollContent;     // Content внутри ScrollRect
-    public GameObject avatarItemPrefab;  // Префаб ячейки аватарки
-    public GameObject categoryHeaderPrefab; // Префаб заголовка категории
+    public GameObject avatarPanel; // Главная всплывающая панель гардероба аватарок и рамок
+    public Button closeButton; // Кнопка с крестиком для закрытия окна гардероба
+    public Transform scrollContent; // Внутренний контейнер списка (Content в ScrollRect)
+    public GameObject avatarItemPrefab; // Префаб отдельной ячейки с аватаркой / рамкой
+    public GameObject categoryHeaderPrefab; // Префаб разделительного заголовка категории
 
     [Header("Настройки Сетки Гардероба")]
-    public int columnsCount = 3;
-    public Vector2 cellSize = new Vector2(145, 170);
-    public Vector2 cellSpacing = new Vector2(16, 16);
-    public Vector2 panelSize = new Vector2(620, 840);
+    public int columnsCount = 3; // Количество колонок в сетке гардероба
+    public Vector2 cellSize = new Vector2(145, 170); // Размер одной ячейки гардероба (ширина, высота)
+    public Vector2 cellSpacing = new Vector2(16, 16); // Отступы между ячейками по X и Y
+    public Vector2 panelSize = new Vector2(620, 840); // Размер окна гардероба
 
     [Header("Адаптивная Настройка Гардероба")]
-    public bool autoAdaptResolution = false; // Отключено принудительное растяжение белого фона, чтобы не ломать верстку в 4K и на телефонах
-    public int pcColumnsCount = 3;
-    public Vector2 pcPanelSize = new Vector2(620, 840);
-    public int mobileColumnsCount = 3;
-    public Vector2 mobilePanelSize = new Vector2(620, 840);
+    public bool autoAdaptResolution = false; // Отключено принудительное растяжение, чтобы не ломать верстку в 4K и на телефонах
+    public int pcColumnsCount = 3; // Количество колонок на мониторах ПК
+    public Vector2 pcPanelSize = new Vector2(620, 840); // Размеры окна для ПК версии
+    public int mobileColumnsCount = 3; // Количество колонок на мобильных экранах
+    public Vector2 mobilePanelSize = new Vector2(620, 840); // Размеры окна для мобильных устройств
 
     [Header("Настройки Цветов Гардероба (Легко настраивать в Инспекторе)")]
-    public Color categoryHeaderColor = new Color(1f, 0.92f, 0.45f, 1f); // #FFEBA3 Яркий золотой
-    public Color selectedStatusColor = new Color(0.3f, 1f, 0.75f, 1f);   // #4DFFBF Изумрудно-зеленый
-    public Color wearStatusColor = new Color(1f, 0.95f, 0.4f, 1f);       // #FFF266 Золотой
-    public Color levelLockedColor = new Color(1f, 0.45f, 0.55f, 1f);     // #FF738C Розово-красный
-    public Color shopGoldPriceColor = new Color(1f, 0.85f, 0.2f, 1f);    // #FFD933 Золотой
-    public Color premiumCrystalColor = new Color(0.95f, 0.5f, 1f, 1f);   // #F280FF Пурпурный
+    public Color categoryHeaderColor = new Color(1f, 0.92f, 0.45f, 1f); // #FFEBA3 Яркий золотой цвет заголовков
+    public Color selectedStatusColor = new Color(0.3f, 1f, 0.75f, 1f);   // #4DFFBF Изумрудно-зеленый цвет для выбранного предмета
+    public Color wearStatusColor = new Color(1f, 0.95f, 0.4f, 1f);       // #FFF266 Золотой цвет кнопки "Надеть"
+    public Color levelLockedColor = new Color(1f, 0.45f, 0.55f, 1f);     // #FF738C Розово-красный цвет для заблокированных предметов
+    public Color shopGoldPriceColor = new Color(1f, 0.85f, 0.2f, 1f);    // #FFD933 Золотой цвет ценников за монеты
+    public Color premiumCrystalColor = new Color(0.95f, 0.5f, 1f, 1f);   // #F280FF Пурпурный цвет ценников за кристаллы
     public Color cellBackgroundColor = new Color(0.12f, 0.11f, 0.18f, 0.85f); // Темный контрастный фон ячейки
 
     [Header("Иконка Профиля в верхнем левом углу")]
-    public Button avatarIconButton;
-    public Image currentAvatarDisplayImage;
-    public Image currentFrameDisplayImage;
-    public TextMeshProUGUI levelBadgeText;
-    public Image expProgressBar;       // Полоска опыта кота (Image Type: Filled)
-    public TextMeshProUGUI expProgressText; // Текст опыта "0/10 XP"
+    public Button avatarIconButton; // Кнопка-круг аватара в левом верхнем углу интерфейса
+    public Image currentAvatarDisplayImage; // Слой с картинкой выбранного кота
+    public Image currentFrameDisplayImage; // Слой с выбранной золотой/кристаллической рамкой
+    public TextMeshProUGUI levelBadgeText; // Текстовый бейдж уровня (например "Ур. 1")
+    public Image expProgressBar; // Полоска опыта кота (Image Type: Filled)
+    public TextMeshProUGUI expProgressText; // Текст опыта кота (например "0/10 XP")
 
     [Header("Шкала Опыта Мастерства (Алхимический Ранг)")]
-    public GameObject masteryContainer;            // Родительский контейнер второй полоски
-    public TextMeshProUGUI masteryRankTitleText;   // "Новичок" / "Новичок-травник"
-    public Image masteryExpProgressBar;            // Вторая полоска опыта мастерства
-    public TextMeshProUGUI masteryExpProgressText; // Текст "0/100 XP"
-    public Vector2 masteryBarPosition = new Vector2(130, -32); // Сдвиг второй полоски чуть ниже
-    public Vector2 masteryBarScale = new Vector2(1f, 0.85f);
-    public Color noviceTextColor = Color.white;
-    public Color herbalistTextColor = new Color(0.32f, 0.75f, 0.50f, 1f); // #52B788 Более темный травянисто-зеленый
-    public AudioClip masteryRankUpSound;
+    public GameObject masteryContainer; // Родительский контейнер второй полоски алхимического ранга
+    public TextMeshProUGUI masteryRankTitleText; // Название ранга ("Новичок", "Новичок-травник" и т.д.)
+    public Image masteryExpProgressBar; // Полоска опыта мастерства (Filled Image)
+    public TextMeshProUGUI masteryExpProgressText; // Текст опыта мастерства (например "0/100 XP")
+    public Vector2 masteryBarPosition = new Vector2(130, -32); // Позиция второй полоски по X и Y
+    public Vector2 masteryBarScale = new Vector2(1f, 0.85f); // Масштаб второй полоски
+    public Color noviceTextColor = Color.white; // Цвет шрифта для начальных рангов
+    public Color herbalistTextColor = new Color(0.32f, 0.75f, 0.50f, 1f); // Травянисто-зеленый цвет шрифта
+    public AudioClip masteryRankUpSound; // Звуковой эффект при повышении алхимического ранга
 
     [System.Serializable]
     public enum AvatarCategory
@@ -167,33 +167,33 @@ public class Avatar_Manager : MonoBehaviour
 
     private void Awake()
     {
-        Instance = this;
+        Instance = this; // Инициализация синглтона для глобального доступа
 
-        // Если в инспекторе остались старые значения Pos X (<= 0), автоматически корректируем их на 130
-        if (expBarPosition.x <= 0f) expBarPosition.x = 130f;
-        if (masteryBarPosition.x <= 0f) masteryBarPosition.x = 130f;
-        if (levelBadgePosition.x <= 0f) levelBadgePosition.x = 130f;
+        // Корректировка позиций элементов интерфейса (смещение вправо от аватара)
+        if (expBarPosition.x <= 0f) expBarPosition.x = 130f; // Позиция полоски опыта кота
+        if (masteryBarPosition.x <= 0f) masteryBarPosition.x = 130f; // Позиция полоски опыта мастерства
+        if (levelBadgePosition.x <= 0f) levelBadgePosition.x = 130f; // Позиция бейджа уровня
 
         if (closeButton != null)
         {
-            closeButton.onClick.RemoveAllListeners();
-            closeButton.onClick.AddListener(CloseAvatarPanel);
+            closeButton.onClick.RemoveAllListeners(); // Очистка старых событий кнопки закрытия
+            closeButton.onClick.AddListener(CloseAvatarPanel); // Назначение закрытия панели гардероба
         }
 
         if (avatarIconButton != null)
         {
-            avatarIconButton.onClick.RemoveAllListeners();
-            avatarIconButton.onClick.AddListener(OnAvatarIconClicked);
+            avatarIconButton.onClick.RemoveAllListeners(); // Очистка старых событий кнопки аватара
+            avatarIconButton.onClick.AddListener(OnAvatarIconClicked); // Назначение открытия панели гардероба
         }
 
-        LoadPlayerProfile();
-        InitDefaultData();
+        LoadPlayerProfile(); // Загрузка сохраненного прогресса профиля (уровень, опыт, выбранные облики)
+        InitDefaultData(); // Инициализация начальной коллекции аватарок и рамок
     }
 
     private void Start()
     {
-        UpdateProfileUI();
-        UpdateMasteryUI();
+        UpdateProfileUI(); // Первичное обновление визуала аватара, рамки и полоски опыта
+        UpdateMasteryUI(); // Первичное обновление ранга алхимика и второй шкалы мастерства
     }
 
     /// <summary>
@@ -212,6 +212,25 @@ public class Avatar_Manager : MonoBehaviour
         maxExp = GetMaxExpForLevel(currentLevel);
         selectedAvatarId = PlayerPrefs.GetInt("Selected_Avatar_Id", 0);
         selectedFrameId = PlayerPrefs.GetInt("Selected_Frame_Id", 0);
+
+        // Защита: стартовая выбранная аватарка по умолчанию должна быть 0 (бесплатная Стартовый Ученик #1)
+        if (selectedAvatarId < 0 || selectedAvatarId > 2)
+        {
+            if (PlayerPrefs.GetInt($"Avatar_Unlocked_{selectedAvatarId}", 0) != 1)
+            {
+                selectedAvatarId = 0;
+                PlayerPrefs.SetInt("Selected_Avatar_Id", 0);
+            }
+        }
+
+        if (selectedFrameId != 0)
+        {
+            if (PlayerPrefs.GetInt($"Frame_Unlocked_{selectedFrameId}", 0) != 1)
+            {
+                selectedFrameId = 0;
+                PlayerPrefs.SetInt("Selected_Frame_Id", 0);
+            }
+        }
 
         currentMasteryRankIndex = PlayerPrefs.GetInt("Player_Mastery_Rank", 0);
         currentMasteryExp = PlayerPrefs.GetInt("Player_Mastery_Exp", 0);

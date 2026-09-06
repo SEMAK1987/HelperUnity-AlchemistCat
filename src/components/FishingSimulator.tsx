@@ -119,10 +119,10 @@ export const FishingSimulator: React.FC = () => {
         return next;
       });
 
-      animFrameRef.current = requestAnimationFrame(updateLoop而去);
+      animFrameRef.current = requestAnimationFrame(updateLoop);
     };
 
-    animFrameRef.current = requestAnimationFrame(updateLoop而去);
+    animFrameRef.current = requestAnimationFrame(updateLoop);
     return () => {
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
     };

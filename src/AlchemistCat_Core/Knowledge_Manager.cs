@@ -14,75 +14,75 @@ using TMPro;
 /// </summary>
 public class Knowledge_Manager : MonoBehaviour
 {
-    public static Knowledge_Manager Instance { get; private set; }
+    public static Knowledge_Manager Instance { get; private set; } // Статический синглтон окна знаний
 
     [Header("UI Панель Знаний и Рангов")]
-    public GameObject knowledgePanel;
-    public TextMeshProUGUI titleText;           // Заголовок панели (Ранги Алхимии)
-    public Button knowledgeCloseButton;
-    public ScrollRect knowledgeScrollView;
-    public Transform knowledgeContent;
-    public bool isKnowledgeCompleted = false;
+    public GameObject knowledgePanel; // Главная панель окна "Знания и Ранги"
+    public TextMeshProUGUI titleText; // Заголовок панели (Ранги Алхимии)
+    public Button knowledgeCloseButton; // Кнопка закрытия окна знаний
+    public ScrollRect knowledgeScrollView; // Компонент прокрутки списка рангов (ScrollRect)
+    public Transform knowledgeContent; // Внутренний контейнер списка карточек рангов (Content)
+    public bool isKnowledgeCompleted = false; // Достигнут ли максимальный 21 ранг мастерства
 
     [Header("Иконка Книг Знаний в верхнем UI")]
-    public GameObject knowledgeIconButton; // Иконка сложенных книг слева от сундука
-    public Button knowledgeButton;
-    public bool autoAlignKnowledgeToChest = true;
-    public Vector2 knowledgeOffsetFromChest = new Vector2(-135f, 0f);
+    public GameObject knowledgeIconButton; // Иконка сложенных книг слева от сундука в верхнем интерфейсе
+    public Button knowledgeButton; // Интерактивная кнопка открытия знаний
+    public bool autoAlignKnowledgeToChest = true; // Автоматическое позиционирование рядом с сундуком
+    public Vector2 knowledgeOffsetFromChest = new Vector2(-135f, 0f); // Смещение по X/Y относительно сундука
 
     [Header("Верхняя панель ресурсов (скрывается при открытии)")]
-    public GameObject topResourcesPanel;
+    public GameObject topResourcesPanel; // Ссылка на панель ресурсов, скрываемую для чистоты интерфейса
 
     [Header("Звуки")]
-    public AudioClip openKnowledgeSound;
-    public AudioClip closeSound;
-    public AudioClip unlockSound;
+    public AudioClip openKnowledgeSound; // Звук шелеста страниц при открытии книги знаний
+    public AudioClip closeSound; // Звук закрытия окна
+    public AudioClip unlockSound; // Звук открытия нового ранга алхимии
 
     [System.Serializable]
     public class AlchemyRankInfo
     {
-        public int rankIndex;
-        public string stageNameRU;
-        public string rankNameRU;
-        public string rankNameEN;
-        public string rankNameTR;
-        public int requiredMasteryExp;
-        public Color rankTextColor = Color.white;
-        public string rankDescriptionRU;
+        public int rankIndex; // Порядковый номер ранга (1 - 21)
+        public string stageNameRU; // Название этапа алхимии (I - IV)
+        public string rankNameRU; // Русское название ранга
+        public string rankNameEN; // Английское название ранга
+        public string rankNameTR; // Турецкое название ранга
+        public int requiredMasteryExp; // Необходимый опыт мастерства для открытия
+        public Color rankTextColor = Color.white; // Цвет шрифта названия ранга
+        public string rankDescriptionRU; // Описание достижений ранга
     }
 
     [Header("Список 21 Рангов Мастерства (4 Этапа)")]
-    public List<AlchemyRankInfo> allRanks = new List<AlchemyRankInfo>();
+    public List<AlchemyRankInfo> allRanks = new List<AlchemyRankInfo>(); // База данных всех рангов
 
     private void Awake()
     {
-        Instance = this;
+        Instance = this; // Инициализация синглтона
 
         if (knowledgeCloseButton != null)
         {
-            knowledgeCloseButton.onClick.RemoveAllListeners();
-            knowledgeCloseButton.onClick.AddListener(CloseKnowledgeUI);
+            knowledgeCloseButton.onClick.RemoveAllListeners(); // Очистка старых событий
+            knowledgeCloseButton.onClick.AddListener(CloseKnowledgeUI); // Назначение закрытия окна
         }
 
         if (knowledgeButton != null)
         {
-            knowledgeButton.onClick.RemoveAllListeners();
-            knowledgeButton.onClick.AddListener(OnKnowledgeButtonClicked);
+            knowledgeButton.onClick.RemoveAllListeners(); // Очистка старых событий
+            knowledgeButton.onClick.AddListener(OnKnowledgeButtonClicked); // Назначение открытия окна
         }
 
         if (knowledgeScrollView != null)
         {
-            knowledgeScrollView.onValueChanged.RemoveAllListeners();
-            knowledgeScrollView.onValueChanged.AddListener(OnScrollValueChanged);
+            knowledgeScrollView.onValueChanged.RemoveAllListeners(); // Очистка обработчиков скролла
+            knowledgeScrollView.onValueChanged.AddListener(OnScrollValueChanged); // Реакция на прокрутку списка
         }
 
-        InitDefaultRanks();
+        InitDefaultRanks(); // Инициализация базы данных 21 ранга алхимии
     }
 
     private void Start()
     {
-        if (knowledgePanel != null) knowledgePanel.SetActive(false);
-        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false);
+        if (knowledgePanel != null) knowledgePanel.SetActive(false); // Прячем окно знаний на старте игры
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false); // Прячем иконку до первого открытия
     }
 
     public void InitDefaultRanks()

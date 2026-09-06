@@ -10,35 +10,35 @@ using TMPro;
 /// </summary>
 public class LoadingScreenManager : MonoBehaviour
 {
-    public static LoadingScreenManager Instance { get; private set; }
+    public static LoadingScreenManager Instance { get; private set; } // Статический синглтон загрузочного экрана
 
     [Header("UI Ссылки")]
-    public GameObject loadingPanel;
-    public Slider progressBar;
-    public TextMeshProUGUI progressText;
-    public TextMeshProUGUI funnyQuoteText;
-    public Image kittenSilhouette; // Ссылка на силуэт кота для динамического проявления alpha-канала
+    public GameObject loadingPanel; // Панель загрузочного экрана
+    public Slider progressBar; // Полоса прогресса загрузки сцены
+    public TextMeshProUGUI progressText; // Текстовый процент загрузки ("75%")
+    public TextMeshProUGUI funnyQuoteText; // Текст кошачьих алхимических цитат и подсказок
+    public Image kittenSilhouette; // Силуэт котенка для анимации проявления
 
     private void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Instance = this; // Назначение глобального синглтона
+            DontDestroyOnLoad(gameObject); // Сохранение при переходах между сценами
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Уничтожение дубликата менеджера
             return;
         }
     }
 
     private void Start()
     {
-        if (loadingPanel != null) loadingPanel.SetActive(false);
+        if (loadingPanel != null) loadingPanel.SetActive(false); // Скрываем загрузочный экран при старте сцены
     }
 
-    private bool isLoading = false;
+    private bool isLoading = false; // Флаг: выполняется ли загрузка сцены в данный момент
 
     /// <summary>
     /// Асинхронный запуск загрузки любой сцены по индексу.

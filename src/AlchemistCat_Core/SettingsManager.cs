@@ -13,56 +13,56 @@ using System.Collections.Generic;
 /// </summary>
 public class SettingsManager : MonoBehaviour
 {
-    public static SettingsManager Instance { get; private set; }
+    public static SettingsManager Instance { get; private set; } // Статический синглтон менеджера настроек
 
     [Header("UI Компоненты (Назначаются на сцене)")]
-    public Slider soundSlider;
-    public Slider musicSlider;
-    public TMP_Dropdown qualityDropdown;
-    public TMP_Dropdown resolutionDropdown;
-    public TMP_Dropdown languageDropdown;
-    public Toggle fullscreenToggle;
+    public Slider soundSlider; // Слайдер регулировки громкости звуковых эффектов (SFX)
+    public Slider musicSlider; // Слайдер регулировки громкости фоновой музыки (BGM)
+    public TMP_Dropdown qualityDropdown; // Выпадающий список выбора графического качества
+    public TMP_Dropdown resolutionDropdown; // Выпадающий список выбора экранного разрешения
+    public TMP_Dropdown languageDropdown; // Выпадающий список выбора языка интерфейса
+    public Toggle fullscreenToggle; // Переключатель полноэкранного / оконного режима
 
     [Header("Аудио Смеситель")]
-    public AudioMixer masterMixer;
+    public AudioMixer masterMixer; // Главный аудио-микшер Unity
 
     [Header("Источники Аудио")]
-    [SerializeField] private AudioSource sfxSource;
-    [SerializeField] private AudioSource musicSource;
+    [SerializeField] private AudioSource sfxSource; // Источник воспроизведения звуковых эффектов
+    [SerializeField] private AudioSource musicSource; // Источник воспроизведения фоновой музыки
 
     [Header("Клипы эффектов и музыки")]
-    [SerializeField] private AudioClip[] hoverSounds;
-    [SerializeField] private AudioClip[] clickSounds;
-    [SerializeField] private AudioClip[] menuPlaylist;
-    [SerializeField] private AudioClip[] labPlaylist;
-    [SerializeField] private AudioClip[] minigamePlaylist;
+    [SerializeField] private AudioClip[] hoverSounds; // Звуки наведения курсора на кнопки
+    [SerializeField] private AudioClip[] clickSounds; // Звуки нажатия на интерактивные элементы
+    [SerializeField] private AudioClip[] menuPlaylist; // Список музыкальных треков главного меню
+    [SerializeField] private AudioClip[] labPlaylist; // Список музыкальных треков алхимической лаборатории
+    [SerializeField] private AudioClip[] minigamePlaylist; // Музыкальные треки для мини-игр
 
-    private List<Resolution> resolutionsList = new List<Resolution>();
-    private int currentPlaylistIndex = 0;
-    private AudioClip[] activePlaylist;
-    public bool isUpdatingSettings = false;
+    private List<Resolution> resolutionsList = new List<Resolution>(); // Список поддерживаемых монитором разрешений
+    private int currentPlaylistIndex = 0; // Индекс текущего играющего трека
+    private AudioClip[] activePlaylist; // Активный список треков для текущей локации
+    public bool isUpdatingSettings = false; // Флаг: происходит ли программное обновление значений в UI
 
     private void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;
+            Instance = this; // Инициализация единственного экземпляра
 
             // Если этот объект является дочерним, открепляем его для правильной работы DontDestroyOnLoad
             if (transform.parent != null)
             {
-                transform.parent = null;
+                transform.parent = null; // Делаем корневым объектом
             }
 
-            DontDestroyOnLoad(gameObject);
+            DontDestroyOnLoad(gameObject); // Сохраняем объект между сменами сцен
 
             // Принудительно запускаем интеллектуальную автокалибровку аудио источников
-            CalibrateAudioSources();
+            CalibrateAudioSources(); // Автопоиск и настройка аудио источников
 
             // Настраиваем маршрутизацию в микшер для точной работы слайдеров громкости
-            RouteSourcesToMixer();
+            RouteSourcesToMixer(); // Привязка к группам громкости микшера
 
-            InitializeSettings();
+            InitializeSettings(); // Загрузка и применение сохраненных настроек графики и звука
         }
         else if (Instance != this)
         {

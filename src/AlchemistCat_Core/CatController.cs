@@ -10,42 +10,42 @@ using TMPro;
 /// </summary>
 public class CatController : MonoBehaviour
 {
-    public static CatController Instance { get; private set; }
+    public static CatController Instance { get; private set; } // Статический синглтон для глобального доступа к коту
 
     [Header("Спрайты Кота")]
-    public Sprite idleSprite;
-    public Sprite happySprite;
-    public Sprite sleepingSprite;
-    public Sprite brewingSprite;
+    public Sprite idleSprite; // Спрайт кота в обычном спокойном состоянии
+    public Sprite happySprite; // Спрайт довольного кота при поглаживании
+    public Sprite sleepingSprite; // Спрайт спящего кота
+    public Sprite brewingSprite; // Спрайт кота во время варки зелий
 
     [Header("UI Ссылки")]
-    public Image catImage;
-    public TextMeshProUGUI meowBubbleText;
-    public GameObject bubbleObject;
+    public Image catImage; // UI-компонент Image для отображения спрайта кота
+    public TextMeshProUGUI meowBubbleText; // Текст всплывающего облачка с мяуканьем
+    public GameObject bubbleObject; // Родительский объект облачка с текстом
 
     [Header("Звуки Кота")]
-    public AudioClip meowSound;
-    public AudioClip purrSound;
+    public AudioClip meowSound; // Звуковой эффект мяуканья
+    public AudioClip purrSound; // Звуковой эффект мурлыканья
 
-    private Coroutine bubbleCoroutine;
-    private Vector3 originalScale;
+    private Coroutine bubbleCoroutine; // Ссылка на корутину анимации облачка
+    private Vector3 originalScale; // Исходный масштаб объекта для эффекта покачивания
 
-    public enum CatState { Idle, Happy, Sleeping, Brewing }
-    private CatState currentState = CatState.Idle;
+    public enum CatState { Idle, Happy, Sleeping, Brewing } // Перечисление состояний поведения кота
+    private CatState currentState = CatState.Idle; // Текущее состояние кота
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance == null) Instance = this; // Инициализация синглтона
+        else Destroy(gameObject); // Уничтожение дубликата при повторном создании
     }
 
     private void Start()
     {
-        if (catImage == null) catImage = GetComponent<Image>();
-        originalScale = transform.localScale;
+        if (catImage == null) catImage = GetComponent<Image>(); // Автопоиск Image если ссылка не назначена
+        originalScale = transform.localScale; // Запоминаем исходный размер
 
-        if (bubbleObject != null) bubbleObject.SetActive(false);
-        SetState(CatState.Idle);
+        if (bubbleObject != null) bubbleObject.SetActive(false); // Прячем речевое облачко на старте
+        SetState(CatState.Idle); // Устанавливаем спокойное состояние кота
     }
 
     /// <summary>

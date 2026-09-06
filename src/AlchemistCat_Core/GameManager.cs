@@ -10,49 +10,49 @@ using TMPro;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; }
+    public static GameManager Instance { get; private set; } // Статический синглтон для доступа к игровым ресурсам
 
     [Header("Экономика и Прогресс")]
-    public int gold = 0;
-    public int crystals = 10;
-    public int stones = 10;
-    public int scrolls = 3;
-    public int vipXP = 0;
-    public int daysActive = 1;
-    public int catLevel = 1;
-    public int currentXP = 0;
-    public int xpToNextLevel = 100;
-    public int cauldronLevel = 1;
-    public int potionsBrewed = 0;
+    public int gold = 0; // Текущий запас золотых монет игрока
+    public int crystals = 10; // Текущий запас премиальных кристаллов
+    public int stones = 10; // Текущее количество алхимических камней
+    public int scrolls = 3; // Текущее количество древних свитков
+    public int vipXP = 0; // Накопленный опыт VIP-системы
+    public int daysActive = 1; // Количество активных дней в игре
+    public int catLevel = 1; // Текущий уровень персонажа (кота)
+    public int currentXP = 0; // Текущий опыт для следующего уровня
+    public int xpToNextLevel = 100; // Требуемый опыт для перехода на следующий уровень
+    public int cauldronLevel = 1; // Уровень прокачки алхимического котла
+    public int potionsBrewed = 0; // Общее число сваренных зелий за игру
 
     [Header("Разблокированные Квесты / Игры")]
-    public bool unlockedDarts = false;
-    public bool unlockedMouseCatch = false;
+    public bool unlockedDarts = false; // Открыта ли мини-игра "Алхимический дартс"
+    public bool unlockedMouseCatch = false; // Открыта ли мини-игра "Поймай мышь"
 
     [Header("UI Ссылки на Ресурсы (Опционально)")]
-    public TextMeshProUGUI goldText;
-    public TextMeshProUGUI crystalsText;
-    public TextMeshProUGUI stonesText;
-    public TextMeshProUGUI scrollsText;
-    public TextMeshProUGUI levelText;
-    public TextMeshProUGUI xpText;
-    public TextMeshProUGUI cauldronText;
-    public Slider xpSlider;
+    public TextMeshProUGUI goldText; // Текстовый индикатор количества золота
+    public TextMeshProUGUI crystalsText; // Текстовый индикатор количества кристаллов
+    public TextMeshProUGUI stonesText; // Текстовый индикатор камней
+    public TextMeshProUGUI scrollsText; // Текстовый индикатор свитков
+    public TextMeshProUGUI levelText; // Текстовый индикатор уровня игрока
+    public TextMeshProUGUI xpText; // Текстовый индикатор опыта (XP)
+    public TextMeshProUGUI cauldronText; // Текстовый индикатор уровня котла
+    public Slider xpSlider; // Графическая полоса прогресса опыта (Slider)
 
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Защита от дубликатов при перезагрузке сцены
             return;
         }
-        Instance = this;
+        Instance = this; // Назначение глобального экземпляра
     }
 
     private void Start()
     {
-        LoadResourcesFromPlayerPrefs();
-        UpdateUI();
+        LoadResourcesFromPlayerPrefs(); // Загрузка всех сохраненных балансов и уровня
+        UpdateUI(); // Обновление числовых показателей на экране
     }
 
     public void LoadResourcesFromPlayerPrefs()

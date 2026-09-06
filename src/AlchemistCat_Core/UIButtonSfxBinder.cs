@@ -9,22 +9,22 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public class UIButtonSfxBinder : MonoBehaviour
 {
-    public static UIButtonSfxBinder Instance { get; private set; }
+    public static UIButtonSfxBinder Instance { get; private set; } // Статический синглтон биндера звуков на кнопки
 
     [Header("Настройки Биндера")]
-    public bool scanOnStart = true;
-    public bool scanOnSceneLoaded = true;
+    public bool scanOnStart = true; // Сканировать ли все кнопки при старте игры
+    public bool scanOnSceneLoaded = true; // Сканировать ли сцену при каждой смене уровня
 
     private void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Instance = this; // Инициализация единственного экземпляра
+            DontDestroyOnLoad(gameObject); // Сохраняем объект между сценами
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Уничтожаем дубликат
             return;
         }
     }
@@ -33,20 +33,20 @@ public class UIButtonSfxBinder : MonoBehaviour
     {
         if (scanOnSceneLoaded)
         {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.sceneLoaded += OnSceneLoaded; // Подписка на событие загрузки новой сцены
         }
     }
 
     private void OnDisable()
     {
-        SceneManager.sceneLoaded -= OnSceneLoaded;
+        SceneManager.sceneLoaded -= OnSceneLoaded; // Отписка от событий загрузки сцен
     }
 
     private void Start()
     {
         if (scanOnStart)
         {
-            ScanAndBindAllButtons();
+            ScanAndBindAllButtons(); // Первичное сканирование и привязка звуков ко всем кнопкам
         }
     }
 

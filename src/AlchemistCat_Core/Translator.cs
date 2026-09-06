@@ -10,27 +10,27 @@ using TMPro;
 /// </summary>
 public class Translator : MonoBehaviour
 {
-    public static Translator Instance { get; private set; }
-    private static int _languageID = 0; // 0 = RU, 1 = EN, 2 = TR
-    public static int LanguageID
+    public static Translator Instance { get; private set; } // Статический синглтон переводчика игры
+    private static int _languageID = 0; // Идентификатор языка (0 = RU, 1 = EN, 2 = TR)
+    public static int LanguageID // Публичное свойство текущего языка
     {
         get { return _languageID; }
         set { _languageID = value; }
     }
 
-    private static List<Transtable_Text> listId = new List<Transtable_Text>();
-    private static List<Transtable_Dropdown> listDropdowns = new List<Transtable_Dropdown>();
+    private static List<Transtable_Text> listId = new List<Transtable_Text>(); // Зарегистрированные текстовые элементы
+    private static List<Transtable_Dropdown> listDropdowns = new List<Transtable_Dropdown>(); // Зарегистрированные выпадающие списки
 
     [Header("Шрифты Локализации")]
-    public TMP_FontAsset defaultFont;
-    public TMP_FontAsset chineseFont;
-    public TMP_FontAsset koreanFont;
+    public TMP_FontAsset defaultFont; // Стандартный шрифт
+    public TMP_FontAsset chineseFont; // Шрифт для китайского языка
+    public TMP_FontAsset koreanFont; // Шрифт для корейского языка
 
     [Header("Интервалы букв")]
-    public float russianCharacterSpacing = -8f;
+    public float russianCharacterSpacing = -8f; // Межбуквенный интервал для кириллицы
 
     // Специфичные строки для Алхимического Кота
-    private static string[][] LineText = 
+    private static string[][] LineText = // Таблица переводов строк интерфейса
     {
         // 0 - Russian
         new string[] {
@@ -70,7 +70,7 @@ public class Translator : MonoBehaviour
         {
             if (gameObject.name != "ALCHEMIST_TRANSLATOR")
             {
-                GameObject translatorObject = new GameObject("ALCHEMIST_TRANSLATOR");
+                GameObject translatorObject = new GameObject("ALCHEMIST_TRANSLATOR"); // Создание персистентного объекта локализации
                 Translator customTranslator = translatorObject.AddComponent<Translator>();
                 
                 customTranslator.defaultFont = this.defaultFont;
@@ -78,19 +78,19 @@ public class Translator : MonoBehaviour
                 customTranslator.koreanFont = this.koreanFont;
                 customTranslator.russianCharacterSpacing = this.russianCharacterSpacing;
                 
-                Instance = customTranslator;
-                DontDestroyOnLoad(translatorObject);
+                Instance = customTranslator; // Присвоение синглтона
+                DontDestroyOnLoad(translatorObject); // Сохранение при смене сцен
                 
-                _languageID = PlayerPrefs.GetInt("Alchemist_Language", 0);
-                Update_texts();
+                _languageID = PlayerPrefs.GetInt("Alchemist_Language", 0); // Загрузка сохраненного языка
+                Update_texts(); // Обновление текста на экране
                 
-                Destroy(this);
+                Destroy(this); // Уничтожение временного компонента
                 return;
             }
 
-            Instance = this;
-            _languageID = PlayerPrefs.GetInt("Alchemist_Language", 0);
-            Update_texts();
+            Instance = this; // Инициализация прямого инстанса
+            _languageID = PlayerPrefs.GetInt("Alchemist_Language", 0); // Загрузка языка из настроек
+            Update_texts(); // Обновление всех текстов
         }
         else if (Instance != this)
         {
@@ -98,8 +98,8 @@ public class Translator : MonoBehaviour
             Instance.chineseFont = this.chineseFont;
             Instance.koreanFont = this.koreanFont;
             Instance.russianCharacterSpacing = this.russianCharacterSpacing;
-            Update_texts();
-            Destroy(this);
+            Update_texts(); // Синхронизация текстов
+            Destroy(this); // Уничтожение дубликата
         }
     }
 

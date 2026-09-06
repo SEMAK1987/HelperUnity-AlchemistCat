@@ -13,59 +13,59 @@ using TMPro;
 /// </summary>
 public class Inventory_Manager : MonoBehaviour
 {
-    public static Inventory_Manager Instance { get; private set; }
+    public static Inventory_Manager Instance { get; private set; } // Статический синглтон для доступа к инвентарю
 
     [System.Serializable]
     public class ItemStack
     {
-        public string itemId;
-        public string itemName;
-        public int count;
-        public int xpPerItem;
-        public Sprite icon;
-        public Color rarityColor;
+        public string itemId; // Уникальный строковый ID предмета
+        public string itemName; // Название предмета для отображения
+        public int count; // Количество предметов в одном слоте (стек)
+        public int xpPerItem; // Опыт, даваемый за использование предмета
+        public Sprite icon; // Иконка предмета для инвентаря
+        public Color rarityColor; // Цвет рамки редкости (Обычный, Редкий, Легендарный)
 
         public ItemStack(string id, string name, int count, int xp, Sprite icon, Color color)
         {
-            this.itemId = id;
-            this.itemName = name;
-            this.count = count;
-            this.xpPerItem = xp;
-            this.icon = icon;
-            this.rarityColor = color;
+            this.itemId = id; // Запоминаем идентификатор
+            this.itemName = name; // Запоминаем название
+            this.count = count; // Запоминаем число
+            this.xpPerItem = xp; // Запоминаем опыт
+            this.icon = icon; // Запоминаем иконку
+            this.rarityColor = color; // Запоминаем цвет
         }
     }
 
     [Header("UI Панель Сундука / Инвентаря")]
-    public GameObject chestInventoryPanel;
-    public Transform chestSlotsContainer;
-    public GameObject chestSlotPrefab;
-    public Button closeChestButton;
-    public TextMeshProUGUI totalItemsCountText;
-    public TextMeshProUGUI totalChestXpText;
+    public GameObject chestInventoryPanel; // Главный объект окна сундука
+    public Transform chestSlotsContainer; // Контейнер (Grid / Layout) со слотами предметов
+    public GameObject chestSlotPrefab; // Префаб одного слота инвентаря
+    public Button closeChestButton; // Кнопка закрытия окна сундука
+    public TextMeshProUGUI totalItemsCountText; // Текстовый счетчик общего количества предметов
+    public TextMeshProUGUI totalChestXpText; // Текстовый счетчик суммарного опыта предметов
 
     [Header("Список предметов в сундуке игрока")]
-    public List<ItemStack> inventorySlots = new List<ItemStack>();
+    public List<ItemStack> inventorySlots = new List<ItemStack>(); // Список всех слотов предметов в сундуке
 
     private void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Instance = this; // Инициализация синглтона
+            DontDestroyOnLoad(gameObject); // Сохранение при смене сцен
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Удаление дубликата
         }
     }
 
     private void Start()
     {
         if (closeChestButton != null)
-            closeChestButton.onClick.AddListener(CloseChestPanel);
+            closeChestButton.onClick.AddListener(CloseChestPanel); // Назначение закрытия окна по кнопке
 
-        LoadInventory();
+        LoadInventory(); // Загрузка предметов из сохраненного файла/реестра
     }
 
     /// <summary>

@@ -18,52 +18,52 @@ using TMPro;
 [ExecuteAlways]
 public class Calendar_Manager : MonoBehaviour
 {
-    public static Calendar_Manager Instance { get; private set; }
+    public static Calendar_Manager Instance { get; private set; } // Статический синглтон календаря
 
-    [Header("UI Panels & Containers")]
-    [SerializeField] private GameObject calendarPanel;
-    [SerializeField] private Transform monthsContainer; // Content у ScrollRect
-    [SerializeField] private GameObject monthPrefab;     // Префаб карточки месяца
-    [SerializeField] private GameObject dayCellPrefab;   // Префаб ячейки дня
-    [SerializeField] private Button closeButton;
+    [Header("UI Панели и Контейнеры")]
+    [SerializeField] private GameObject calendarPanel; // Главная панель календаря
+    [SerializeField] private Transform monthsContainer; // Контейнер месяцев (Content у ScrollRect)
+    [SerializeField] private GameObject monthPrefab; // Префаб карточки месяца
+    [SerializeField] private GameObject dayCellPrefab; // Префаб одной ячейки дня
+    [SerializeField] private Button closeButton; // Кнопка закрытия окна календаря
 
-    [Header("12 Month Sprites (Jan..Dec)")]
-    [SerializeField] private Sprite[] monthSprites = new Sprite[12];
+    [Header("12 Спрайтов Месяцев (Янв..Дек)")]
+    [SerializeField] private Sprite[] monthSprites = new Sprite[12]; // Массив из 12 сезонных рамок месяцев
 
-    [Header("Missed Day Icon (Broken Flask)")]
+    [Header("Иконка Пропущенного Дня (Разбитая Колба)")]
     [SerializeField] private Sprite missedFlaskSprite; // Спрайт разбитой колбы для пропущенных дней
 
-    [Header("Reward Icons")]
-    [SerializeField] private Sprite goldIcon;
-    [SerializeField] private Sprite stoneIcon;
-    [SerializeField] private Sprite scrollIcon;
-    [SerializeField] private Sprite crystalIcon;
+    [Header("Иконки Наград")]
+    [SerializeField] private Sprite goldIcon; // Иконка золотой монеты
+    [SerializeField] private Sprite stoneIcon; // Иконка алхимического камня
+    [SerializeField] private Sprite scrollIcon; // Иконка свитка знаний
+    [SerializeField] private Sprite crystalIcon; // Иконка кристалла
 
     [System.Serializable]
     public class MonthLayoutConfig
     {
-        public string monthName = "Month";
-        public Vector2 cardSize = new Vector2(400f, 540f);
-        public Vector2 cellSize = new Vector2(34f, 34f);
-        public Vector2 spacing = new Vector2(5f, 5f);
-        public int padLeft = 35;
-        public int padRight = 35;
-        public int padTop = 95;
-        public int padBottom = 30;
+        public string monthName = "Month"; // Название месяца
+        public Vector2 cardSize = new Vector2(400f, 540f); // Размер карточки месяца
+        public Vector2 cellSize = new Vector2(34f, 34f); // Размер ячейки дня
+        public Vector2 spacing = new Vector2(5f, 5f); // Отступы между днями
+        public int padLeft = 35; // Отступ слева
+        public int padRight = 35; // Отступ справа
+        public int padTop = 95; // Отступ сверху
+        public int padBottom = 30; // Отступ снизу
     }
 
     [Header("Индивидуальная калибровка сеток для каждого месяца")]
-    public MonthLayoutConfig[] customMonthLayouts = new MonthLayoutConfig[12];
+    public MonthLayoutConfig[] customMonthLayouts = new MonthLayoutConfig[12]; // Настройки верстки для 12 месяцев
 
-    [Header("Reward Popup / Notification")]
-    [SerializeField] private GameObject rewardPopup;
-    [SerializeField] private TextMeshProUGUI rewardPopupText;
-    [SerializeField] private Button rewardPopupCloseBtn;
+    [Header("Всплывающее окно награды")]
+    [SerializeField] private GameObject rewardPopup; // Всплывающее окно полученной награды
+    [SerializeField] private TextMeshProUGUI rewardPopupText; // Текст описания полученной награды
+    [SerializeField] private Button rewardPopupCloseBtn; // Кнопка закрытия всплывающего окна
 
     // Текущая системная дата
-    private int currentYear;
-    private int currentMonth;
-    private int currentDay;
+    private int currentYear; // Текущий год устройства
+    private int currentMonth; // Текущий месяц устройства
+    private int currentDay; // Текущий день устройства
 
     private readonly string[] monthNamesRu = {
         "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",

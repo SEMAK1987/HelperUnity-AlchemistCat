@@ -56,87 +56,87 @@ public class RecipeCrafting_Manager : MonoBehaviour
     }
 
     [Header("0. Главная группа Стола и Котла")]
-    public GameObject tableCauldronGroup;      // Родительская группа Table_Cauldron_Group
+    public GameObject tableCauldronGroup; // Родительская группа Table_Cauldron_Group
 
     [Header("1. Большой Свиток Рецепта")]
-    public GameObject recipeScrollPanel;
-    public Button startCraftButton;
-    public TextMeshProUGUI startCraftButtonText;
+    public GameObject recipeScrollPanel; // Панель свитка с описанием рецепта и ингредиентов
+    public Button startCraftButton; // Кнопка "Начать" под рецептом
+    public TextMeshProUGUI startCraftButtonText; // Текст кнопки начала крафта
 
     [Header("2. Стол, Котел и Маленький Кот")]
-    public GameObject tableCauldronObject;     // Объект/Кнопка котла на столе
-    public Button cauldronClickButton;
-    public GameObject tableMiniCatObject;       // Маленький кот на столе
-    public Button miniCatClickButton;           // Кнопка на маленьком котике для вызова подсказки
-    public GameObject miniCatBubblePanel;       // Рамка-реплика маленького кота
-    public TextMeshProUGUI miniCatBubbleText;
+    public GameObject tableCauldronObject; // Объект котла на столе
+    public Button cauldronClickButton; // Кнопка клика по котлу для взаимодействия
+    public GameObject tableMiniCatObject; // Маленький котик, сидящий на столе рядом с котлом
+    public Button miniCatClickButton; // Кнопка на маленьком котике для вызова подсказки
+    public GameObject miniCatBubblePanel; // Облачко с диалоговой репликой маленького кота
+    public TextMeshProUGUI miniCatBubbleText; // Текст подсказки котика
 
     [Header("3. Кнопка 'Изготовить' над Котлом")]
-    public GameObject makeBadgeButtonObject;    // Плашка с надписью 'Изготовить'
-    public Button makeBadgeButton;
+    public GameObject makeBadgeButtonObject; // Плашка с надписью "Изготовить" над котлом
+    public Button makeBadgeButton; // Интерактивная кнопка запуска варки
 
     [Header("4. Шкала Прогресса Варки Зелья")]
-    public GameObject craftingProgressBarContainer;
-    public Image craftingProgressFill;
-    public TextMeshProUGUI craftingTimerText;
-    public float craftDurationSeconds = 5.0f;
+    public GameObject craftingProgressBarContainer; // Контейнер шкалы прогресса варки
+    public Image craftingProgressFill; // Заполняющаяся полоса прогресса варки
+    public TextMeshProUGUI craftingTimerText; // Текст оставшегося времени (5.0s -> 0.0s)
+    public float craftDurationSeconds = 5.0f; // Базовое время варки зелья в секундах
 
     [Header("5. Кнопка 'Забрать' и Всплывающий Опыт (Floating XP)")]
-    public GameObject claimPotionButtonObject;
-    public Button claimPotionButton;
-    public int firstRecipeRewardXP = 10;
-    public GameObject floatingXPPrefab;          // Префаб/Объект всплывающей плашки опыта
-    public RectTransform floatingXPSpawnPoint;   // Точка над котлом, откуда взлетает опыт
-    public CanvasGroup floatingXPCanvasGroup;    // Для плавного исчезновения/осветления вверх
+    public GameObject claimPotionButtonObject; // Кнопка "Забрать" готовое зелье
+    public Button claimPotionButton; // Кнопка сбора награды
+    public int firstRecipeRewardXP = 10; // Опыт за первый скрафченный рецепт (+10 XP)
+    public GameObject floatingXPPrefab; // Префаб всплывающей плашки опыта
+    public RectTransform floatingXPSpawnPoint; // Точка над котлом, откуда взлетает опыт
+    public CanvasGroup floatingXPCanvasGroup; // Группа прозрачности для анимации растворения
 
     [Header("Спрайты/Значки опыта для разных рецептов (5..1000 XP)")]
-    public Image floatingXPImage;                // Иконка спрайта опыта
-    public Sprite xpBadge5;
-    public Sprite xpBadge10;
-    public Sprite xpBadge20;
-    public Sprite xpBadge30;
-    public Sprite xpBadge50;
-    public Sprite xpBadge100;
-    public Sprite xpBadge200;
-    public Sprite xpBadge300;
-    public Sprite xpBadge500;
-    public Sprite xpBadge1000;
+    public Image floatingXPImage; // Иконка спрайта опыта
+    public Sprite xpBadge5; // Значок +5 XP
+    public Sprite xpBadge10; // Значок +10 XP
+    public Sprite xpBadge20; // Значок +20 XP
+    public Sprite xpBadge30; // Значок +30 XP
+    public Sprite xpBadge50; // Значок +50 XP
+    public Sprite xpBadge100; // Значок +100 XP
+    public Sprite xpBadge200; // Значок +200 XP
+    public Sprite xpBadge300; // Значок +300 XP
+    public Sprite xpBadge500; // Значок +500 XP
+    public Sprite xpBadge1000; // Значок +1000 XP
 
     [Header("6. Иконка Сундука в верхнем UI")]
-    public GameObject chestIconButton;         // Иконка сундучка (слева от свитка)
-    public Button chestButton;
+    public GameObject chestIconButton; // Иконка сундучка слева от свитка
+    public Button chestButton; // Кнопка открытия инвентаря
 
     [Header("7. Окно Инвентаря (100 слотов, 5 в ряд, со скроллом)")]
-    public GameObject inventoryPanel;
-    public Button inventoryCloseButton;        // Кнопка закрытия (крестик)
-    public Transform inventorySlotsContent;    // Content внутри ScrollRect
-    public GameObject inventorySlotPrefab;     // Префаб ячейки инвентаря
-    public int totalSlots = 100;               // 100 ячеек
-    public int columnsCount = 5;               // 5 в ряду
+    public GameObject inventoryPanel; // Главная панель инвентаря
+    public Button inventoryCloseButton; // Кнопка закрытия окна (крестик)
+    public Transform inventorySlotsContent; // Контейнер ячеек инвентаря внутри ScrollRect
+    public GameObject inventorySlotPrefab; // Префаб отдельной ячейки инвентаря
+    public int totalSlots = 100; // Общее количество ячеек инвентаря
+    public int columnsCount = 5; // Количество столбцов в сетке инвентаря
 
     [Header("8. Колба Опыта Мастерства в 1-м слоте")]
-    public GameObject masteryPotionItemObject; // Иконка колбы опыта мастерства в первом слоте
-    public Button masteryPotionButton;         // Кнопка на колбе для ее выпивания (+100 XP)
-    public AudioClip potionConsumeSound;       // Звук применения колбы
-    public bool isMasteryPotionConsumed = false;
+    public GameObject masteryPotionItemObject; // Колба опыта мастерства в первом слоте инвентаря
+    public Button masteryPotionButton; // Кнопка применения колбы опыта (+100 XP)
+    public AudioClip potionConsumeSound; // Звуковой эффект выпивания зелья
+    public bool isMasteryPotionConsumed = false; // Флаг: выпита ли колба опыта
 
     [Header("Звуки")]
-    public AudioClip craftStartSound;
-    public AudioClip craftCompleteSound;
-    public AudioClip chestOpenSound;
+    public AudioClip craftStartSound; // Звук начала алхимической варки (кипение)
+    public AudioClip craftCompleteSound; // Звук завершения приготовления зелья
+    public AudioClip chestOpenSound; // Звук открытия сундука
 
-    private Coroutine craftCoroutine;
+    private Coroutine craftCoroutine; // Ссылка на запущенную корутину таймера варки
 
     private void Awake()
     {
-        Instance = this;
+        Instance = this; // Инициализация синглтона при старте
 
-        AutoFindAndBindTableElements();
+        AutoFindAndBindTableElements(); // Автопоиск и привязка интерактивных элементов стола и котла
 
         if (startCraftButton != null)
         {
-            startCraftButton.onClick.RemoveAllListeners();
-            startCraftButton.onClick.AddListener(OnStartCraftButtonClicked);
+            startCraftButton.onClick.RemoveAllListeners(); // Сброс старых обработчиков
+            startCraftButton.onClick.AddListener(OnStartCraftButtonClicked); // Назначение клика начала крафта
         }
 
         if (cauldronClickButton != null)

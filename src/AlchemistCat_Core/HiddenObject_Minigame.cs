@@ -20,136 +20,136 @@ using TMPro;
 /// </summary>
 public class HiddenObject_Minigame : MonoBehaviour
 {
-    public static HiddenObject_Minigame Instance { get; private set; }
+    public static HiddenObject_Minigame Instance { get; private set; } // Статический синглтон мини-игры поиска предметов
 
-    public enum DifficultyTier { Easy, Normal, Hard }
-    public enum RecordModeType { TimeRush, BigCountSurge, FlickerSpawn }
+    public enum DifficultyTier { Easy, Normal, Hard } // Уровни сложности (Легкий, Средний, Сложный)
+    public enum RecordModeType { TimeRush, BigCountSurge, FlickerSpawn } // Режимы испытаний рекордов
 
     [System.Serializable]
     public class DifficultyConfig
     {
-        public DifficultyTier tier;
-        public string tierName = "Легкий";
-        public int itemsPerRound = 5;       // Количество предметов за 1 раунд
-        public int roundsRequired = 3;      // Количество раундов (попыток) для победы
+        public DifficultyTier tier; // Уровень сложности
+        public string tierName = "Легкий"; // Название уровня сложности
+        public int itemsPerRound = 5; // Количество предметов за 1 раунд
+        public int roundsRequired = 3; // Количество раундов (попыток) для победы
         public float timeLimitPerRound = 90f; // Время на 1 раунд в секундах
 
         [Header("Награды за завершение")]
-        public int rewardGold = 1000;
-        public int rewardStones = 3;
-        public int rewardScrolls = 1;
-        public int rewardExpPotion100 = 0;
-        public int rewardExpPotion500 = 0;
-        public int rewardMasteryPotion100 = 0;
-        public int rewardMasteryPotion500 = 0;
+        public int rewardGold = 1000; // Награда золотом
+        public int rewardStones = 3; // Награда камнями
+        public int rewardScrolls = 1; // Награда свитками
+        public int rewardExpPotion100 = 0; // Кол-во зелий опыта +100 XP
+        public int rewardExpPotion500 = 0; // Кол-во зелий опыта +500 XP
+        public int rewardMasteryPotion100 = 0; // Кол-во зелий мастерства +100 XP
+        public int rewardMasteryPotion500 = 0; // Кол-во зелий мастерства +500 XP
     }
 
     [System.Serializable]
     public class LocationConfig
     {
-        public string locationId = "Shop";
-        public string locationName = "Лавка Алхимика";
-        public Sprite backgroundSprite;
-        public Button locationCardButton;
-        public List<Sprite> itemsPool = new List<Sprite>();
+        public string locationId = "Shop"; // Идентификатор локации
+        public string locationName = "Лавка Алхимика"; // Название локации
+        public Sprite backgroundSprite; // Фоновое изображение локации
+        public Button locationCardButton; // Кнопка выбора локации
+        public List<Sprite> itemsPool = new List<Sprite>(); // Набор предметов для поиска в локации
 
         [Header("3 Уровня сложности локации")]
-        public List<DifficultyConfig> difficulties = new List<DifficultyConfig>();
+        public List<DifficultyConfig> difficulties = new List<DifficultyConfig>(); // Настройки 3 сложностей
 
         [Header("Статус прохождения")]
-        public bool isEasyCompleted;
-        public bool isNormalCompleted;
-        public bool isHardCompleted;
-        public bool IsFullyCompleted => isEasyCompleted && isNormalCompleted && isHardCompleted;
+        public bool isEasyCompleted; // Пройден ли легкий уровень
+        public bool isNormalCompleted; // Пройден ли нормальный уровень
+        public bool isHardCompleted; // Пройден ли сложный уровень
+        public bool IsFullyCompleted => isEasyCompleted && isNormalCompleted && isHardCompleted; // Полностью ли зачищена локация
     }
 
     [Header("=== Главные панели ===")]
-    public GameObject hiddenObjectPanel;
-    public GameObject locationSelectPopup;
-    public GameObject difficultySelectPopup;
-    public Button closeGameButton;
+    public GameObject hiddenObjectPanel; // Главная панель игры поиска предметов
+    public GameObject locationSelectPopup; // Попап выбора локации
+    public GameObject difficultySelectPopup; // Попап выбора сложности
+    public Button closeGameButton; // Кнопка закрытия игры
 
     [Header("=== Кнопки выбора сложности ===")]
-    public Button buttonEasy;
-    public Button buttonNormal;
-    public Button buttonHard;
-    public TextMeshProUGUI difficultyPopupTitleText;
+    public Button buttonEasy; // Кнопка легкой сложности
+    public Button buttonNormal; // Кнопка обычной сложности
+    public Button buttonHard; // Кнопка сложной сложности
+    public TextMeshProUGUI difficultyPopupTitleText; // Текст заголовка выбора сложности
 
     [Header("=== Viewport и Зум/Панорамирование ===")]
-    public RectTransform viewportContainer;
-    public RectTransform backgroundContentRoot;
-    public Image backgroundLocationImage;
-    public AspectRatioFitter backgroundAspect;
-    public float minZoom = 1.0f;
-    public float maxZoom = 2.8f;
-    public float zoomSpeed = 0.5f;
+    public RectTransform viewportContainer; // Окно просмотра локации (Viewport)
+    public RectTransform backgroundContentRoot; // Корневой контейнер с фоном и предметами
+    public Image backgroundLocationImage; // Спрайт фона локации
+    public AspectRatioFitter backgroundAspect; // Компонент сохранения пропорций
+    public float minZoom = 1.0f; // Минимальный масштаб
+    public float maxZoom = 2.8f; // Максимальный зум
+    public float zoomSpeed = 0.5f; // Скорость зумирования колесиком/жестом
 
     [Header("=== Нижняя панель целей (Target Items Bar) ===")]
-    public RectTransform targetIconsContainer;
-    public GameObject targetItemSlotPrefab;
-    public TextMeshProUGUI itemsRemainingText;
-    public TextMeshProUGUI locationTitleText;
-    public TextMeshProUGUI currentRoundText;
+    public RectTransform targetIconsContainer; // Контейнер иконок искомых предметов
+    public GameObject targetItemSlotPrefab; // Префаб ячейки искомого предмета
+    public TextMeshProUGUI itemsRemainingText; // Текст "Осталось: X"
+    public TextMeshProUGUI locationTitleText; // Текст названия локации
+    public TextMeshProUGUI currentRoundText; // Текст текущего раунда
 
     [Header("=== Кнопки подсказок и таймер ===")]
-    public Button hintCatButton;
-    public TextMeshProUGUI hintCountText;
-    public TextMeshProUGUI timerText;
-    public int availableHints = 3;
+    public Button hintCatButton; // Кнопка вызова подсказки Кота
+    public TextMeshProUGUI hintCountText; // Счетчик оставшихся подсказок
+    public TextMeshProUGUI timerText; // Текст таймера раунда
+    public int availableHints = 3; // Доступное количество подсказок
 
     [Header("=== Окно победы локации ===")]
-    public GameObject victoryPopupPanel;
-    public TextMeshProUGUI victoryTitleText;
-    public TextMeshProUGUI victoryRewardsText;
-    public Button claimRewardsAndBackButton;
+    public GameObject victoryPopupPanel; // Окно победы
+    public TextMeshProUGUI victoryTitleText; // Заголовок победы
+    public TextMeshProUGUI victoryRewardsText; // Текст полученных наград
+    public Button claimRewardsAndBackButton; // Кнопка сбора наград и возврата
 
     [Header("=== Кот и Режим 'Становление Рекорда' ===")]
-    public GameObject catRecordUnlockedDialog; // Окно диалога с Котом
-    public TextMeshProUGUI catSpeechText;
-    public Button catDialogContinueButton;
-    public GameObject recordModeSelectPopup;    // Попап с 3 хардкорными испытаниями
-    public Button recordTimeRushButton;        // Блиц на время (+1 Кристалл)
-    public Button recordItemSurgeButton;       // Лавина предметов (+1..5 Кристаллов)
-    public Button recordFlickerSpawnButton;    // Мерцание (+1..10 Кристаллов)
-    public Button closeRecordPopupButton;
+    public GameObject catRecordUnlockedDialog; // Окно диалога с Котом об открытии рекордов
+    public TextMeshProUGUI catSpeechText; // Текст речи Кота
+    public Button catDialogContinueButton; // Кнопка продолжить в диалоге
+    public GameObject recordModeSelectPopup; // Попап с 3 хардкорными испытаниями
+    public Button recordTimeRushButton; // Блиц на время (+1 Кристалл)
+    public Button recordItemSurgeButton; // Лавина предметов (+1..5 Кристаллов)
+    public Button recordFlickerSpawnButton; // Мерцание (+1..10 Кристаллов)
+    public Button closeRecordPopupButton; // Кнопка закрытия попапа рекордов
 
     [Header("=== Спрайты зелий для выдачи в инвентарь ===")]
-    public Sprite expPotion100Sprite;
-    public Sprite expPotion500Sprite;
-    public Sprite masteryPotion100Sprite;
-    public Sprite masteryPotion500Sprite;
-    public Sprite stoneSprite;
-    public Sprite scrollSprite;
+    public Sprite expPotion100Sprite; // Спрайт зелья опыта +100 XP
+    public Sprite expPotion500Sprite; // Спрайт зелья опыта +500 XP
+    public Sprite masteryPotion100Sprite; // Спрайт зелья мастерства +100 XP
+    public Sprite masteryPotion500Sprite; // Спрайт зелья мастерства +500 XP
+    public Sprite stoneSprite; // Спрайт камня
+    public Sprite scrollSprite; // Спрайт свитка
 
     [Header("=== Конфигурация 3 Локаций ===")]
-    public List<LocationConfig> locations = new List<LocationConfig>();
+    public List<LocationConfig> locations = new List<LocationConfig>(); // Список 3 локаций с предметами
 
     // Внутреннее состояние игры
-    private LocationConfig currentLocation;
-    private DifficultyConfig currentDifficulty;
-    private int currentRoundIndex = 1;
-    private int itemsFoundInCurrentRound = 0;
-    private float roundTimer = 0f;
-    private bool isGameRunning = false;
-    private bool isRecordModeActive = false;
-    private RecordModeType currentRecordMode = RecordModeType.TimeRush;
-    private int recordTargetCount = 0;
-    private float currentZoom = 1.0f;
-    private Vector2 panOffset = Vector2.zero;
-    private List<GameObject> activeClickableItems = new List<GameObject>();
-    private Coroutine flickerCoroutine;
+    private LocationConfig currentLocation; // Текущая выбранная локация
+    private DifficultyConfig currentDifficulty; // Текущая сложность
+    private int currentRoundIndex = 1; // Номер раунда
+    private int itemsFoundInCurrentRound = 0; // Найдено предметов в раунде
+    private float roundTimer = 0f; // Таймер времени раунда
+    private bool isGameRunning = false; // Флаг: идет ли игра
+    private bool isRecordModeActive = false; // Флаг: активен ли хардкорный режим рекордов
+    private RecordModeType currentRecordMode = RecordModeType.TimeRush; // Выбранный тип рекорда
+    private int recordTargetCount = 0; // Целевое количество для рекорда
+    private float currentZoom = 1.0f; // Текущий коэффициент масштаба
+    private Vector2 panOffset = Vector2.zero; // Смещение панорамирования
+    private List<GameObject> activeClickableItems = new List<GameObject>(); // Список интерактивных предметов на экране
+    private Coroutine flickerCoroutine; // Ссылка на корутину мерцания
 
     private void Awake()
     {
-        if (Instance == null) Instance = this;
-        else Destroy(gameObject);
+        if (Instance == null) Instance = this; // Инициализация синглтона
+        else Destroy(gameObject); // Уничтожение дубликата
     }
 
     private void Start()
     {
-        InitializeDefaultConfigurationsIfEmpty();
-        SetupButtons();
-        LoadCompletionProgress();
+        InitializeDefaultConfigurationsIfEmpty(); // Инициализация локаций и предметов по умолчанию
+        SetupButtons(); // Настройка кликов кнопок интерфейса
+        LoadCompletionProgress(); // Загрузка сохраненного прогресса прохождения локаций
     }
 
     private void SetupButtons()

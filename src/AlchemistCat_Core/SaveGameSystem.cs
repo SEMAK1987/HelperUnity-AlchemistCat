@@ -8,32 +8,32 @@ using UnityEngine.SceneManagement;
 /// </summary>
 public static class SaveGameSystem
 {
-    public static SaveData CurrentData = new SaveData();
-    public static bool IsStartedFromMenu = false;
+    public static SaveData CurrentData = new SaveData(); // Текущие активные данные сохранения в оперативной памяти
+    public static bool IsStartedFromMenu = false; // Флаг: была ли игра запущена из главного меню
 
     [Serializable]
     public class SaveData
     {
         [Header("Основное")]
-        public string saveName = "Кот-Алхимик";
-        public int currentSceneIndex = 1;
-        public string saveDateTime = "";
+        public string saveName = "Кот-Алхимик"; // Название слота сохранения
+        public int currentSceneIndex = 1; // Номер сохраненной сцены Unity
+        public string saveDateTime = ""; // Дата и время создания файла сохранения
         
         [Header("Экономика и Валюта")]
-        public int gold = 100;
-        public int crystals = 0;
-        public int vipXP = 0;
-        public int daysActive = 0;
+        public int gold = 100; // Количество золотых монет
+        public int crystals = 0; // Количество кристаллов
+        public int vipXP = 0; // Опыт VIP системы
+        public int daysActive = 0; // Число активных игровых дней
 
         [Header("Развитие Кота")]
-        public int catLevel = 1;
-        public int currentXP = 0;
-        public int cauldronLevel = 1;
-        public int potionsBrewed = 0;
+        public int catLevel = 1; // Уровень персонажа
+        public int currentXP = 0; // Текущий опыт
+        public int cauldronLevel = 1; // Уровень котла
+        public int potionsBrewed = 0; // Сварено зелий
 
         [Header("Миниигры и Разблокировки")]
-        public bool unlockedDarts = false;
-        public bool unlockedMouseCatch = false;
+        public bool unlockedDarts = false; // Доступность игры в дартс
+        public bool unlockedMouseCatch = false; // Доступность игры "Поймай мышь"
     }
 
     /// <summary>

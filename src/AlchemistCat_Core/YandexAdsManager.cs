@@ -8,32 +8,32 @@ using System.Runtime.InteropServices;
 /// </summary>
 public class YandexAdsManager : MonoBehaviour
 {
-    public static YandexAdsManager Instance { get; private set; }
+    public static YandexAdsManager Instance { get; private set; } // Статический синглтон менеджера рекламы Яндекс Игр
 
     [Header("Настройки")]
-    public bool isTestMode = true;
+    public bool isTestMode = true; // Тестовый режим рекламы (для локальной отладки в редакторе)
 
     // Импортируем JavaScript функции для связи с Yandex SDK в WebGL
     [DllImport("__Internal")]
-    private static extern void ShowYandexRewarded();
+    private static extern void ShowYandexRewarded(); // Вызов внешнего JS метода показа рекламы с наградой
 
     [DllImport("__Internal")]
-    private static extern void ShowYandexInterstitial();
+    private static extern void ShowYandexInterstitial(); // Вызов внешнего JS метода полноэкранного баннера
 
-    private Action rewardedSuccessCallback;
-    private Action rewardedCloseCallback;
-    private Action interstitialCloseCallback;
+    private Action rewardedSuccessCallback; // Колбэк успешного завершения просмотра рекламы
+    private Action rewardedCloseCallback; // Колбэк закрытия окна рекламы с наградой
+    private Action interstitialCloseCallback; // Колбэк закрытия полноэкранной межстраничной рекламы
 
     private void Awake()
     {
         if (Instance == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            Instance = this; // Назначение глобального синглтона
+            DontDestroyOnLoad(gameObject); // Сохранение объекта между сценами
         }
         else
         {
-            Destroy(gameObject);
+            Destroy(gameObject); // Уничтожение дубликата
             return;
         }
     }

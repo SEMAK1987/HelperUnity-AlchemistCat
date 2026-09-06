@@ -4,26 +4,26 @@ using System;
 
 public class DailyRewardSystem : MonoBehaviour
 {
-    [Header("UI References (Must be assigned in Inspector)")]
-    public Button claimButton;
-    public Text timerText;
-    public Text statusText;
+    [Header("UI Ссылки (Назначаются в Инспекторе)")]
+    public Button claimButton; // Кнопка "Забрать награду"
+    public Text timerText; // Текстовое поле таймера обратного отсчета до следующей награды
+    public Text statusText; // Текстовое поле статуса (состояние дня / уведомления)
     [Tooltip("Массив из 7 слотов дней (День 1 - День 7)")]
-    public Transform[] calendarDaySlots; 
+    public Transform[] calendarDaySlots; // Массив UI-контейнеров для 7 дней недели наград
 
-    private int currentStreak = 0;
-    private DateTime lastClaimTime;
+    private int currentStreak = 0; // Текущая серия непрерывных заходов в игру (дни 1-7)
+    private DateTime lastClaimTime; // Время и дата последнего получения награды
 
     private void Start()
     {
-        ValidateInspectorReferences();
-        LoadDailyData();
-        CheckDailyStatus();
+        ValidateInspectorReferences(); // Проверка и автопоиск привязанных UI компонентов
+        LoadDailyData(); // Загрузка сохраненного дня и времени последнего захода
+        CheckDailyStatus(); // Проверка доступности награды на сегодняшний день
     }
 
     private void Update()
     {
-        CheckDailyStatus();
+        CheckDailyStatus(); // Постоянное обновление таймера обратного отсчета в реальном времени
     }
 
     private void ValidateInspectorReferences()

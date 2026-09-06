@@ -10,54 +10,54 @@ using UnityEngine.UI;
 /// </summary>
 public class TimeOfDaySystem : MonoBehaviour
 {
-    public static TimeOfDaySystem Instance;
+    public static TimeOfDaySystem Instance; // Статический синглтон системы смены времени суток
 
-    [Header("Cozy Room Day/Night Blending")]
+    [Header("Смена Дня и Ночи в комнате")]
     [Tooltip("Дневной фон комнаты алхимика (яркий день)")]
-    public Image dayRoomImage;
+    public Image dayRoomImage; // Слой дневной комнаты алхимика
     [Tooltip("Ночной фон комнаты алхимика (уютный свет свечей и луны)")]
-    public Image nightRoomImage;
+    public Image nightRoomImage; // Слой ночной комнаты алхимика
 
     [Header("Настройки реального времени суток")]
     [Tooltip("Использовать реальное время устройства игрока")]
-    public bool useRealTime = true;
+    public bool useRealTime = true; // Синхронизация с системными часами устройства игрока
     [Range(0, 23)]
     [Tooltip("Час начала дня (например, 6 утра)")]
-    public int dayStartHour = 6;
+    public int dayStartHour = 6; // Час наступления утра (по умолчанию 6:00)
     [Range(0, 23)]
     [Tooltip("Час начала ночи (например, 21 вечера)")]
-    public int nightStartHour = 21;
+    public int nightStartHour = 21; // Час наступления ночи (по умолчанию 21:00)
 
     [Header("Плавность перехода")]
     [Tooltip("Длительность плавного фейда между днем и ночью в секундах")]
-    public float transitionDuration = 2.5f;
+    public float transitionDuration = 2.5f; // Время плавного перетекания света в секундах
 
     [Header("Текущее состояние (Debug)")]
-    public bool isNight = false;
+    public bool isNight = false; // Флаг: сейчас ли ночь в игре
 
     [Header("Тестирование / Ручной режим")]
-    public bool manualOverride = false;
+    public bool manualOverride = false; // Ручной режим тестирования без системных часов
 
-    private Coroutine blendCoroutine;
+    private Coroutine blendCoroutine; // Ссылка на корутину анимации смены освещения
 
     private void Awake()
     {
-        Instance = this;
+        Instance = this; // Инициализация синглтона при старте
     }
 
     private void Start()
     {
-        // Первичная проверка при запуске
-        CheckAndApplyTimeOfDay(instant: true);
+        // Первичная проверка при запуске игры
+        CheckAndApplyTimeOfDay(instant: true); // Мгновенное применение освещения без задержки
         // Запуск периодической проверки раз в минуту
-        StartCoroutine(PeriodicTimeCheck());
+        StartCoroutine(PeriodicTimeCheck()); // Фоновая корутина проверки времени
     }
 
     private void Update()
     {
-        if (manualOverride)
+        if (manualOverride) // Если включен ручной режим отладки
         {
-            ApplyBlendDirect(isNight ? 1f : 0f);
+            ApplyBlendDirect(isNight ? 1f : 0f); // Принудительно устанавливаем день или ночь
         }
     }
 

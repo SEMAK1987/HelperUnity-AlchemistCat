@@ -203,13 +203,7 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         StartBackgroundMusic();
 
-        if (dialogueBodyText != null)
-        {
-            dialogueBodyText.enableAutoSizing = true;
-            dialogueBodyText.fontSizeMin = 18;
-            dialogueBodyText.fontSizeMax = 28;
-            dialogueBodyText.overflowMode = TextOverflowModes.Ellipsis;
-        }
+        // Не переопределяем alignment и margins текста кодом, чтобы строго сохранялись настройки из инспектора Unity (выравнивание слева сверху, отступы и стиль)
 
         if (topPanel != null) topPanel.SetActive(false);
         if (slotGold != null) slotGold.SetActive(false);
@@ -234,10 +228,16 @@ public class DialogueSystem_Manager : MonoBehaviour
         UpdateResourceTextsInstant();
 
         if (confirmNameButton != null)
+        {
+            confirmNameButton.onClick.RemoveAllListeners();
             confirmNameButton.onClick.AddListener(OnConfirmNameClicked);
+        }
 
         if (nextStepButton != null)
+        {
+            nextStepButton.onClick.RemoveAllListeners();
             nextStepButton.onClick.AddListener(OnNextStepClicked);
+        }
 
         if (nameInputField != null)
         {
@@ -327,7 +327,11 @@ public class DialogueSystem_Manager : MonoBehaviour
         {
             if (typingCoroutine != null) StopCoroutine(typingCoroutine);
             isTyping = false;
-            if (dialogueBodyText != null) dialogueBodyText.text = activeFullText;
+            if (dialogueBodyText != null)
+            {
+                dialogueBodyText.text = activeFullText;
+                dialogueBodyText.maxVisibleCharacters = 99999;
+            }
             OnTypingFinished();
             return;
         }
@@ -516,32 +520,32 @@ public class DialogueSystem_Manager : MonoBehaviour
     private IEnumerator TypeTextCoroutine(string text, DialogStep step)
     {
         isTyping = true;
-        if (dialogueBodyText != null) dialogueBodyText.text = "";
-
-        int length = text.Length;
-        int i = 0;
-
-        while (i < length)
+        if (dialogueBodyText != null)
         {
-            if (text[i] == '<')
+            dialogueBodyText.text = text;
+            dialogueBodyText.maxVisibleCharacters = 0;
+            dialogueBodyText.ForceMeshUpdate();
+
+            int totalVisibleCharacters = dialogueBodyText.textInfo.characterCount;
+            for (int visibleCount = 1; visibleCount <= totalVisibleCharacters; visibleCount++)
             {
-                int closeIndex = text.IndexOf('>', i);
-                if (closeIndex != -1)
+                dialogueBodyText.maxVisibleCharacters = visibleCount;
+
+                if (textTypeSound != null && SettingsManager.Instance != null && visibleCount - 1 < dialogueBodyText.textInfo.characterInfo.Length)
                 {
-                    i = closeIndex + 1;
-                    if (dialogueBodyText != null) dialogueBodyText.text = text.Substring(0, i);
-                    continue;
+                    char c = dialogueBodyText.textInfo.characterInfo[visibleCount - 1].character;
+                    if (c != ' ' && c != '\n' && c != '\t')
+                    {
+                        SettingsManager.Instance.PlaySoundEffect(textTypeSound);
+                    }
                 }
+                yield return new WaitForSeconds(textSpeed);
             }
-
-            i++;
-            if (dialogueBodyText != null) dialogueBodyText.text = text.Substring(0, i);
-
-            if (textTypeSound != null && SettingsManager.Instance != null && i - 1 < length && text[i - 1] != ' ')
-            {
-                SettingsManager.Instance.PlaySoundEffect(textTypeSound);
-            }
-            yield return new WaitForSeconds(textSpeed);
+            dialogueBodyText.maxVisibleCharacters = 99999;
+        }
+        else
+        {
+            yield return null;
         }
 
         isTyping = false;
@@ -1162,12 +1166,12 @@ public class DialogueSystem_Manager : MonoBehaviour
             revealAvatarUI = true
         });
 
-        // 2. Цвета полоски опыта (Скриншот 5)
+        // 2. Цвета полоски опыта
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=104%>Полоска опыта меняет цвет: сначала она <b>белая</b>, затем при заполнении станет <b>зеленой</b>, ближе к уровню — <b>оранжевой</b>, а перед самым повышением — <b>красной</b>!</size>",
-            textEN = "<size=104%>The EXP bar dynamically changes color: <b>White</b> at start, <b>Green</b> midway, <b>Orange</b> near the top, and <b>Red</b> right before Level Up!</size>",
-            textTR = "<size=104%>Deneyim cubugu renk degistirir: basta <b>Beyaz</b>, doldukca <b>Yesil</b>, seviyeye yaklasinca <b>Turuncu</b> ve seviye atlamadan once <b>Kirmizi</b> olur!</size>",
+            textRU = "<size=84%>Полоска опыта меняет цвет: сначала она <b>белая</b>, затем при заполнении станет <b>зеленой</b>, ближе к уровню — <b>оранжевой</b>, а перед самым повышением — <b>красной</b>!</size>",
+            textEN = "<size=84%>The EXP bar dynamically changes color: <b>White</b> at start, <b>Green</b> midway, <b>Orange</b> near the top, and <b>Red</b> right before Level Up!</size>",
+            textTR = "<size=84%>Deneyim cubugu renk degistirir: basta <b>Beyaz</b>, doldukca <b>Yesil</b>, seviyeye yaklasinca <b>Turuncu</b> ve seviye atlamadan once <b>Kirmizi</b> olur!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true
@@ -1228,12 +1232,12 @@ public class DialogueSystem_Manager : MonoBehaviour
             isConfirmRecipeStep = true
         });
 
-        // 3. Появление свитка слева от календаря и открытие (Скриншот 7)
+        // 3. Появление свитка слева от календаря и открытие
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=102%>Отлично! Слева от календаря появился наш <b><color=#FFD166>Свиток Рецептов</color></b>!\n\nНажми кнопку ниже, чтобы развернуть его и посмотреть формулу приготовления первого зелья!</size>",
-            textEN = "<size=102%>Look! Next to the calendar, our <b><color=#FFD166>Recipe Scroll</color></b> has appeared!\n\nTap below to open it and inspect the first potion formula!</size>",
-            textTR = "<size=102%>Takvimin solunda <b><color=#FFD166>Tarif Parsomenimiz</color></b> belirdi!\n\nIlk iksir formulu icin asagidaki butona bas!</size>",
+            textRU = "<size=84%>Отлично! Слева от календаря появился наш <b><color=#FFD166>Свиток Рецептов</color></b>!\n\nНажми кнопку ниже, чтобы развернуть его и посмотреть формулу приготовления первого зелья!</size>",
+            textEN = "<size=84%>Look! Next to the calendar, our <b><color=#FFD166>Recipe Scroll</color></b> has appeared!\n\nTap below to open it and inspect the first potion formula!</size>",
+            textTR = "<size=84%>Takvimin solunda <b><color=#FFD166>Tarif Parsomenimiz</color></b> belirdi!\n\nIlk iksir formulu icin asagidaki butona bas!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1254,9 +1258,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Поздравление с уровнем и появление сундука
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=108%>Поздравляю! Ты получил <b><color=#80FFDB>+10 XP</color></b> и поднял <b><color=#FFE57F>2-й Уровень</color></b>!\n\nСлева от свитка рецептов появился твой <b><color=#FFD166>Сундук Алхимика</color></b>!</size>",
-            textEN = "<size=108%>Congratulations! You gained <b><color=#80FFDB>+10 XP</color></b> and reached <b><color=#FFE57F>Level 2</color></b>!\n\nNext to the scroll, your <b><color=#FFD166>Alchemist Chest</color></b> appeared!</size>",
-            textTR = "<size=108%>Tebrikler! <b><color=#80FFDB>+10 XP</color></b> kazandin ve <b><color=#FFE57F>Seviye 2</color></b> oldun!\n\nParsomenin solunda <b><color=#FFD166>Sandigin</color></b> belirdi!</size>",
+            textRU = "<size=84%>Поздравляю! Ты получил <b><color=#80FFDB>+10 XP</color></b> и поднял <b><color=#FFE57F>2-й Уровень</color></b>!\n\nСлева от свитка рецептов появился твой <b><color=#FFD166>Сундук Алхимика</color></b>!</size>",
+            textEN = "<size=84%>Congratulations! You gained <b><color=#80FFDB>+10 XP</color></b> and reached <b><color=#FFE57F>Level 2</color></b>!\n\nNext to the scroll, your <b><color=#FFD166>Alchemist Chest</color></b> appeared!</size>",
+            textTR = "<size=84%>Tebrikler! <b><color=#80FFDB>+10 XP</color></b> kazandin ve <b><color=#FFE57F>Seviye 2</color></b> oldun!\n\nParsomenin solunda <b><color=#FFD166>Sandigin</color></b> belirdi!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1267,9 +1271,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 2. Рассказ про Опыт Мастерства и колбу в сундуке
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=100%>Помимо обычного уровня, алхимик развивает свой <b><color=#52B788>Опыт Мастерства</color></b>!\n\nЯ положил в твой сундук редкую <b><color=#80FFDB>Колбу Опыта Мастерства</color></b> — она поможет мгновенно повысить твой алхимический ранг!</size>",
-            textEN = "<size=100%>Besides normal levels, you develop <b><color=#52B788>Mastery Experience</color></b>!\n\nI placed a rare <b><color=#80FFDB>Mastery Flask</color></b> in your chest to elevate your rank instantly!</size>",
-            textTR = "<size=100%>Normal seviyenin yani sira <b><color=#52B788>Ustalik Deneyimi</color></b> gelistirirsin!\n\nSandigina rutbeni yukseltecek ozel bir <b><color=#80FFDB>Ustalik Sisesi</color></b> koydum!</size>",
+            textRU = "<size=84%>Помимо обычного уровня, алхимик развивает свой <b><color=#52B788>Опыт Мастерства</color></b>!\n\nЯ положил в твой сундук редкую <b><color=#80FFDB>Колбу Опыта Мастерства</color></b> — она поможет мгновенно повысить твой алхимический ранг!</size>",
+            textEN = "<size=84%>Besides normal levels, you develop <b><color=#52B788>Mastery Experience</color></b>!\n\nI placed a rare <b><color=#80FFDB>Mastery Flask</color></b> in your chest to elevate your rank instantly!</size>",
+            textTR = "<size=84%>Normal seviyenin yani sira <b><color=#52B788>Ustalik Deneyimi</color></b> gelistirirsin!\n\nSandigina rutbeni yukseltecek ozel bir <b><color=#80FFDB>Ustalik Sisesi</color></b> koydum!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1280,9 +1284,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 3. Предложение открыть инвентарь и выпить колбу
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=105%>Давай откроем твой инвентарь!\n\nНажми на <b>Колбу Опыта</b> в первом слоте, чтобы выпить её и получить <b><color=#80FFDB>+100 Опыта Мастерства</color></b>!</size>",
-            textEN = "<size=105%>Let us open your inventory!\n\nTap the <b>Mastery Flask</b> in the first slot to drink it and receive <b><color=#80FFDB>+100 Mastery XP</color></b>!</size>",
-            textTR = "<size=105%>Hadi envanterini acalim!\n\nIlk yuvadaki <b>Ustalik Sisesine</b> basarak <b><color=#80FFDB>+100 Ustalik XP</color></b> kazan!</size>",
+            textRU = "<size=84%>Давай откроем твой инвентарь!\n\nНажми на <b>Колбу Опыта</b> в первом слоте, чтобы выпить её и получить <b><color=#80FFDB>+100 Опыта Мастерства</color></b>!</size>",
+            textEN = "<size=84%>Let us open your inventory!\n\nTap the <b>Mastery Flask</b> in the first slot to drink it and receive <b><color=#80FFDB>+100 Mastery XP</color></b>!</size>",
+            textTR = "<size=84%>Hadi envanterini acalim!\n\nIlk yuvadaki <b>Ustalik Sisesine</b> basarak <b><color=#80FFDB>+100 Ustalik XP</color></b> kazan!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
@@ -1583,127 +1587,127 @@ public class DialogueSystem_Manager : MonoBehaviour
     {
         dialogueSteps.Clear();
 
-        // 0. Имя (Скриншот 1)
+        // 0. Имя
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=108%>Здравствуй, путник! Я Кот-Алхимик. Я буду помогать тебе по всей игре во всём!\n\nКак к тебе обращаться? (введи от 2 до 12 букв, без знаков)</size>",
-            textEN = "<size=108%>Greetings, traveler! I am the Alchemist Cat. I will assist you throughout your journey!\n\nHow may I call you? (enter 2-12 letters, no symbols)</size>",
-            textTR = "<size=108%>Selam gezgin! Ben Simyaci Kedi. Yolculugun boyunca sana yardim edecegim!\n\nSana nasil hitap edebilirim? (2-12 harf girin, sembolsuz)</size>",
+            textRU = "<size=90%>Здравствуй, путник! Я Кот-Алхимик. Я буду помогать тебе по всей игре во всём!\n\nКак к тебе обращаться? (введи от 2 до 12 букв, без знаков)</size>",
+            textEN = "<size=90%>Greetings, traveler! I am the Alchemist Cat. I will assist you throughout your journey!\n\nHow may I call you? (enter 2-12 letters, no symbols)</size>",
+            textTR = "<size=90%>Selam gezgin! Ben Simyaci Kedi. Yolculugun boyunca sana yardim edecegim!\n\nSana nasil hitap edebilirim? (2-12 harf girin, sembolsuz)</size>",
             isNameInputStep = true,
             revealResourceIndex = -1
         });
 
-        // 1. Приветствие (Скриншот 2)
+        // 1. Приветствие
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=108%>Приятно познакомиться, {PLAYER_NAME}!\nДобро пожаловать в нашу алхимическую лабораторию. Позволь мне познакомить тебя с главными ресурсами нашего мастерства!</size>",
-            textEN = "<size=108%>Pleasure to meet you, {PLAYER_NAME}!\nWelcome to our alchemy sanctuary. Let me introduce you to the core resources of our craft!</size>",
-            textTR = "<size=108%>Tanistigimiza memnun oldum, {PLAYER_NAME}!\nSimya mabedimize hos geldin. Sana zanaatimizin temel kaynaklarini tanitmama izin ver!",
+            textRU = "<size=90%>Приятно познакомиться, {PLAYER_NAME}!\nДобро пожаловать в нашу алхимическую лабораторию. Позволь мне познакомить тебя с главными ресурсами нашего мастерства!</size>",
+            textEN = "<size=90%>Pleasure to meet you, {PLAYER_NAME}!\nWelcome to our alchemy sanctuary. Let me introduce you to the core resources of our craft!</size>",
+            textTR = "<size=90%>Tanistigimiza memnun oldum, {PLAYER_NAME}!\nSimya mabedimize hos geldin. Sana zanaatimizin temel kaynaklarini tanitmama izin ver!",
             isNameInputStep = false,
             revealResourceIndex = -1
         });
 
-        // 2. Золото (Скриншот 3)
+        // 2. Золото
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=112%><b><color=#FFE57F>Золотые Монеты</color></b> — наша основная валюта! За них мы улучшаем котёл, открываем новые колбы и покупаем базовые ингредиенты.</size>",
-            textEN = "<size=112%><b><color=#FFE57F>Gold Coins</color></b> are our main currency! We use them to upgrade the cauldron, unlock new flasks, and buy basic ingredients.</size>",
-            textTR = "<size=112%><b><color=#FFE57F>Altin Paralar</color></b> temel para birimimizdir! Kazani gelistirmek, yeni siseler acmak ve temel malzemeler almak icin kullanilir.</size>",
+            textRU = "<size=90%><b><color=#FFE57F>Золотые Монеты</color></b> — наша основная валюта! За них мы улучшаем котёл, открываем новые колбы и покупаем базовые ингредиенты.</size>",
+            textEN = "<size=90%><b><color=#FFE57F>Gold Coins</color></b> are our main currency! We use them to upgrade the cauldron, unlock new flasks, and buy basic ingredients.</size>",
+            textTR = "<size=90%><b><color=#FFE57F>Altin Paralar</color></b> temel para birimimizdir! Kazani gelistirmek, yeni siseler acmak ve temel malzemeler almak icin kullanilir.</size>",
             isNameInputStep = false,
             revealResourceIndex = 0
         });
 
-        // 3. Камни (Скриншот 4)
+        // 3. Камни
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=112%><b><color=#80FFDB>Магические Камни</color></b> — редкий минерал стихий! Они нужны для усиления магических зелий и постоянных улучшений лаборатории.</size>",
-            textEN = "<size=112%><b><color=#80FFDB>Magic Rune Stones</color></b> are rare elemental minerals! Required for boosting magical potions and permanent lab upgrades.</size>",
-            textTR = "<size=112%><b><color=#80FFDB>Buyulu Run Taslari</color></b> nadir element mineralleridir! Buyulu iksirleri guclendirmek ve kalici gelistirmeler icin gereklidir.</size>",
+            textRU = "<size=90%><b><color=#80FFDB>Магические Камни</color></b> — редкий минерал стихий! Они нужны для усиления магических зелий и постоянных улучшений лаборатории.</size>",
+            textEN = "<size=90%><b><color=#80FFDB>Magic Rune Stones</color></b> are rare elemental minerals! Required for boosting magical potions and permanent lab upgrades.</size>",
+            textTR = "<size=90%><b><color=#80FFDB>Buyulu Run Taslari</color></b> nadir element mineralleridir! Buyulu iksirleri guclendirmek ve kalici gelistirmeler icin gereklidir.</size>",
             isNameInputStep = false,
             revealResourceIndex = 1
         });
 
-        // 4. Свитки (Скриншот 5)
+        // 4. Свитки
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=112%><b><color=#FFD166>Древние Свитки</color></b> — тайные знания предков! С их помощью мы изучаем рецепты легендарных эликсиров и открываем мистические формулы.</size>",
-            textEN = "<size=112%><b><color=#FFD166>Ancient Scrolls</color></b> hold ancestral wisdom! They allow us to research legendary elixir recipes and decipher mystic formulas.</size>",
-            textTR = "<size=112%><b><color=#FFD166>Kadim Parsomenler</color></b> atalarin gizemli bilgileridir! Efsanevi iksir tariflerini ogrenmek icin kullanilir.</size>",
+            textRU = "<size=90%><b><color=#FFD166>Древние Свитки</color></b> — тайные знания предков! С их помощью мы изучаем рецепты легендарных эликсиров и открываем мистические формулы.</size>",
+            textEN = "<size=90%><b><color=#FFD166>Ancient Scrolls</color></b> hold ancestral wisdom! They allow us to research legendary elixir recipes and decipher mystic formulas.</size>",
+            textTR = "<size=90%><b><color=#FFD166>Kadim Parsomenler</color></b> atalarin gizemli bilgileridir! Efsanevi iksir tariflerini ogrenmek icin kullanilir.</size>",
             isNameInputStep = false,
             revealResourceIndex = 2
         });
 
-        // 5. Кристаллы (Скриншот 6)
+        // 5. Кристаллы
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=112%><b><color=#F384FF>Астральные Кристаллы</color></b> — драгоценная энергия небес! Это самый ценный премиум-ресурс, позволяющий мгновенно творить чудеса.</size>",
-            textEN = "<size=112%><b><color=#F384FF>Astral Crystals</color></b> contain celestial energy! The most valuable premium resource for instant magical miracles.</size>",
-            textTR = "<size=112%><b><color=#F384FF>Astral Kristaller</color></b> goklerin enerjisidir! Aninda harikalar yaratmak icin en degerli premium kaynaktir.</size>",
+            textRU = "<size=90%><b><color=#F384FF>Астральные Кристаллы</color></b> — драгоценная энергия небес! Это самый ценный премиум-ресурс, позволяющий мгновенно творить чудеса.</size>",
+            textEN = "<size=90%><b><color=#F384FF>Astral Crystals</color></b> contain celestial energy! The most valuable premium resource for instant magical miracles.</size>",
+            textTR = "<size=90%><b><color=#F384FF>Astral Kristaller</color></b> goklerin enerjisidir! Aninda harikalar yaratmak icin en degerli premium kaynaktir.</size>",
             isNameInputStep = false,
             revealResourceIndex = 3
         });
 
-        // 6. Стартовый бонус (Скриншот 7)
+        // 6. Стартовый бонус
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=108%>Каждому новому мастеру полагается стартовый набор алхимика! Прими в подарок: <b><color=#FFE57F>5 000 Монет</color></b>, <b><color=#80FFDB>10 Камней</color></b> и <b><color=#FFD166>3 Свитка</color></b>. Нажми кнопку, чтобы забрать!</size>",
-            textEN = "<size=108%>Every apprentice deserves a starter kit! Accept this gift: <b><color=#FFE57F>5,000 Coins</color></b>, <b><color=#80FFDB>10 Stones</color></b>, and <b><color=#FFD166>3 Scrolls</color></b>. Click below to claim!</size>",
-            textTR = "<size=108%>Her yeni ustaya bir baslangic kiti verilir! Hediyeni kabul et: <b><color=#FFE57F>5.000 Altin</color></b>, <b><color=#80FFDB>10 Tas</color></b> ve <b><color=#FFD166>3 Parsomen</color></b>. Almak icin tikla!",
+            textRU = "<size=86%>Каждому новому мастеру полагается стартовый набор алхимика! Прими в подарок: <b><color=#FFE57F>5 000 Монет</color></b>, <b><color=#80FFDB>10 Камней</color></b> и <b><color=#FFD166>3 Свитка</color></b>. Нажми кнопку, чтобы забрать!</size>",
+            textEN = "<size=86%>Every apprentice deserves a starter kit! Accept this gift: <b><color=#FFE57F>5,000 Coins</color></b>, <b><color=#80FFDB>10 Stones</color></b>, and <b><color=#FFD166>3 Scrolls</color></b>. Click below to claim!</size>",
+            textTR = "<size=86%>Her yeni ustaya bir baslangic kiti verilir! Hediyeni kabul et: <b><color=#FFE57F>5.000 Altin</color></b>, <b><color=#80FFDB>10 Tas</color></b> ve <b><color=#FFD166>3 Parsomen</color></b>. Almak icin tikla!",
             isNameInputStep = false,
             revealResourceIndex = 4,
             isClaimStarterRewardStep = true
         });
 
-        // 7. Показ календаря (Скриншот 8)
+        // 7. Показ календаря
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=112%>Отлично! Ресурсы у тебя. Взгляни: на экране появился наш <b><color=#FFE57F>Магический Календарь Алхимика</color></b>!</size>",
-            textEN = "<size=112%>Great! You have the resources. Look: our <b><color=#FFE57F>Alchemist Magic Calendar</color></b> has appeared!</size>",
-            textTR = "<size=112%>Harika! Kaynaklar sende. Ekrana bak: <b><color=#FFE57F>Simyaci Buyulu Takvimimiz</color></b> belirdi!</size>",
+            textRU = "<size=90%>Отлично! Ресурсы у тебя. Взгляни: на экране появился наш <b><color=#FFE57F>Магический Календарь Алхимика</color></b>!</size>",
+            textEN = "<size=90%>Great! You have the resources. Look: our <b><color=#FFE57F>Alchemist Magic Calendar</color></b> has appeared!</size>",
+            textTR = "<size=90%>Harika! Kaynaklar sende. Ekrana bak: <b><color=#FFE57F>Simyaci Buyulu Takvimimiz</color></b> belirdi!</size>",
             isNameInputStep = false,
             revealResourceIndex = 4,
             showCalendarIcon = true
         });
 
-        // 8. Ежемесячные награды (Скриншот 1)
+        // 8. Ежемесячные награды
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=93%>Каждый день ты будешь ставить печать на числе в календаре и получать порцию наград!\n\nА за <b>полный закрытый месяц</b> без пропусков: <b><color=#FFE57F>30 000 Монет</color></b>, <b><color=#80FFDB>10 Камней</color></b>, <b><color=#FFD166>5 Свитков</color></b> и <b><color=#F384FF>3 Кристалла</color></b>!</size>",
-            textEN = "<size=93%>Each day you stamp your date in the calendar and get rewards!\n\nFull month complete: <b><color=#FFE57F>30,000 Coins</color></b>, <b><color=#80FFDB>10 Stones</color></b>, <b><color=#FFD166>5 Scrolls</color></b>, and <b><color=#F384FF>3 Crystals</color></b>!</size>",
-            textTR = "<size=93%>Her gun takvime damga vuracaksin!\n\nTam ay bonusu: <b><color=#FFE57F>30.000 Altin</color></b>, <b><color=#80FFDB>10 Tas</color></b>, <b><color=#FFD166>5 Parsomen</color></b> ve <b><color=#F384FF>3 Kristal</color></b>!</size>",
+            textRU = "<size=82%>Каждый день ты будешь ставить печать на числе в календаре и получать порцию наград!\n\nА за <b>полный закрытый месяц</b> без пропусков: <b><color=#FFE57F>30 000 Монет</color></b>, <b><color=#80FFDB>10 Камней</color></b>, <b><color=#FFD166>5 Свитков</color></b> и <b><color=#F384FF>3 Кристалла</color></b>!</size>",
+            textEN = "<size=82%>Each day you stamp your date in the calendar and get rewards!\n\nFull month complete: <b><color=#FFE57F>30,000 Coins</color></b>, <b><color=#80FFDB>10 Stones</color></b>, <b><color=#FFD166>5 Scrolls</color></b>, and <b><color=#F384FF>3 Crystals</color></b>!</size>",
+            textTR = "<size=82%>Her gun takvime damga vuracaksin!\n\nTam ay bonusu: <b><color=#FFE57F>30.000 Altin</color></b>, <b><color=#80FFDB>10 Tas</color></b>, <b><color=#FFD166>5 Parsomen</color></b> ve <b><color=#F384FF>3 Kristal</color></b>!</size>",
             isNameInputStep = false,
             revealResourceIndex = 4,
             showCalendarIcon = true
         });
 
-        // 9. Квартальные супер-бонусы (Скриншот 2)
+        // 9. Квартальные супер-бонусы
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=98%>За каждый <b>3-й, 6-й, 9-й и 12-й месяц</b> тебя ждут <b>Квартальные Супер-Бонусы</b>: от <b><color=#FFE57F>35 000 до 90 000 Монет</color></b>, до <b><color=#80FFDB>20 Камней</color></b>, <b><color=#FFD166>15 Свитков</color></b> и до <b><color=#F384FF>20 Кристаллов</color></b>!</size>",
-            textEN = "<size=98%>Every <b>3rd, 6th, 9th, and 12th month</b> unlocks <b>Quarterly Super Bonuses</b> up to <b><color=#FFE57F>90k Coins</color></b> and <b><color=#F384FF>20 Crystals</color></b>!</size>",
-            textTR = "<size=98%>Her <b>3., 6., 9. ve 12. ayda</b> <b>Super Bonuslar</b> seni bekliyor: <b><color=#FFE57F>90k Altin</color></b> ve <b><color=#F384FF>20 Kristal</color></b>!",
+            textRU = "<size=82%>За каждый <b>3-й, 6-й, 9-й и 12-й месяц</b> тебя ждут <b>Квартальные Супер-Бонусы</b>: от <b><color=#FFE57F>35 000 до 90 000 Монет</color></b>, до <b><color=#80FFDB>20 Камней</color></b>, <b><color=#FFD166>15 Свитков</color></b> и до <b><color=#F384FF>20 Кристаллов</color></b>!</size>",
+            textEN = "<size=82%>Every <b>3rd, 6th, 9th, and 12th month</b> unlocks <b>Quarterly Super Bonuses</b> up to <b><color=#FFE57F>90k Coins</color></b> and <b><color=#F384FF>20 Crystals</color></b>!</size>",
+            textTR = "<size=82%>Her <b>3., 6., 9. ve 12. ayda</b> <b>Super Bonuslar</b> seni bekliyor: <b><color=#FFE57F>90k Altin</color></b> ve <b><color=#F384FF>20 Kristal</color></b>!",
             isNameInputStep = false,
             revealResourceIndex = 4,
             showCalendarIcon = true
         });
 
-        // 10. Годовой джекпот (Скриншот 3)
+        // 10. Годовой джекпот
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=102%>А за <b>целый год (365 дней) без пропусков</b> — мифический <b>Годовой Джекпот</b>: <b><color=#FFE57F>500 000 Монет</color></b>, <b><color=#80FFDB>200 Камней</color></b>, <b><color=#FFD166>100 Свитков</color></b> и <b><color=#F384FF>200 Кристаллов</color></b>!</size>",
-            textEN = "<size=102%>And for a <b>full year (365 days)</b> — the <b>Annual Jackpot</b>: <b><color=#FFE57F>500k Coins</color></b>, <b><color=#80FFDB>200 Stones</color></b>, <b><color=#FFD166>100 Scrolls</color></b>, and <b><color=#F384FF>200 Crystals</color></b>!</size>",
-            textTR = "<size=102%>Ve <b>tam bir yil (365 gun)</b> boyunca: <b><color=#FFE57F>500k Altin</color></b>, <b><color=#80FFDB>200 Tas</color></b>, <b><color=#FFD166>100 Parsomen</color></b> ve <b><color=#F384FF>200 Kristal</color></b>!</size>",
+            textRU = "<size=84%>А за <b>целый год (365 дней) без пропусков</b> — мифический <b>Годовой Джекпот</b>: <b><color=#FFE57F>500 000 Монет</color></b>, <b><color=#80FFDB>200 Камней</color></b>, <b><color=#FFD166>100 Свитков</color></b> и <b><color=#F384FF>200 Кристаллов</color></b>!</size>",
+            textEN = "<size=84%>And for a <b>full year (365 days)</b> — the <b>Annual Jackpot</b>: <b><color=#FFE57F>500k Coins</color></b>, <b><color=#80FFDB>200 Stones</color></b>, <b><color=#FFD166>100 Scrolls</color></b>, and <b><color=#F384FF>200 Crystals</color></b>!</size>",
+            textTR = "<size=84%>Ve <b>tam bir yil (365 gun)</b> boyunca: <b><color=#FFE57F>500k Altin</color></b>, <b><color=#80FFDB>200 Tas</color></b>, <b><color=#FFD166>100 Parsomen</color></b> ve <b><color=#F384FF>200 Kristal</color></b>!</size>",
             isNameInputStep = false,
             revealResourceIndex = 4,
             showCalendarIcon = true
         });
 
-        // 11. Переход в календарь (Скриншот 4)
+        // 11. Переход в календарь
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=98%>Сейчас я покажу тебе календарь. Поставь отметку на сегодняшнем числе — с этого дня начнется твой отсчет посещаемости!\n\nНажми кнопку ниже, чтобы открыть календарь!</size>",
-            textEN = "<size=98%>Now I will show you the calendar. Stamp today's date — your attendance streak begins today!\n\nClick the button below to open the calendar!</size>",
-            textTR = "<size=98%>Simdi takvimi gosterecegim. Bugunku tarihi damgala — giris takibin baslasin!\n\nTakvimi acmak icin asagidaki butona bas!</size>",
+            textRU = "<size=84%>Сейчас я покажу тебе календарь. Поставь отметку на сегодняшнем числе — с этого дня начнется твой отсчет посещаемости!\n\nНажми кнопку ниже, чтобы открыть календарь!</size>",
+            textEN = "<size=84%>Now I will show you the calendar. Stamp today's date — your attendance streak begins today!\n\nClick the button below to open the calendar!</size>",
+            textTR = "<size=84%>Simdi takvimi gosterecegim. Bugunku tarihi damgala — giris takibin baslasin!\n\nTakvimi acmak icin asagidaki butona bas!</size>",
             isNameInputStep = false,
             revealResourceIndex = 4,
             showCalendarIcon = true,

@@ -9,23 +9,23 @@ using TMPro;
 public class Transtable_Text : MonoBehaviour
 {
     [Tooltip("ID текстовой строки в базе переводчика Translator (например, 0 - Старт, 1 - Продолжить...)")]
-    public int TextID;
+    public int TextID; // ID текстовой строки в базе данных переводчика
 
     [Tooltip("Принудительно делать текст жирным (Bold) для русского языка")]
-    public bool boldForRussian = false;
+    public bool boldForRussian = false; // Флаг: включать ли жирное начертание для русского языка
 
     [HideInInspector]
-    public TextMeshProUGUI UIText;
+    public TextMeshProUGUI UIText; // Кэшированная ссылка на компонент TextMeshProUGUI
     
     [HideInInspector]
-    public TMP_FontAsset originalFont;
+    public TMP_FontAsset originalFont; // Оригинальный шрифт компонента
 
     private void Awake()
     {
-        UIText = GetComponent<TextMeshProUGUI>();
+        UIText = GetComponent<TextMeshProUGUI>(); // Получение ссылки на TextMeshProUGUI
         if (UIText != null)
         {
-            originalFont = UIText.font;
+            originalFont = UIText.font; // Сохранение оригинального шрифта
         }
     }
 
