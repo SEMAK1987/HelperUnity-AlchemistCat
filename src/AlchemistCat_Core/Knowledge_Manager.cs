@@ -116,7 +116,7 @@ public class Knowledge_Manager : MonoBehaviour
         AddRank(18, "Этап IV: Великий Алхимик — Легенды и Первозданная магия", "Ткач реальности", "Reality Weaver", "Gerceklik Dokuyucusu", 85000, new Color(1f, 0.85f, 0.35f, 1f), "Изменение физических свойств пространства вокруг котла."); // Ранг 18
         AddRank(19, "Этап IV: Великий Алхимик — Легенды и Первозданная магия", "Конструктор душ", "Soul Constructor", "Ruh Yapicisi", 120000, new Color(1f, 0.90f, 0.40f, 1f), "Вдохновение жизни в гомункулов и волшебных стражей."); // Ранг 19
         AddRank(20, "Этап IV: Великий Алхимик — Легенды и Первозданная магия", "Хранитель Первоматерии", "Keeper of Prima Materia", "Ilk Maddenin Bekcisi", 200000, new Color(1f, 0.95f, 0.50f, 1f), "Владение изначальной субстанцией творения Вселенной."); // Ранг 20
-        AddRank(21, "Этап IV: Великий Алхимик — Легенды и Первозданная магия", "Создатель Философского камня", "Creator of Philosopher's Stone", "Felsefe Tasi Yaraticisi", 500000, new Color(1f, 0.98f, 0.60f, 1f), "Вершина мастерства: вечная жизнь и бесконечное золото."); // Ранг 21
+        AddRank(21, "Этап IV: Великий Алхимик — Легенды и Первозданная магия", "Создатель Философского камня", "Creator of Philosopher's Stone", "Felsefe Tasi Yaraticisi", 1000000, new Color(1f, 0.98f, 0.60f, 1f), "Вершина мастерства: вечная жизнь и бесконечное золото."); // Ранг 21
     }
 
     private void AddRank(int idx, string stage, string ru, string en, string tr, int exp, Color col, string desc = "") // Вспомогательный метод добавления ранга в коллекцию

@@ -162,7 +162,7 @@ public class Avatar_Manager : MonoBehaviour
         100, 300, 500, 1000, 1500, 3000,
         5000, 7000, 10000, 15000, 20000,
         25000, 30000, 37000, 45000, 60000,
-        70000, 85000, 120000, 200000, 500000
+        70000, 85000, 120000, 200000, 1000000
     };
 
     private void Awake()
@@ -1107,7 +1107,7 @@ public class Avatar_Manager : MonoBehaviour
     public bool IsAvatarUnlocked(AvatarData data) // Проверка: открыта ли аватарка кота
     {
         if (data.isUnlockedByDefault) return true; // Стартовая открыта по умолчанию
-        if (data.id == 0 && data.category == AvatarCategory.Free) return true; // Только первая стартовая аватарка открыта по умолчанию
+        if (data.id < 3 && data.category == AvatarCategory.Free) return true; // Первые 3 стартовые аватарки открыты по умолчанию для выбора
         if (PlayerPrefs.GetInt($"Avatar_Unlocked_{data.id}", 0) == 1) return true; // Сохранен статус покупки
 
         if (data.category == AvatarCategory.Free && currentLevel >= data.unlockLevelRequired) // Достигнут уровень

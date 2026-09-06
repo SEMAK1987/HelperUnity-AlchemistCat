@@ -1389,9 +1389,9 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 2. Рассказ про раздел Знания (Древо Рангов)
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=84%>Слева от сундука открылся раздел <b><color=#FFD166>Знания</color></b> (древние фолианты)!\n\nВ нем хранятся все <b>4 Этапа</b> и <b>21 Алхимический Ранг</b> — от Новичка до Создателя Философского камня.</size>",
-            textEN = "<size=84%>To the left of your chest, the <b><color=#FFD166>Knowledge</color></b> section has unlocked!\n\nIt displays all <b>4 Stages</b> and <b>21 Alchemy Ranks</b> — from Novice to Philosopher's Stone Creator.</size>",
-            textTR = "<size=84%>Sandigin solunda <b><color=#FFD166>Bilgi</color></b> bolumu acildi!\n\nBurada Acemiden Felsefe Tasi Yaraticisina kadar tum <b>4 Asama</b> ve <b>21 Rutbe</b> bulunur.</size>",
+            textRU = "<size=82%>Слева от сундука открылся раздел <b><color=#FFD166>Знания</color></b> (древние фолианты)!\n\nВ нем хранятся все <b>21 Алхимический Ранг</b> и <b>3 ранга Высшей Алхимии</b> — от Новичка до Создателя Философского камня и вечных легенд.</size>",
+            textEN = "<size=82%>To the left of your chest, the <b><color=#FFD166>Knowledge</color></b> section has unlocked!\n\nIt displays all <b>21 Alchemy Ranks</b> and <b>3 Higher Alchemy Ranks</b> — from Novice to Philosopher's Stone Creator and eternal legends.</size>",
+            textTR = "<size=82%>Sandigin solunda <b><color=#FFD166>Bilgi</color></b> bolumu acildi!\n\nBurada Acemiden Felsefe Tasi Yaraticisina kadar tum <b>21 Simya Rutbesi</b> ve <b>3 Yuksek Simya Rutbesi</b> bulunur.</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
