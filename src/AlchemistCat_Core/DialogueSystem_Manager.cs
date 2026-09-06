@@ -318,18 +318,36 @@ public class DialogueSystem_Manager : MonoBehaviour
         localMusicSource.Play(); // Старт проигрывания
     }
 
-    private void Update() // Обработка горячих клавиш и кликов для быстрого пропуска диалогов
+    private void Update() // Безопасная обработка клавиш и кликов для быстрого пропуска диалогов
     {
-        if (isTyping) // Если текст в данный момент печатается
+        if (!isTyping) return; // Если текст в данный момент не печатается, прерываем
+
+        if (nameInputField != null && nameInputField.isFocused) return; // Игнорирование при активном вводе текста в инпут
+
+        bool skipPressed = false; // Флаг запроса пропуска диалога
+
+#if ENABLE_INPUT_SYSTEM
+        // Поддержка современного пакета Unity Input System
+        var keyboard = UnityEngine.InputSystem.Keyboard.current; // Текущая активная клавиатура
+        if (keyboard != null && (keyboard.spaceKey.wasPressedThisFrame || keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)) // Проверка клавиш Space и Enter
         {
-            // При нажатии Пробела, Enter или клика ЛКМ в любом месте экрана (если не активен ввод имени)
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetMouseButtonDown(0)) // Проверка нажатия клавиш или мыши
+            skipPressed = true; // Установка флага пропуска
+        }
+#elif ENABLE_LEGACY_INPUT_MANAGER
+        // Поддержка классической системы ввода Legacy Input Manager
+        try
+        {
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter)) // Проверка клавиш клавиатуры
             {
-                if (nameInputField == null || !nameInputField.isFocused) // Исключение фокуса поля ввода имени
-                {
-                    SkipTypingAnimation(); // Мгновенный вывод полного текста реплики
-                }
+                skipPressed = true; // Установка флага пропуска
             }
+        }
+        catch (System.Exception) { } // Защита от исключений смены системы ввода
+#endif
+
+        if (skipPressed) // Если была нажата клавиша пропуска
+        {
+            SkipTypingAnimation(); // Мгновенный вывод полного текста диалога
         }
     }
 
