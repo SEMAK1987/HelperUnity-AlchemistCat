@@ -17,7 +17,9 @@ public class UIButtonHoverEffect : MonoBehaviour, IPointerEnterHandler, IPointer
 
     private Vector3 originalScale; // Исходный локальный масштаб кнопки
     private Vector3 targetScale; // Целевой масштаб для плавной интерполяции
-    private bool isHovered = false; // Флаг: находится ли курсор над кнопкой
+    private bool isHovered = false; // Внутренний флаг: находится ли курсор над кнопкой
+
+    public bool IsHovered => isHovered; // Публичный геттер состояния наведения курсора для внешних контроллеров
 
     private void Start() // Стартовая инициализация исходного масштаба
     {
@@ -28,7 +30,10 @@ public class UIButtonHoverEffect : MonoBehaviour, IPointerEnterHandler, IPointer
     private void Update() // Плавное масштабирование каждого кадра
     {
         // Плавная интерполяция размера для предотвращения резкого дергания
-        transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * animationSpeed); // Плавный переход к targetScale
+        if (transform.localScale != targetScale || isHovered) // Проверка необходимости анимации или активного наведения
+        {
+            transform.localScale = Vector3.Lerp(transform.localScale, targetScale, Time.deltaTime * animationSpeed); // Плавный переход к targetScale
+        }
     }
 
     public void OnPointerEnter(PointerEventData eventData) // Событие: наведение курсора мыши
