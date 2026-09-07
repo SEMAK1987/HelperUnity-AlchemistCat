@@ -121,6 +121,25 @@
       "features": ["New Game Confirmation Panel", "Language-aware fonts", "3 PlayerPrefs-backed Core Save slots (SaveGameSystem)", "Language-adaptive save metadata level prefixes (Ур/Lvl/레벨/等级)"]
     },
     {
+      "name": "Alchemist Cat Core & Daily Rewards",
+      "scripts": ["DailyRewardSystem.cs", "GameManager.cs", "Calendar_Manager.cs", "RecipeCrafting_Manager.cs"],
+      "version": "18.12.46",
+      "features": [
+        "Dynamic 7-Day Cycle & Milestone Rewards (1, 3, 6, 8, 12 months with massive Crystals & Gold payouts)",
+        "Zero-wiring UI auto-detection (claimButton, timerText/TMP, statusText/TMP, and day slots)",
+        "Dual-UI Component Binding (TextMeshProUGUI + standard Text, Image Fill + Slider) preventing Unity Inspector drag-and-drop errors",
+        "Mandatory Code tab sync: all C# script files in the project code tree must always be kept 100% updated, compile-checked, and commented in Russian (//)"
+      ]
+    },
+    {
+      "name": "Pipeline & Connectors",
+      "scripts": ["UnityConnector.cs", "blender_connector.py"],
+      "features": [
+        "Bidirectional Unity-Blender bridge with automated mesh, material, and skeleton import/export",
+        "Auto-reloading and live code inspection"
+      ]
+    },
+    {
       "name": "Pixabay Sound & AudioMixer Integration Help DB",
       "features": [
         "Step-by-step guideline on downloading audios from Pixabay.com",

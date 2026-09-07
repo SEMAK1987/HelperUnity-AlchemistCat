@@ -668,7 +668,7 @@ public class DialogueSystem_Manager : MonoBehaviour
                     else if (step.isMinigamesWheelOpenStep)
                         nextStepButtonText.text = "Открыть Колесо Игр";
                     else if (step.isConfirmFishingStep)
-                        nextStepButtonText.text = "Согласен";
+                        nextStepButtonText.text = "Начать рыбалку!";
                     else
                         nextStepButtonText.text = "Далее";
                 }
@@ -1153,23 +1153,31 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (AlchemyFishing_Minigame.Instance != null)
         {
+            AlchemyFishing_Minigame.Instance.gameObject.SetActive(true);
             AlchemyFishing_Minigame.Instance.ShowDifficultySelection();
+            return;
         }
-        else
+
+        AlchemyFishing_Minigame fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
+        if (fishing != null)
         {
-            AlchemyFishing_Minigame fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
-            if (fishing != null)
+            fishing.gameObject.SetActive(true);
+            fishing.ShowDifficultySelection();
+            return;
+        }
+
+        string[] fishingPanelNames = { "AlchemyFishing_Panel", "Fishing_Minigame_Panel", "FishingMinigamePanel", "Fishing_Panel", "AlchemyFishing" };
+        foreach (var name in fishingPanelNames)
+        {
+            GameObject foundFishing = GameObject.Find(name);
+            if (foundFishing != null)
             {
-                fishing.ShowDifficultySelection();
-            }
-            else
-            {
-                GameObject foundFishing = GameObject.Find("AlchemyFishing_Panel");
-                if (foundFishing != null)
+                foundFishing.SetActive(true);
+                AlchemyFishing_Minigame comp = foundFishing.GetComponent<AlchemyFishing_Minigame>();
+                if (comp != null)
                 {
-                    foundFishing.SetActive(true);
-                    AlchemyFishing_Minigame comp = foundFishing.GetComponent<AlchemyFishing_Minigame>();
-                    if (comp != null) comp.ShowDifficultySelection();
+                    comp.ShowDifficultySelection();
+                    return;
                 }
             }
         }
@@ -1339,6 +1347,14 @@ public class DialogueSystem_Manager : MonoBehaviour
             showSmallScrollIcon = true,
             isRecipeStep = true
         });
+    }
+
+    /// <summary>
+    /// Закрытие диалога Кота на время взаимодействия с Котлом на столе
+    /// </summary>
+    public void StartCauldronInteractionDialogue() // Метод скрытия диалога на время варки
+    {
+        if (dialoguePanel != null) dialoguePanel.SetActive(false); // Скрытие диалоговой панели Кота
     }
 
     // -------------------------------------------------------------
@@ -1537,7 +1553,7 @@ public class DialogueSystem_Manager : MonoBehaviour
             showChestIcon = true,
             showKnowledgeIcon = true,
             showMinigamesIcon = true,
-            isConfirmFishingStep = true
+            isConfirmFishingStep = false // Обычный переход к следующей реплике (шаг 1)
         });
 
         // 2. Кот представляет правила «Алхимической Рыбалки» (Шкалы заброса и ловли)
@@ -1552,22 +1568,24 @@ public class DialogueSystem_Manager : MonoBehaviour
             showSmallScrollIcon = true,
             showChestIcon = true,
             showKnowledgeIcon = true,
-            showMinigamesIcon = true
+            showMinigamesIcon = true,
+            isConfirmFishingStep = false // Обычный переход к шагу 2
         });
 
-        // 3. Таблица улова и дропа зелий опыта
+        // 3. Таблица улова и дропа зелий опыта + запуск рыбалки
         dialogueSteps.Add(new DialogStep
         {
-            textRU = "<size=77%>Твой улов зависит от точности заброса:\n• <b>Близко и плохо</b>: Пустые бутылочки, осколки, камни, тина и <i>Малое зелье (+10 XP)</i>.\n• <b>Средний заброс</b>: Магические камни, тина, <i>Малое (+10 XP)</i>, <i>Среднее (+50 XP)</i> и <i>Большое (+100 XP)</i> зелья!\n• <b>Идеальный дальний</b>: Зелья от Малого до <i>Магического (+300)</i>, <i>Легендарного (+500)</i>, <i>Мифического (+1000)</i> и <b><color=#FFE57F>Драконьего (+3000 XP)</color></b>!</size>",
-            textEN = "<size=77%>Your catch depends on casting precision:\n• <b>Short/Poor</b>: Empty bottles, junk jars, stones, duckweed & <i>Small Potion (+10 XP)</i>.\n• <b>Medium</b>: Magic stones, pond slime, <i>Small (+10 XP)</i>, <i>Medium (+50 XP)</i> & <i>High (+100 XP)</i> potions!\n• <b>Perfect Long Cast</b>: Potions up to <i>Magical (+300)</i>, <i>Legendary (+500)</i>, <i>Mythic (+1000)</i> & <b><color=#FFE57F>Dragon Potion (+3000 XP)</color></b>!</size>",
-            textTR = "<size=77%>Avin atis hassasiyetine baglidir:\n• <b>Kisa/Kotu</b>: Bos siseler, cam kiriklari, taslar, yosun ve <i>Kucuk iksir (+10 XP)</i>.\n• <b>Orta</b>: Buyu taslari, <i>Kucuk (+10)</i>, <i>Orta (+50)</i> ve <i>Buyuk (+100 XP)</i> iksirler!\n• <b>Mukemmel Uzak</b>: <i>Efsanevi (+500)</i>, <i>Mitolojik (+1000)</i> ve <b><color=#FFE57F>Ejderha Iksirine (+3000 XP)</color></b> kadar!",
+            textRU = "<size=77%>Твой улов зависит от точности заброса:\n• <b>Близко и плохо</b>: Пустые бутылочки, осколки, камни, тина и <i>Малое зелье (+10 XP)</i>.\n• <b>Средний заброс</b>: Магические камни, тина, <i>Малое (+10 XP)</i>, <i>Среднее (+50 XP)</i> и <i>Большое (+100 XP)</i> зелья!\n• <b>Идеальный дальний</b>: Зелья от Малого до <i>Магического (+300)</i>, <i>Легендарного (+500)</i>, <i>Мифического (+1000)</i> и <b><color=#FFE57F>Драконьего (+3000 XP)</color></b>!\n\nНажми кнопку ниже, чтобы отправиться на рыбалку!</size>",
+            textEN = "<size=77%>Your catch depends on casting precision:\n• <b>Short/Poor</b>: Empty bottles, junk jars, stones, duckweed & <i>Small Potion (+10 XP)</i>.\n• <b>Medium</b>: Magic stones, pond slime, <i>Small (+10 XP)</i>, <i>Medium (+50 XP)</i> & <i>High (+100 XP)</i> potions!\n• <b>Perfect Long Cast</b>: Potions up to <i>Magical (+300)</i>, <i>Legendary (+500)</i>, <i>Mythic (+1000)</i> & <b><color=#FFE57F>Dragon Potion (+3000 XP)</color></b>!\n\nClick the button below to start fishing!</size>",
+            textTR = "<size=77%>Avin atis hassasiyetine baglidir:\n• <b>Kisa/Kotu</b>: Bos siseler, cam kiriklari, taslar, yosun ve <i>Kucuk iksir (+10 XP)</i>.\n• <b>Orta</b>: Buyu taslari, <i>Kucuk (+10)</i>, <i>Orta (+50)</i> ve <i>Buyuk (+100 XP)</i> iksirler!\n• <b>Mukemmel Uzak</b>: <i>Efsanevi (+500)</i>, <i>Mitolojik (+1000)</i> ve <b><color=#FFE57F>Ejderha Iksirine (+3000 XP)</color></b> kadar!\n\nBalik tutmaya baslamak icin asagidaki butona bas!</size>",
             revealResourceIndex = 4,
             showCalendarIcon = true,
             revealAvatarUI = true,
             showSmallScrollIcon = true,
             showChestIcon = true,
             showKnowledgeIcon = true,
-            showMinigamesIcon = true
+            showMinigamesIcon = true,
+            isConfirmFishingStep = true // Финальный шаг — переход к мини-игре Рыбалки
         });
 
         DisplayStep(0);

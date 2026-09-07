@@ -1,0 +1,7 @@
+{
+  "version": "18.12.46",
+  "release_date": "2026-09-07",
+  "changelog": [
+    "v18.12.46: Alchemist Cat Core & Code Tab Continuous Sync, DailyRewardSystem milestone rewards, GameManager dual-UI support, UnityConnector.cs, blender_connector.py"
+  ]
+}

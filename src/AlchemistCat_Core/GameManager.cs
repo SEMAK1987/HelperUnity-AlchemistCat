@@ -10,7 +10,37 @@ using TMPro;
 /// </summary>
 public class GameManager : MonoBehaviour
 {
-    public static GameManager Instance { get; private set; } // Статический синглтон для доступа к игровым ресурсам
+    private static GameManager _instance; // Приватное статическое поле синглтона
+    public static GameManager Instance // Публичный аксессор синглтона с умным автопоиском и автосозданием
+    {
+        get
+        {
+            if (_instance == null)
+            {
+#if UNITY_2023_1_OR_NEWER
+                _instance = FindFirstObjectByType<GameManager>(); // Поиск в Unity 2023+
+#else
+                _instance = FindObjectOfType<GameManager>(); // Поиск в ранних версиях Unity
+#endif
+                if (_instance == null)
+                {
+                    // Если объект забыли повесить в сцене, он создается автоматически в _GameSystems
+                    GameObject go = GameObject.Find("_GameSystems");
+                    if (go == null)
+                    {
+                        go = new GameObject("_GameSystems");
+                        DontDestroyOnLoad(go);
+                    }
+                    _instance = go.AddComponent<GameManager>();
+                }
+            }
+            return _instance;
+        }
+        private set
+        {
+            _instance = value;
+        }
+    }
 
     [Header("Экономика и Прогресс")]
     public int gold = 0; // Текущий запас золотых монет игрока
@@ -38,6 +68,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI xpText; // Текстовый индикатор опыта (XP)
     public TextMeshProUGUI cauldronText; // Текстовый индикатор уровня котла
     public Slider xpSlider; // Графическая полоса прогресса опыта (Slider)
+    public Image xpFillImage; // Полоса прогресса опыта типа Image Fill (например, Exp_Progress_Bar)
 
     private void Awake() // Инициализация синглтона при загрузке объекта
     {
@@ -123,6 +154,45 @@ public class GameManager : MonoBehaviour
         UpdateUI(); // Обновление индикаторов уровня и прогресс-бара
     }
 
+    public void AddExperience(int amount) // Синоним начисления опыта для полной совместимости систем
+    {
+        AddXP(amount); // Перенаправление в основной метод начисления опыта
+    }
+
+    public void AddVipXP(int amount) // Начисление очков VIP-опыта
+    {
+        vipXP += amount; // Увеличение VIP очков
+        SaveResourcesToPlayerPrefs(); // Сохранение прогресса
+    }
+
+    public void SpendResources(int spendGold, int spendStones, int spendScrolls, int spendCrystals) // Списание ресурсов игрока
+    {
+        gold = Mathf.Max(0, gold - spendGold); // Списание золота
+        stones = Mathf.Max(0, stones - spendStones); // Списание камней
+        scrolls = Mathf.Max(0, scrolls - spendScrolls); // Списание свитков
+        crystals = Mathf.Max(0, crystals - spendCrystals); // Списание кристаллов
+        SaveResourcesToPlayerPrefs(); // Сохранение нового баланса
+        UpdateUI(); // Обновление интерфейса
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
+        {
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Синхронизация верхнего тулбара
+        }
+    }
+
+    public void UnlockDarts() // Разблокировка мини-игры дартс
+    {
+        unlockedDarts = true; // Установка флага
+        PlayerPrefs.SetInt("Minigame_Darts_Unlocked", 1); // Сохранение в PlayerPrefs
+        PlayerPrefs.Save(); // Запись
+    }
+
+    public void UnlockMouseCatch() // Разблокировка мини-игры ловли мышей
+    {
+        unlockedMouseCatch = true; // Установка флага
+        PlayerPrefs.SetInt("Minigame_MouseCatch_Unlocked", 1); // Сохранение в PlayerPrefs
+        PlayerPrefs.Save(); // Запись
+    }
+
     public void UpdateUI() // Обновление текста всех UI-элементов и слайдера опыта
     {
         if (goldText != null) goldText.text = gold.ToString(); // Отображение золота
@@ -135,6 +205,10 @@ public class GameManager : MonoBehaviour
         {
             xpSlider.maxValue = xpToNextLevel; // Установка максимума слайдера
             xpSlider.value = currentXP; // Установка текущего значения слайдера
+        }
+        if (xpFillImage != null) // Если назначена шкала опыта типа Image Fill
+        {
+            xpFillImage.fillAmount = xpToNextLevel > 0 ? (float)currentXP / xpToNextLevel : 0f; // Расчет прогресса заполнения
         }
         if (cauldronText != null) cauldronText.text = $"Ур. {cauldronLevel}"; // Отображение уровня котла
     }

@@ -43,9 +43,11 @@ export interface DropCondition {
 
 export interface CSharpScript {
   name: string;
-  category: 'Minigames' | 'Core' | 'UI' | 'Systems';
+  category: string;
   description: string;
   code: string;
+  lineCount?: number;
+  sizeBytes?: number;
 }
 
 export type ActiveTab = 'fishing_sim' | 'mouse_sim' | 'hierarchy_guide' | 'drop_table' | 'scripts' | 'dialogues' | 'assets';

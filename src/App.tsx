@@ -39,11 +39,11 @@ export const App: React.FC = () => {
                   Кот-Алхимик: Студия &amp; Игровой Ассистент
                 </h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold">
-                  v18.12.45
+                  v18.12.46
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Алхимическая Рыбалка • 2 Шкалы • Ловля Мышей • Unity Hierarchy &amp; C#
+                Ежедневные Награды (1-12 мес) • Dual-UI Inspector • C# Code Sync • Unity &amp; Blender
               </p>
             </div>
           </div>

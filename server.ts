@@ -1,4 +1,4 @@
-// 🤖 Unity & Blender AI Assistant • Server Component (v18.12.45 Verified)
+// 🤖 Unity & Blender AI Assistant • Server Component (v18.12.46 Verified)
 import express from "express";
 import axios from "axios";
 import { createServer as createViteServer } from "vite";
@@ -921,6 +921,99 @@ async function startServer() {
   app.use(express.urlencoded({ limit: '500mb', extended: true }));
   app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
   app.use("/local_storage", express.static(path.join(process.cwd(), "local_storage")));
+
+  // API Healthcheck
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
+  // API: Get all C# scripts from AlchemistCat_Core
+  app.get("/api/scripts", async (req, res) => {
+    try {
+      const scriptsDir = path.join(process.cwd(), "src", "AlchemistCat_Core");
+      if (!(await fs.pathExists(scriptsDir))) {
+        return res.json({ scripts: [] });
+      }
+
+      const files = await fs.readdir(scriptsDir);
+      const csFiles = files.filter(f => f.endsWith(".cs"));
+      
+      const scripts = await Promise.all(
+        csFiles.map(async (fileName) => {
+          const filePath = path.join(scriptsDir, fileName);
+          const content = await fs.readFile(filePath, "utf-8");
+          const stats = await fs.stat(filePath);
+          const lineCount = content.split("\n").length;
+
+          // Categorization helper
+          let category = "Core";
+          if (fileName.includes("Minigame") || fileName.includes("Fishing") || fileName.includes("CatchMouse") || fileName.includes("HiddenObject")) {
+            category = "Minigames";
+          } else if (fileName.includes("Animator") || fileName.includes("UI") || fileName.includes("Menu") || fileName.includes("Loading")) {
+            category = "UI & Visuals";
+          } else if (fileName.includes("Translator") || fileName.includes("Transtable") || fileName.includes("Localization")) {
+            category = "Localization";
+          } else if (fileName.includes("Manager")) {
+            category = "Managers";
+          } else if (fileName.includes("System") || fileName.includes("Ads") || fileName.includes("Time")) {
+            category = "Systems";
+          }
+
+          // Simple description parser from summary if present
+          let description = `C# скрипт Unity проекта Алхимический Кот (${fileName})`;
+          const summaryMatch = content.match(/<summary>([\s\S]*?)<\/summary>/);
+          if (summaryMatch && summaryMatch[1]) {
+            description = summaryMatch[1]
+              .split("\n")
+              .map(l => l.replace(/^[/\s*#]+/, "").trim())
+              .filter(Boolean)
+              .slice(0, 3)
+              .join(" • ");
+          }
+
+          return {
+            name: fileName,
+            category,
+            description,
+            lineCount,
+            sizeBytes: stats.size,
+            code: content,
+          };
+        })
+      );
+
+      // Sort alphabetically with core managers first
+      scripts.sort((a, b) => {
+        const priority = ["DialogueSystem_Manager.cs", "Avatar_Manager.cs", "Knowledge_Manager.cs", "RecipeCrafting_Manager.cs", "AlchemyFishing_Minigame.cs", "CatchMouse_Minigame.cs", "Inventory_Manager.cs"];
+        const idxA = priority.indexOf(a.name);
+        const idxB = priority.indexOf(b.name);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+      res.json({ count: scripts.length, scripts });
+    } catch (error: any) {
+      console.error("Error fetching scripts:", error);
+      res.status(500).json({ error: "Failed to read scripts directory" });
+    }
+  });
+
+  // API: Get specific C# script content
+  app.get("/api/scripts/:name", async (req, res) => {
+    try {
+      const fileName = req.params.name;
+      const filePath = path.join(process.cwd(), "src", "AlchemistCat_Core", fileName);
+      if (!(await fs.pathExists(filePath))) {
+        return res.status(404).json({ error: "Script not found" });
+      }
+      const content = await fs.readFile(filePath, "utf-8");
+      res.json({ name: fileName, code: content });
+    } catch (error: any) {
+      res.status(500).json({ error: "Failed to read script file" });
+    }
+  });
 
   // Serve specific root files needed by frontend
   app.get("/version.json", (req, res) => {

@@ -125,6 +125,11 @@ public class RecipeCrafting_Manager : MonoBehaviour
     public AudioClip craftCompleteSound; // Звук завершения приготовления зелья
     public AudioClip chestOpenSound; // Звук открытия сундука
 
+    [Header("Состояние варки (защита от повторных кликов)")]
+    public bool isCraftingActive = false; // Флаг: идет ли прямо сейчас процесс варки зелья
+    public bool isPotionReadyToClaim = false; // Флаг: сварено ли зелье и ожидает нажатия кнопки 'Забрать'
+    public bool isFirstCraftCompleted = false; // Флаг: сварен и забран ли первый рецепт
+
     private Coroutine craftCoroutine; // Ссылка на запущенную корутину таймера варки
 
     private void Awake() // Инициализация синглтона, автопоиск элементов и привязка событий кнопок
@@ -340,6 +345,10 @@ public class RecipeCrafting_Manager : MonoBehaviour
     /// </summary>
     public void OnStartCraftButtonClicked() // Обработчик нажатия на кнопку "Начать" в окне рецепта
     {
+        isCraftingActive = false; // Сброс состояния активной варки
+        isPotionReadyToClaim = false; // Сброс флага готовности зелья
+        isFirstCraftCompleted = false; // Сброс флага завершения первого крафта
+
         if (SettingsManager.Instance != null) // Если менеджер настроек доступен
             SettingsManager.Instance.PlaySoundEffect(craftStartSound); // Звук начала крафта
 
@@ -498,6 +507,9 @@ public class RecipeCrafting_Manager : MonoBehaviour
     /// </summary>
     public void OnCauldronClicked() // Нажатие на котел для перехода к варке
     {
+        // Если зелье уже варится, готово к сбору или уже изготовлено — блокируем клик, чтобы не вылезали повторные плашки
+        if (isCraftingActive || isPotionReadyToClaim || isFirstCraftCompleted) return; // Защита от повторного нажатия во время/после готовки
+
         if (SettingsManager.Instance != null) // Если менеджер настроек доступен
             SettingsManager.Instance.PlaySoundEffect(craftStartSound); // Звук взаимодействия
 
@@ -510,6 +522,9 @@ public class RecipeCrafting_Manager : MonoBehaviour
     /// </summary>
     public void OnMakeBadgeClicked() // Запуск процесса алхимического приготовления зелья
     {
+        if (isCraftingActive || isPotionReadyToClaim || isFirstCraftCompleted) return; // Защита от повторного запуска варки
+
+        isCraftingActive = true; // Установка флага процесса варки
         if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false); // Скрытие плашки "Изготовить"
 
         if (craftCoroutine != null) StopCoroutine(craftCoroutine); // Остановка предыдущей варки
@@ -541,6 +556,9 @@ public class RecipeCrafting_Manager : MonoBehaviour
 
         if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false); // Скрытие шкалы варки
 
+        isCraftingActive = false; // Завершение процесса варки
+        isPotionReadyToClaim = true; // Установка статуса готовности зелья к сбору
+
         if (SettingsManager.Instance != null) // Если менеджер звуков доступен
             SettingsManager.Instance.PlaySoundEffect(craftCompleteSound); // Звук успешной варки
 
@@ -553,7 +571,12 @@ public class RecipeCrafting_Manager : MonoBehaviour
     /// </summary>
     public void OnClaimPotionClicked() // Сбор готового сваренного зелья и запуск полета значка опыта
     {
+        if (!isPotionReadyToClaim) return; // Защита от повторного сбора
+        isPotionReadyToClaim = false; // Сброс статуса ожидания сбора
+        isFirstCraftCompleted = true; // Фиксация завершения первого крафта в котле
+
         if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false); // Скрытие кнопки "Забрать"
+        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false); // Принудительное скрытие кнопки "Изготовить"
         if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false); // Скрытие облачка котика
 
         StartCoroutine(FlyFloatingXPAndProceed(firstRecipeRewardXP)); // Запуск анимации взлета опыта

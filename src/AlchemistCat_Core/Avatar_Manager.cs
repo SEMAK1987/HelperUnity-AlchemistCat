@@ -377,19 +377,27 @@ public class Avatar_Manager : MonoBehaviour
         PlayerPrefs.DeleteKey("Tutorial_Avatar_Chosen"); // Удаление флага выбора аватара
         PlayerPrefs.DeleteKey("Selected_Avatar_Id"); // Удаление выбранного аватара
         PlayerPrefs.DeleteKey("Selected_Frame_Id"); // Удаление выбранной рамки
+
+        // Удаление сохраненных покупок аватарок и рамок для чистого сброса
+        for (int i = 0; i < 64; i++) // Цикл по возможным ID
+        {
+            PlayerPrefs.DeleteKey($"Avatar_Unlocked_{i}"); // Сброс статуса покупки аватарки
+            PlayerPrefs.DeleteKey($"Frame_Unlocked_{i}"); // Сброс статуса покупки рамки
+        }
         PlayerPrefs.Save(); // Сохранение изменений
 
         currentLevel = 1; // Уровень 1
         currentExp = 0; // Опыт 0
         maxExp = 10; // Порог 10
-        selectedAvatarId = 0; // Аватарка #0
-        selectedFrameId = 0; // Рамка #0
+        selectedAvatarId = 0; // Аватарка #0 (Стартовый Ученик #1)
+        selectedFrameId = 0; // Рамка #0 (Стартовая)
         currentMasteryRankIndex = 0; // Ранг Новичок
         currentMasteryExp = 0; // Опыт 0
         maxMasteryExp = 100; // Порог 100
 
-        UpdateProfileUI(); // Перерисовка профиля
-        UpdateMasteryUI(); // Перерисовка шкалы мастерства
+        UpdateProfileUI(); // Перерисовка интерфейса кота
+        UpdateMasteryUI(); // Перерисовка интерфейса ранга
+        UpdateAllCellStatusTexts(); // Обновление текста карточек
         Debug.Log("[Avatar_Manager] Профиль и мастерство успешно сброшены к начальному состоянию!"); // Лог сброса
     }
 
@@ -740,13 +748,14 @@ public class Avatar_Manager : MonoBehaviour
             int[] earlyLevels = new int[] { 0, 0, 0, 2, 4, 6, 8, 10, 12, 14, 15, 16, 17, 18, 19, 20 }; // Уровни разблокировки начальных аватарок
             for (int i = 0; i < earlyLevels.Length; i++) // Цикл по начальным обликам
             {
+                string avName = (i < 3) ? $"Стартовый Ученик #{i + 1}" : (i == 5 ? "Песец в морозной колбе" : $"Мастер {earlyLevels[i]} Уровня"); // Имя аватарки
                 allAvatars.Add(new AvatarData // Создание записи аватарки
                 {
                     id = i, // Уникальный ID
-                    avatarNameRU = (i < 3) ? $"Стартовый Ученик #{i + 1}" : $"Мастер {earlyLevels[i]} Уровня", // Название на русском
+                    avatarNameRU = avName, // Название на русском
                     category = AvatarCategory.Free, // Категория: бесплатная/по уровню
                     isUnlockedByDefault = (i < 3), // Первые 3 открыты сразу
-                    unlockLevelRequired = earlyLevels[i] // Требуемый уровень
+                    unlockLevelRequired = earlyLevels[i] // Требуемый уровень (для ID 5 = 6 уровень)
                 });
             }
 
@@ -788,6 +797,35 @@ public class Avatar_Manager : MonoBehaviour
                     unlockLevelRequired = 3, // Доступна с 3 уровня
                     crystalPrice = (i + 1) * 20 // Цена в кристаллах (20, 40, 60, 80, 100)
                 });
+            }
+        }
+        else
+        {
+            // Санитизация данных из Инспектора: гарантируем, что только 3 верхние аватарки (ID 0, 1, 2) открыты на 1 уровне!
+            for (int i = 0; i < allAvatars.Count; i++) // Цикл по всем аватаркам
+            {
+                AvatarData av = allAvatars[i]; // Текущая аватарка
+                if (av.id < 3) // Первые 3 аватарки (Кот, Сова, Лиса)
+                {
+                    av.isUnlockedByDefault = true; // Открыты по умолчанию
+                    av.unlockLevelRequired = 0; // Доступны с 0 уровня
+                }
+                else // Все остальные аватарки (ID >= 3)
+                {
+                    av.isUnlockedByDefault = false; // Строго закрыты по умолчанию!
+
+                    // Специфическая проверка для ID 5 / Песца в морозной колбе: строго 6-й уровень!
+                    if (av.id == 5 || (av.avatarNameRU != null && (av.avatarNameRU.Contains("Песец") || av.avatarNameRU.Contains("колб") || av.avatarNameRU.Contains("мороз"))))
+                    {
+                        av.unlockLevelRequired = 6; // Открывается строго с 6 уровня
+                    }
+                    else if (av.category == AvatarCategory.Free && av.unlockLevelRequired <= 1)
+                    {
+                        // Если в инспекторе был ошибочно указан уровень 0 или 1 для бесплатных аватарок после 3-й
+                        av.unlockLevelRequired = (av.id == 3) ? 2 : ((av.id == 4) ? 4 : (av.id * 2)); // Авто-расчет уровня
+                    }
+                }
+                allAvatars[i] = av; // Сохранение структуры
             }
         }
     }
@@ -1108,15 +1146,30 @@ public class Avatar_Manager : MonoBehaviour
 
     public bool IsAvatarUnlocked(AvatarData data) // Проверка: открыта ли аватарка кота
     {
-        if (data.id == 0 || data.id == 1 || data.id == 2) return true; // Строго только первые 3 стартовые аватарки (0, 1, 2) открыты по умолчанию
-        if (PlayerPrefs.GetInt($"Avatar_Unlocked_{data.id}", 0) == 1) return true; // Сохранен статус покупки
+        // 1. Строго только первые 3 стартовые аватарки (ID 0, 1, 2) открыты на 1 уровне игры!
+        if (data.id == 0 || data.id == 1 || data.id == 2) return true; // Разблокированы со старта
 
-        if (currentLevel >= data.unlockLevelRequired) // Достигнут требуемый уровень для разблокировки
+        // 2. Если аватарка была куплена в магазине и сохранен ее статус
+        if (PlayerPrefs.GetInt($"Avatar_Unlocked_{data.id}", 0) == 1) return true; // Куплена в магазине
+
+        // 3. Специфическое требование для ID 5 / Песца в морозной колбе: строго 6-й уровень!
+        if (data.id == 5 || (data.avatarNameRU != null && (data.avatarNameRU.Contains("Песец") || data.avatarNameRU.Contains("колб") || data.avatarNameRU.Contains("мороз"))))
         {
-            return true; // Открыта по уровню
+            return currentLevel >= 6; // Открывается строго с 6 уровня
         }
 
-        return false; // Закрыта
+        // 4. Для бесплатных аватарок по уровню (ID >= 3)
+        if (data.category == AvatarCategory.Free)
+        {
+            int reqLvl = data.unlockLevelRequired; // Требуемый уровень
+            if (reqLvl <= 1) // Защита от ошибочного 0/1 уровня в инспекторе
+            {
+                reqLvl = (data.id == 3) ? 2 : ((data.id == 4) ? 4 : data.id * 2); // Авто-расчет уровня
+            }
+            return currentLevel >= reqLvl; // Открыта только если уровень игрока достаточен
+        }
+
+        return false; // Заблокирована
     }
 
     private void OnSelectAvatar(AvatarData data) // Обработчик выбора аватарки

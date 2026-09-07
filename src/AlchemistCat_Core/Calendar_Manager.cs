@@ -613,20 +613,19 @@ public class Calendar_Manager : MonoBehaviour
 
     private Sprite GetRewardSpriteForDay(int month, int day) // Получение спрайта награды для дня
     {
-        // Гармоничное чередование наград на каждый день (без повторения только камней):
-        // 7, 14, 21, 28-й день (каждое воскресенье) и конец месяца -> Кристаллы
-        if (day % 7 == 0 || day == DateTime.DaysInMonth(currentYear, month)) return crystalIcon != null ? crystalIcon : goldIcon; // Кристаллы
-        // 5, 10, 15, 20, 25-й день -> Древние Свитки
-        if (day % 5 == 0) return scrollIcon != null ? scrollIcon : goldIcon; // Свитки
-        // 3, 6, 9, 12, 18, 24-й день -> Камни Улучшения
-        if (day % 3 == 0) return stoneIcon != null ? stoneIcon : goldIcon; // Камни
-        // Остальные дни (1, 2, 4, 8, 11, 13, 16, 17, 19, 22, 23, 26, 27, 29) -> Золото
+        // В ежедневном календаре даются ТОЛЬКО ресурсы: Золото, Камни, Свитки (Кристаллы выдаются за полный месяц и год)
+        // 5, 10, 15, 20, 25, 30-й день -> Древние Свитки
+        if (day % 5 == 0) return scrollIcon != null ? scrollIcon : goldIcon; // Свитки знаний
+        // 3, 6, 9, 12, 18, 21, 24, 27-й день -> Алхимические Камни
+        if (day % 3 == 0) return stoneIcon != null ? stoneIcon : goldIcon; // Камни улучшения
+        // Все остальные дни -> Золотые Монеты
         return goldIcon; // Золотые монеты
     }
 
     private void OnDayClicked(int month, int day, GameObject cellObj) // Обработка клика по ячейке дня
     {
         string saveKey = $"Cal_Claimed_{currentYear}_{month}_{day}"; // Ключ сбора награды
+        UpdateCurrentDate(); // Актуализация системной даты
 
         // Сегодняшний активный день
         if (month == currentMonth && day == currentDay) // Если кликнули на сегодняшний день
@@ -652,6 +651,10 @@ public class Calendar_Manager : MonoBehaviour
             ShowPopup("Награда получена!", $"Поздравляем! Вы получили награду за {day} {monthNamesRu[month - 1]}:\n\n<b>{rewardDesc}</b>"); // Показ поздравления
 
             UpdateDayCellVisual(cellObj, month, day); // Обновление визуала ячейки
+
+            // Проверка закрытия полного месяца и полного года для начисления Кристаллов
+            CheckAndClaimMonthCompletionReward(month); // Проверка ежемесячной награды
+            CheckAndClaimYearCompletionReward(); // Проверка годовой награды
         }
         else if (month < currentMonth || (month == currentMonth && day < currentDay)) // Если кликнули по прошедшему дню
         {
@@ -672,35 +675,34 @@ public class Calendar_Manager : MonoBehaviour
         }
     }
 
-    private string ClaimReward(int month, int day) // Логика начисления наград за посещение
+    private string ClaimReward(int month, int day) // Логика начисления наград за посещение дня
     {
-        int gold = 1000 + (day * 80); // Формула расчета золота
+        // В ежедневном календаре начисляются ТОЛЬКО ресурсы: Золото, Камни и Свитки
+        int gold = 1000 + (day * 100); // Базовое золото за день
         int stones = 0; // Инициализация камней
         int scrolls = 0; // Инициализация свитков
-        int crystals = 0; // Инициализация кристаллов
 
-        if (day % 7 == 0 || day == DateTime.DaysInMonth(currentYear, month)) // Каждое воскресенье и конец месяца
+        if (day % 5 == 0) // Каждый 5-й день
         {
-            crystals = 5 + (month >= 6 ? 3 : 0); // Кристаллы
-        }
-        else if (day % 5 == 0) // Каждый 5-й день
-        {
-            scrolls = 2; // Свитки
+            scrolls = 2 + (day >= 25 ? 1 : 0); // +2..3 Свитка
         }
         else if (day % 3 == 0) // Каждый 3-й день
         {
-            stones = 3; // Камни
+            stones = 3 + (day >= 21 ? 2 : 0); // +3..5 Камней
+        }
+        else if (day % 7 == 0) // Каждое воскресенье
+        {
+            gold += 2000; // Бонусное золото
+            stones += 2; // Бонусные камни
         }
 
         int currentGold = PlayerPrefs.GetInt("Player_Gold", 5000); // Текущее золото
         int currentStones = PlayerPrefs.GetInt("Player_Stones", 10); // Текущие камни
         int currentScrolls = PlayerPrefs.GetInt("Player_Scrolls", 3); // Текущие свитки
-        int currentCrystals = PlayerPrefs.GetInt("Player_Crystals", 0); // Текущие кристаллы
 
         PlayerPrefs.SetInt("Player_Gold", currentGold + gold); // Сохранение золота
         PlayerPrefs.SetInt("Player_Stones", currentStones + stones); // Сохранение камней
         PlayerPrefs.SetInt("Player_Scrolls", currentScrolls + scrolls); // Сохранение свитков
-        PlayerPrefs.SetInt("Player_Crystals", currentCrystals + crystals); // Сохранение кристаллов
         PlayerPrefs.Save(); // Фиксация на диске
 
         // Мгновенная синхронизация цифр в верхней панели (TopPanel)
@@ -711,14 +713,101 @@ public class Calendar_Manager : MonoBehaviour
 
         if (GameManager.Instance != null) // Если GameManager доступен
         {
-            GameManager.Instance.AddResources(gold, stones, scrolls, crystals); // Начисление в GameManager
+            GameManager.Instance.AddResources(gold, stones, scrolls, 0); // Начисление в GameManager
         }
 
         string res = $"+{gold} Золота"; // Формирование строки золота
         if (stones > 0) res += $", +{stones} Камней"; // Добавление камней
         if (scrolls > 0) res += $", +{scrolls} Свитков"; // Добавление свитков
-        if (crystals > 0) res += $", +{crystals} Кристаллов"; // Добавление кристаллов
         return res; // Возврат описания
+    }
+
+    /// <summary>
+    /// Проверка и выдача супер-награды за полное закрытие всех дней месяца (включает Кристаллы)
+    /// </summary>
+    public void CheckAndClaimMonthCompletionReward(int month) // Награда за полностью закрытый месяц
+    {
+        string monthRewardKey = $"Cal_MonthCompleted_{currentYear}_{month}"; // Ключ ежемесячной награды
+        if (PlayerPrefs.GetInt(monthRewardKey, 0) == 1) return; // Уже получена ранее
+
+        int daysInMonth = DateTime.DaysInMonth(currentYear, month); // Число дней в месяце
+        for (int d = 1; d <= daysInMonth; d++) // Проверка каждого дня
+        {
+            string dayKey = $"Cal_Claimed_{currentYear}_{month}_{d}"; // Ключ дня
+            if (PlayerPrefs.GetInt(dayKey, 0) != 1) return; // Если хоть один день не закрыт - выходим
+        }
+
+        // Все дни месяца закрыты! Начисляем Ежемесячную Награду (Кристаллы, Золото, Камни, Свитки)
+        int bonusCrystals = 50; // +50 Кристаллов за месяц
+        int bonusGold = 50000; // +50 000 Золота
+        int bonusStones = 25; // +25 Камней
+        int bonusScrolls = 15; // +15 Свитков
+
+        PlayerPrefs.SetInt(monthRewardKey, 1); // Фиксация получения награды месяца
+
+        int curC = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение кристаллов
+        int curG = PlayerPrefs.GetInt("Player_Gold", 5000); // Чтение золота
+        int curS = PlayerPrefs.GetInt("Player_Stones", 10); // Чтение камней
+        int curSc = PlayerPrefs.GetInt("Player_Scrolls", 3); // Чтение свитков
+
+        PlayerPrefs.SetInt("Player_Crystals", curC + bonusCrystals); // Сохранение кристаллов
+        PlayerPrefs.SetInt("Player_Gold", curG + bonusGold); // Сохранение золота
+        PlayerPrefs.SetInt("Player_Stones", curS + bonusStones); // Сохранение камней
+        PlayerPrefs.SetInt("Player_Scrolls", curSc + bonusScrolls); // Сохранение свитков
+        PlayerPrefs.Save(); // Запись на диск
+
+        if (DialogueSystem_Manager.Instance != null) // Синхронизация UI
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Обновление счетчиков
+
+        if (GameManager.Instance != null) // Начисление в GameManager
+            GameManager.Instance.AddResources(bonusGold, bonusStones, bonusScrolls, bonusCrystals); // Выдача всех бонусов
+
+        ShowPopup("МЕСЯЦ ПОЛНОСТЬЮ ЗАКРЫТ!", $"Грандиозно! Вы собрали все дни за {monthNamesRu[month - 1]}!\n\nПолучена Ежемесячная Супер-Награда:\n<b>+{bonusCrystals} Кристаллов\n+{bonusGold} Золота\n+{bonusStones} Камней\n+{bonusScrolls} Свитков</b>", 5f); // Показ попапа
+    }
+
+    /// <summary>
+    /// Проверка и выдача мега-награды за полное закрытие всех 12 месяцев года (включает Кристаллы)
+    /// </summary>
+    public void CheckAndClaimYearCompletionReward() // Награда за полностью закрытый год
+    {
+        string yearRewardKey = $"Cal_YearCompleted_{currentYear}"; // Ключ годовой награды
+        if (PlayerPrefs.GetInt(yearRewardKey, 0) == 1) return; // Уже получена ранее
+
+        for (int m = 1; m <= 12; m++) // Проверка каждого из 12 месяцев
+        {
+            int daysInMonth = DateTime.DaysInMonth(currentYear, m); // Дней в месяце
+            for (int d = 1; d <= daysInMonth; d++) // Проверка дней
+            {
+                if (PlayerPrefs.GetInt($"Cal_Claimed_{currentYear}_{m}_{d}", 0) != 1) return; // Если не закрыт - выход
+            }
+        }
+
+        // Весь год закрыт! Начисляем Годовую Мега-Награду
+        int yearCrystals = 500; // +500 Кристаллов
+        int yearGold = 500000; // +500 000 Золота
+        int yearStones = 100; // +100 Камней
+        int yearScrolls = 100; // +100 Свитков
+
+        PlayerPrefs.SetInt(yearRewardKey, 1); // Фиксация награды года
+
+        int curC = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение кристаллов
+        int curG = PlayerPrefs.GetInt("Player_Gold", 5000); // Чтение золота
+        int curS = PlayerPrefs.GetInt("Player_Stones", 10); // Чтение камней
+        int curSc = PlayerPrefs.GetInt("Player_Scrolls", 3); // Чтение свитков
+
+        PlayerPrefs.SetInt("Player_Crystals", curC + yearCrystals); // Сохранение кристаллов
+        PlayerPrefs.SetInt("Player_Gold", curG + yearGold); // Сохранение золота
+        PlayerPrefs.SetInt("Player_Stones", curS + yearStones); // Сохранение камней
+        PlayerPrefs.SetInt("Player_Scrolls", curSc + yearScrolls); // Сохранение свитков
+        PlayerPrefs.Save(); // Запись на диск
+
+        if (DialogueSystem_Manager.Instance != null) // Синхронизация UI
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Обновление счетчиков
+
+        if (GameManager.Instance != null) // Начисление в GameManager
+            GameManager.Instance.AddResources(yearGold, yearStones, yearScrolls, yearCrystals); // Выдача всех бонусов
+
+        ShowPopup("ГОД ПОЛНОСТЬЮ ЗАКРЫТ!", $"Невероятно! Вы закрыли все 12 месяцев года!\n\nПолучена Годовая Мега-Награда:\n<b>+{yearCrystals} Кристаллов\n+{yearGold} Золота\n+{yearStones} Камней\n+{yearScrolls} Свитков</b>", 7f); // Показ попапа
     }
 
     private void UpdateDayCellVisual(GameObject cellObj, int month, int day) // Обновление внешнего вида ячейки
