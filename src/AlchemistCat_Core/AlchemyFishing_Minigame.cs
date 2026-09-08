@@ -58,7 +58,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
     public RectTransform leftMovingBeam; // Левый луч, движущийся от центра
     public RectTransform rightMovingBeam; // Правый луч, движущийся от центра
-    public float baseHorizontalSpeed = 1.1f; // Базовая плавная скорость расхождения лучей
+    public float baseHorizontalSpeed = 0.55f; // Плавная базовая скорость расхождения лучей от центра к краям
 
     [Header("=== Кнопка действия ===")]
     public Button actionButton; // Большая кнопка "Подсечь!" / "Тянуть!"
@@ -278,8 +278,12 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             if (horizontalBarBg) // Фон горизонтальной шкалы
             {
                 float halfW = horizontalBarBg.rect.width * 0.5f; // Половина ширины шкалы
-                if (leftMovingBeam) leftMovingBeam.anchoredPosition = new Vector2(-horizontalSpread * halfW, 0); // Левый луч
-                if (rightMovingBeam) rightMovingBeam.anchoredPosition = new Vector2(horizontalSpread * halfW, 0); // Правый луч
+                float beamHalfWidth = leftMovingBeam ? leftMovingBeam.rect.width * 0.5f : 60f; // Полуширина спрайта луча
+                float maxTravel = Mathf.Max(20f, halfW - beamHalfWidth - 35f); // Ограничение хода строго внутри золотой рамки
+
+                float offset = horizontalSpread * maxTravel; // Текущее смещение от центра к краю
+                if (leftMovingBeam) leftMovingBeam.anchoredPosition = new Vector2(-offset, 0); // Левый луч
+                if (rightMovingBeam) rightMovingBeam.anchoredPosition = new Vector2(offset, 0); // Правый луч
             }
         }
     }
