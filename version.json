@@ -1,7 +1,7 @@
 {
-  "version": "18.12.53",
+  "version": "18.12.55",
   "release_date": "2026-09-08",
   "changelog": [
-    "v18.12.53: Fixed Fishing Minigame Close button to return to Difficulty Selection screen, symmetric horizontal beam spreading along length without overflowing frame."
+    "v18.12.55: Fixed Unity OnValidate SendMessage warning for RectTransform by deferring visual Beam Height update via EditorApplication.delayCall."
   ]
 }

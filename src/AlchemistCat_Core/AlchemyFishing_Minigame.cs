@@ -58,7 +58,8 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
     public RectTransform leftMovingBeam; // Левый луч, растущий от центра влево
     public RectTransform rightMovingBeam; // Правый луч, растущий от центра вправо
-    public float beamHeight = 42f; // Высота (толщина) энергетических полос строго внутри рамки
+    [Range(10f, 250f)] public float beamHeight = 90f; // Настраиваемая вручную высота (толщина) фиолетовых полос
+    [Range(0.2f, 1f)] public float maxBeamSpanRatio = 0.80f; // Максимальная длина расхождения лучей от центра
     public float baseHorizontalSpeed = 0.55f; // Плавная базовая скорость расхождения лучей от центра к краям
 
     [Header("=== Кнопка действия ===")]
@@ -133,8 +134,32 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
     }
 
+#if UNITY_EDITOR
+    private void OnValidate() // Безопасное отложенное обновление высоты лучей в редакторе Unity без SendMessage предупреждений
+    {
+        UnityEditor.EditorApplication.delayCall += () =>
+        {
+            if (this == null) return; // Проверка на уничтожение объекта
+            ApplyBeamHeight(); // Применение высоты
+        };
+    }
+#endif
+
+    public void ApplyBeamHeight() // Метод применения высоты лучей
+    {
+        if (leftMovingBeam != null && beamHeight > 0)
+        {
+            leftMovingBeam.sizeDelta = new Vector2(leftMovingBeam.sizeDelta.x, beamHeight); // Применение высоты левого луча
+        }
+        if (rightMovingBeam != null && beamHeight > 0)
+        {
+            rightMovingBeam.sizeDelta = new Vector2(rightMovingBeam.sizeDelta.x, beamHeight); // Применение высоты правого луча
+        }
+    }
+
     private void OnEnable() // При активации панели рыбалки
     {
+        ApplyBeamHeight(); // Применение заданной толщины полос
         if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
         {
             DialogueSystem_Manager.Instance.HideHUDForMinigame(); // Скрытие аватарки и кнопок справа
@@ -357,19 +382,20 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 float totalW = horizontalBarBg.rect.width; // Полная ширина золотой рамки
                 float halfW = totalW * 0.5f; // Половина ширины золотой рамки
                 
-                // Максимальный размах лучей строго во внутренней части рамки (68% от полуширины, чтобы не выходить за рамку)
-                float maxSpan = Mathf.Max(20f, halfW * 0.68f); 
+                // Максимальный размах лучей строго во внутренней части рамки
+                float spanRatio = maxBeamSpanRatio > 0 ? maxBeamSpanRatio : 0.80f;
+                float maxSpan = Mathf.Max(20f, halfW * spanRatio); 
                 float currentSpan = Mathf.Lerp(15f, maxSpan, horizontalSpread); // Текущая длина полосы от центра
                 
-                // Аккуратная высота полосы (не более 45px), чтобы не вылезать за верх/низ золотой рамки
-                float h = Mathf.Min(beamHeight > 0 ? beamHeight : 42f, 48f);
+                // Прямая высота полосы из инспектора (Beam Height), настраиваемая вручную без ограничений
+                float h = beamHeight > 0 ? beamHeight : 90f;
 
                 if (leftMovingBeam) // Левая половина: правый край зафиксирован строго в центре, растет влево
                 {
                     leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Фиксация правого края в центре
                     leftMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
                     leftMovingBeam.localScale = Vector3.one; // Прямой масштаб (растяжение влево)
-                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины полосы влево
+                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины и высоты полосы влево
                 }
 
                 if (rightMovingBeam) // Правая половина: левый край зафиксирован строго в центре, растет вправо
@@ -377,7 +403,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                     rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Фиксация левого края в центре
                     rightMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
                     rightMovingBeam.localScale = Vector3.one; // Прямой масштаб (растяжение вправо)
-                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины полосы вправо
+                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины и высоты полосы вправо
                 }
             }
         }
