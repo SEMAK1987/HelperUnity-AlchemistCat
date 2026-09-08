@@ -135,8 +135,22 @@ public class CatchMouse_Minigame : MonoBehaviour
 
     private void OnEnable() // Обработка включения панели мини-игры
     {
+        if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов доступен
+        {
+            DialogueSystem_Manager.Instance.HideHUDForMinigame(); // Скрытие верхнего HUD (аватарка и кнопки)
+        }
         SetupRoadPerspective(); // Обновление геометрии дорожки
         ShowDifficultySelection(); // Показ меню выбора сложности
+    }
+
+    private void OnDisable() // Обработка отключения панели мини-игры
+    {
+        StopAllCoroutines(); // Остановка всех запущенных корутин
+        ClearAllMice(); // Очистка всех активных мышей с экрана
+        if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов доступен
+        {
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление верхнего HUD
+        }
     }
 
     /// <summary>
@@ -195,12 +209,6 @@ public class CatchMouse_Minigame : MonoBehaviour
             // Если уже на экране выбора сложности — закрываем окно мини-игры полностью
             CloseMinigame(); // Полное закрытие мини-игры
         }
-    }
-
-    private void OnDisable() // Обработка отключения компонента/окна
-    {
-        StopAllCoroutines(); // Остановка всех запущенных корутин
-        ClearAllMice(); // Очистка всех активных мышей с экрана
     }
 
     /// <summary>
@@ -853,6 +861,8 @@ public class CatchMouse_Minigame : MonoBehaviour
         ClearAllMice(); // Очистка мышек
         if (gamePanel != null) // Если панель игры назначена
             gamePanel.SetActive(false); // Скрытие панели игры
+        if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов доступен
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление видимости HUD
     }
 
     private void ClearAllMice() // Удаление всех активных мышей из сцены и очистка списка

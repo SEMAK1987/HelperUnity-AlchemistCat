@@ -140,13 +140,15 @@ public class Calendar_Manager : MonoBehaviour
         UpdateCurrentDate(); // Обновление даты
         PlayerPrefs.DeleteKey($"Cal_Claimed_{currentYear}_{currentMonth}_{currentDay}"); // Удаление ключа за сегодня
         PlayerPrefs.DeleteKey("Tutorial_Calendar_Claim_Done"); // Удаление ключа туториала
-        for (int m = 1; m <= 12; m++) // Цикл по месяцам
+        for (int m = 1; m <= 12; m++) // Цикл по 12 месяцам
         {
-            for (int d = 1; d <= 31; d++) // Цикл по дням
+            PlayerPrefs.DeleteKey($"Cal_MonthCompleted_{currentYear}_{m}"); // Удаление факта закрытия месяца
+            for (int d = 1; d <= 31; d++) // Цикл по 31 дню
             {
                 PlayerPrefs.DeleteKey($"Cal_Claimed_{currentYear}_{m}_{d}"); // Удаление ключа дня
             }
         }
+        PlayerPrefs.DeleteKey($"Cal_YearCompleted_{currentYear}"); // Удаление закрытия года
         PlayerPrefs.Save(); // Запись на диск
         RefreshAllDaysUI(); // Перерисовка визуала ячеек
         if (closeButton != null) // Блокировка кнопки закрытия
@@ -696,24 +698,27 @@ public class Calendar_Manager : MonoBehaviour
             stones += 2; // Бонусные камни
         }
 
-        int currentGold = PlayerPrefs.GetInt("Player_Gold", 5000); // Текущее золото
-        int currentStones = PlayerPrefs.GetInt("Player_Stones", 10); // Текущие камни
-        int currentScrolls = PlayerPrefs.GetInt("Player_Scrolls", 3); // Текущие свитки
+        // Единое централизованное начисление ресурсов
+        if (GameManager.Instance != null) // Если GameManager доступен
+        {
+            GameManager.Instance.AddResources(gold, stones, scrolls, 0); // Начисление в GameManager с автосохранением
+        }
+        else // Фоллбэк прямое начисление в PlayerPrefs
+        {
+            int currentGold = PlayerPrefs.GetInt("Player_Gold", 0); // Текущее золото
+            int currentStones = PlayerPrefs.GetInt("Player_Stones", 0); // Текущие камни
+            int currentScrolls = PlayerPrefs.GetInt("Player_Scrolls", 0); // Текущие свитки
 
-        PlayerPrefs.SetInt("Player_Gold", currentGold + gold); // Сохранение золота
-        PlayerPrefs.SetInt("Player_Stones", currentStones + stones); // Сохранение камней
-        PlayerPrefs.SetInt("Player_Scrolls", currentScrolls + scrolls); // Сохранение свитков
-        PlayerPrefs.Save(); // Фиксация на диске
+            PlayerPrefs.SetInt("Player_Gold", currentGold + gold); // Сохранение золота
+            PlayerPrefs.SetInt("Player_Stones", currentStones + stones); // Сохранение камней
+            PlayerPrefs.SetInt("Player_Scrolls", currentScrolls + scrolls); // Сохранение свитков
+            PlayerPrefs.Save(); // Фиксация на диске
+        }
 
         // Мгновенная синхронизация цифр в верхней панели (TopPanel)
         if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
         {
             DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Синхронизация UI
-        }
-
-        if (GameManager.Instance != null) // Если GameManager доступен
-        {
-            GameManager.Instance.AddResources(gold, stones, scrolls, 0); // Начисление в GameManager
         }
 
         string res = $"+{gold} Золота"; // Формирование строки золота
@@ -744,23 +749,28 @@ public class Calendar_Manager : MonoBehaviour
         int bonusScrolls = 15; // +15 Свитков
 
         PlayerPrefs.SetInt(monthRewardKey, 1); // Фиксация получения награды месяца
+        PlayerPrefs.Save(); // Сохранение ключа месяца
 
-        int curC = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение кристаллов
-        int curG = PlayerPrefs.GetInt("Player_Gold", 5000); // Чтение золота
-        int curS = PlayerPrefs.GetInt("Player_Stones", 10); // Чтение камней
-        int curSc = PlayerPrefs.GetInt("Player_Scrolls", 3); // Чтение свитков
+        if (GameManager.Instance != null) // Начисление в GameManager
+        {
+            GameManager.Instance.AddResources(bonusGold, bonusStones, bonusScrolls, bonusCrystals); // Выдача всех бонусов
+        }
+        else
+        {
+            int curC = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение кристаллов
+            int curG = PlayerPrefs.GetInt("Player_Gold", 0); // Чтение золота
+            int curS = PlayerPrefs.GetInt("Player_Stones", 0); // Чтение камней
+            int curSc = PlayerPrefs.GetInt("Player_Scrolls", 0); // Чтение свитков
 
-        PlayerPrefs.SetInt("Player_Crystals", curC + bonusCrystals); // Сохранение кристаллов
-        PlayerPrefs.SetInt("Player_Gold", curG + bonusGold); // Сохранение золота
-        PlayerPrefs.SetInt("Player_Stones", curS + bonusStones); // Сохранение камней
-        PlayerPrefs.SetInt("Player_Scrolls", curSc + bonusScrolls); // Сохранение свитков
-        PlayerPrefs.Save(); // Запись на диск
+            PlayerPrefs.SetInt("Player_Crystals", curC + bonusCrystals); // Сохранение кристаллов
+            PlayerPrefs.SetInt("Player_Gold", curG + bonusGold); // Сохранение золота
+            PlayerPrefs.SetInt("Player_Stones", curS + bonusStones); // Сохранение камней
+            PlayerPrefs.SetInt("Player_Scrolls", curSc + bonusScrolls); // Сохранение свитков
+            PlayerPrefs.Save(); // Запись на диск
+        }
 
         if (DialogueSystem_Manager.Instance != null) // Синхронизация UI
             DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Обновление счетчиков
-
-        if (GameManager.Instance != null) // Начисление в GameManager
-            GameManager.Instance.AddResources(bonusGold, bonusStones, bonusScrolls, bonusCrystals); // Выдача всех бонусов
 
         ShowPopup("МЕСЯЦ ПОЛНОСТЬЮ ЗАКРЫТ!", $"Грандиозно! Вы собрали все дни за {monthNamesRu[month - 1]}!\n\nПолучена Ежемесячная Супер-Награда:\n<b>+{bonusCrystals} Кристаллов\n+{bonusGold} Золота\n+{bonusStones} Камней\n+{bonusScrolls} Свитков</b>", 5f); // Показ попапа
     }
@@ -789,23 +799,28 @@ public class Calendar_Manager : MonoBehaviour
         int yearScrolls = 100; // +100 Свитков
 
         PlayerPrefs.SetInt(yearRewardKey, 1); // Фиксация награды года
+        PlayerPrefs.Save(); // Сохранение ключа года
 
-        int curC = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение кристаллов
-        int curG = PlayerPrefs.GetInt("Player_Gold", 5000); // Чтение золота
-        int curS = PlayerPrefs.GetInt("Player_Stones", 10); // Чтение камней
-        int curSc = PlayerPrefs.GetInt("Player_Scrolls", 3); // Чтение свитков
+        if (GameManager.Instance != null) // Начисление в GameManager
+        {
+            GameManager.Instance.AddResources(yearGold, yearStones, yearScrolls, yearCrystals); // Выдача всех бонусов
+        }
+        else
+        {
+            int curC = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение кристаллов
+            int curG = PlayerPrefs.GetInt("Player_Gold", 0); // Чтение золота
+            int curS = PlayerPrefs.GetInt("Player_Stones", 0); // Чтение камней
+            int curSc = PlayerPrefs.GetInt("Player_Scrolls", 0); // Чтение свитков
 
-        PlayerPrefs.SetInt("Player_Crystals", curC + yearCrystals); // Сохранение кристаллов
-        PlayerPrefs.SetInt("Player_Gold", curG + yearGold); // Сохранение золота
-        PlayerPrefs.SetInt("Player_Stones", curS + yearStones); // Сохранение камней
-        PlayerPrefs.SetInt("Player_Scrolls", curSc + yearScrolls); // Сохранение свитков
-        PlayerPrefs.Save(); // Запись на диск
+            PlayerPrefs.SetInt("Player_Crystals", curC + yearCrystals); // Сохранение кристаллов
+            PlayerPrefs.SetInt("Player_Gold", curG + yearGold); // Сохранение золота
+            PlayerPrefs.SetInt("Player_Stones", curS + yearStones); // Сохранение камней
+            PlayerPrefs.SetInt("Player_Scrolls", curSc + yearScrolls); // Сохранение свитков
+            PlayerPrefs.Save(); // Запись на диск
+        }
 
         if (DialogueSystem_Manager.Instance != null) // Синхронизация UI
             DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Обновление счетчиков
-
-        if (GameManager.Instance != null) // Начисление в GameManager
-            GameManager.Instance.AddResources(yearGold, yearStones, yearScrolls, yearCrystals); // Выдача всех бонусов
 
         ShowPopup("ГОД ПОЛНОСТЬЮ ЗАКРЫТ!", $"Невероятно! Вы закрыли все 12 месяцев года!\n\nПолучена Годовая Мега-Награда:\n<b>+{yearCrystals} Кристаллов\n+{yearGold} Золота\n+{yearStones} Камней\n+{yearScrolls} Свитков</b>", 7f); // Показ попапа
     }

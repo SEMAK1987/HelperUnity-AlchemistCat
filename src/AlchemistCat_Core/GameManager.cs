@@ -43,15 +43,15 @@ public class GameManager : MonoBehaviour
     }
 
     [Header("Экономика и Прогресс")]
-    public int gold = 0; // Текущий запас золотых монет игрока
-    public int crystals = 10; // Текущий запас премиальных кристаллов
-    public int stones = 10; // Текущее количество алхимических камней
-    public int scrolls = 3; // Текущее количество древних свитков
+    public int gold = 0; // Текущий запас золотых монет игрока (на старте 0 до начисления стартовой награды)
+    public int crystals = 0; // Текущий запас премиальных кристаллов (на старте 0)
+    public int stones = 0; // Текущее количество алхимических камней (на старте 0)
+    public int scrolls = 0; // Текущее количество древних свитков (на старте 0)
     public int vipXP = 0; // Накопленный опыт VIP-системы
     public int daysActive = 1; // Количество активных дней в игре
     public int catLevel = 1; // Текущий уровень персонажа (кота)
     public int currentXP = 0; // Текущий опыт для следующего уровня
-    public int xpToNextLevel = 100; // Требуемый опыт для перехода на следующий уровень
+    public int xpToNextLevel = 10; // Требуемый опыт для перехода на 2 уровень (10 XP)
     public int cauldronLevel = 1; // Уровень прокачки алхимического котла
     public int potionsBrewed = 0; // Общее число сваренных зелий за игру
 
@@ -88,10 +88,10 @@ public class GameManager : MonoBehaviour
 
     public void LoadResourcesFromPlayerPrefs() // Чтение баланса золота, кристаллов, камней и опыта из PlayerPrefs
     {
-        gold = PlayerPrefs.GetInt("Player_Gold", 5000); // Загрузка золота (по умолчанию 5000)
+        gold = PlayerPrefs.GetInt("Player_Gold", 0); // Загрузка золота (по умолчанию 0)
         crystals = PlayerPrefs.GetInt("Player_Crystals", 0); // Загрузка кристаллов (по умолчанию 0)
-        stones = PlayerPrefs.GetInt("Player_Stones", 10); // Загрузка камней (по умолчанию 10)
-        scrolls = PlayerPrefs.GetInt("Player_Scrolls", 3); // Загрузка свитков (по умолчанию 3)
+        stones = PlayerPrefs.GetInt("Player_Stones", 0); // Загрузка камней (по умолчанию 0)
+        scrolls = PlayerPrefs.GetInt("Player_Scrolls", 0); // Загрузка свитков (по умолчанию 0)
         currentXP = PlayerPrefs.GetInt("Player_XP", 0); // Загрузка текущего опыта (по умолчанию 0)
         catLevel = PlayerPrefs.GetInt("Player_Level", 1); // Загрузка уровня персонажа (по умолчанию 1)
     }
@@ -107,8 +107,26 @@ public class GameManager : MonoBehaviour
         PlayerPrefs.Save(); // Запись изменений на постоянный накопитель
     }
 
+    [ContextMenu("Сбросить Все Данные GameManager (Reset All Data)")]
+    public void ResetAllData() // Полный сброс ресурсов и параметров GameManager
+    {
+        gold = 0; // Обнуление золота
+        crystals = 0; // Обнуление кристаллов
+        stones = 0; // Обнуление камней
+        scrolls = 0; // Обнуление свитков
+        currentXP = 0; // Обнуление опыта
+        catLevel = 1; // Возврат на 1 уровень
+        cauldronLevel = 1; // Базовый уровень котла
+        potionsBrewed = 0; // Обнуление числа зелий
+        unlockedDarts = false; // Блокировка дартса
+        unlockedMouseCatch = false; // Блокировка мышей
+        SaveResourcesToPlayerPrefs(); // Запись обнуленных значений в реестр
+        UpdateUI(); // Обновление отображения в интерфейсе
+    }
+
     public void AddGold(int amount) // Добавление золота на счет игрока с автосохранением и синхронизацией
     {
+        LoadResourcesFromPlayerPrefs(); // Загрузка актуального баланса перед начислением
         gold += amount; // Увеличение запаса золота
         SaveResourcesToPlayerPrefs(); // Сохранение обновленного баланса
         UpdateUI(); // Обновление числовых данных в интерфейсе
@@ -120,6 +138,7 @@ public class GameManager : MonoBehaviour
 
     public void AddCrystals(int amount) // Добавление кристаллов с автосохранением и обновлением
     {
+        LoadResourcesFromPlayerPrefs(); // Загрузка актуального баланса перед начислением
         crystals += amount; // Увеличение запаса кристаллов
         SaveResourcesToPlayerPrefs(); // Сохранение обновленного баланса
         UpdateUI(); // Обновление числовых данных в интерфейсе
@@ -131,6 +150,7 @@ public class GameManager : MonoBehaviour
 
     public void AddResources(int addGold, int addStones, int addScrolls, int addCrystals) // Массовое начисление всех видов ресурсов
     {
+        LoadResourcesFromPlayerPrefs(); // Загрузка актуального баланса перед начислением
         gold += addGold; // Начисление золота
         stones += addStones; // Начисление камней
         scrolls += addScrolls; // Начисление свитков

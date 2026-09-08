@@ -5,7 +5,7 @@ using UnityEngine; // Базовый движок Unity
 using UnityEngine.Networking; // Сетевые запросы UnityWebRequest
 
 /// <summary>
-/// Разработчик: Алхимический Кот (Alchemist Cat Studio v18.12.46)
+/// Разработчик: Алхимический Кот (Alchemist Cat Studio v18.12.47)
 /// Модуль синхронизации Unity с ассистентом разработки, базой знаний и Blender пайплайном:
 /// - Автоматическая проверка статуса скриптов и целостности кодовой базы
 /// - Прием и передача 3D моделей, анимаций и материалов из Blender Connector
@@ -23,7 +23,7 @@ public class UnityConnector : MonoBehaviour
     [Header("Статус Соединения")]
     public bool isConnected = false; // Флаг активности подключения
     public string lastSyncTimestamp = ""; // Время последней успешной синхронизации
-    public string assistantVersion = "v18.12.46"; // Текущая версия ассистента
+    public string assistantVersion = "v18.12.47"; // Текущая версия ассистента
 
     private void Awake() // Инициализация синглтона при старте
     {
@@ -73,10 +73,10 @@ public class UnityConnector : MonoBehaviour
                 lastSyncTimestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"); // Запись времени
                 Debug.Log($"[UnityConnector] Связь с AI Assistant установлена: {request.downloadHandler.text}"); // Лог
             }
-            else // Ошибка подключения
+            else // Ошибка подключения (сервер ассистента не запущен локально)
             {
                 isConnected = false; // Сброс флага
-                Debug.LogWarning($"[UnityConnector] Сервер ассистента недоступен: {request.error}"); // Предупреждение
+                Debug.Log($"[UnityConnector] AI Assistant сервер не обнаружен на {serverUrl} ({request.error}). Игра работает в штатном автономном режиме."); // Информационное сообщение
             }
         }
     }

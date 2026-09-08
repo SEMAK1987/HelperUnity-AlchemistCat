@@ -1,4 +1,4 @@
-// 🤖 Unity & Blender AI Assistant • Server Component (v18.12.46 Verified)
+// 🤖 Unity & Blender AI Assistant • Server Component (v18.12.47 Verified)
 import express from "express";
 import axios from "axios";
 import { createServer as createViteServer } from "vite";

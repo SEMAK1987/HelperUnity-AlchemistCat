@@ -1,5 +1,5 @@
 """
-Blender Connector for Alchemist Cat Studio (v18.12.46)
+Blender Connector for Alchemist Cat Studio (v18.12.47)
 Автоматический мост синхронизации между Blender 3.x/4.x и Unity для проекта «Алхимический Кот»:
 - Экспорт FBX/GLTF моделей с правильными масштабами и осями (Z-up to Y-up)
 - Автоматическая генерация материалов и карт текстур (Diffuse, Normal, Emission, Roughness)
@@ -14,7 +14,7 @@ import json
 import urllib.request
 import urllib.error
 
-VERSION = "18.12.46"
+VERSION = "18.12.47"
 SERVER_URL = "http://localhost:3000"
 
 def get_export_path():

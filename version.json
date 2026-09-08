@@ -1,7 +1,7 @@
 {
-  "version": "18.12.46",
-  "release_date": "2026-09-07",
+  "version": "18.12.49",
+  "release_date": "2026-09-08",
   "changelog": [
-    "v18.12.46: Alchemist Cat Core & Code Tab Continuous Sync, DailyRewardSystem milestone rewards, GameManager dual-UI support, UnityConnector.cs, blender_connector.py"
+    "v18.12.49: Fix CS0111 duplicate OnDisable method in CatchMouse_Minigame.cs, full compilation cleanup."
   ]
 }

@@ -1,17 +1,17 @@
 # PROJECT MASTER BLUEPRINT: Unity & Blender AI Assistant (Total Knowledge Archive Edition)
 
-> **ВНИМАНИЕ:** Этот документ является "источником истины" для всего проекта. Он содержит полную структуру интерфейса, базу знаний агентов, инструкции по самовосстановлению и описание возможностей ИИ v18.12.46.
+> **ВНИМАНИЕ:** Этот документ является "источников истины" для всего проекта. Он содержит полную структуру интерфейса, базу знаний агентов, инструкции по самовосстановлению и описание возможностей ИИ v18.12.45.
 
 ## 1. Общая информация
-- **Версия Помощника:** 18.12.46
-- **Описание:** Гибридный ИИ-помощник нового поколения (v18.12.46 - Alchemist Cat Daily Reward Milestones 1-12 Months, Dual-UI Inspector Binding & Code Tab Sync Mandate) для Unity 6 (6000.3.10f1), Blender 5.2 и Godot 4.4.
+- **Версия Помощника:** 18.12.45
+- **Описание:** Гибридный ИИ-помощник нового поколения (v18.12.45 - Alchemist Cat Catch Mouse Minigame Full UI & 3-Phase Difficulty Calibration, Spritesheet Runner & Audio Inspector Binding) для Unity 6 (6000.3.10f1), Blender 5.2 и Godot 4.4.
 - **Путь проекта:** Не задан
 - **Локальное хранилище:** Не задано
-- **Версия Unity:** Unity 6 / 2022.3 LTS
-- **Версия Blender:** Blender 4.x / 5.x
-- **Версия GIMP:** 2.10+
-- **Версия Redot:** Redot 4.4
-- **Флаги:** [QUANTUM_LINK_ACTIVE], [KNOWLEDGE_STORAGE_SYNC], [V18_12_46_ALCHEMIST_CAT_MASTER]
+- **Версия Unity:** unknown
+- **Версия Blender:** unknown
+- **Версия GIMP:** unknown
+- **Версия Redot:** unknown
+- **Флаги:** [QUANTUM_LINK_ACTIVE], [KNOWLEDGE_STORAGE_SYNC], [V18_12_45_FATE_MASTER]
 
 ## 2. Структура интерфейса
 ### Вкладки
@@ -293,7 +293,8 @@ Freesound содержит миллионы звуков от инди-разр�
 - **Local Knowledge:** Использование knowledge_base.json и project_stats.json для контекста без облака.
 - **Media Handling:** Локальная обработка файлов через Multer и FS-Extra.
 
-## 13. История изменений (v18.12.11)
+## 13. История изменений (v18.12.48)
+- **v18.12.48:** Alchemy Fishing UI Calibration, HUD Auto-Hiding & Button Text Auto-Size Guide • Programmed automatic HUD hiding (`HideHUDForMinigame`) and restoring (`RestoreHUDAfterMinigame`) for player avatar and top-right buttons (`Calendar_Button`, `Small_Scroll_Button`, `Chest_Icon_Button`, `Knowledge_Icon_Button`, `Minigames_Wheel_Button`) upon entering and exiting minigames (Alchemy Fishing, Catch Mouse, Minigames Wheel). Memorized and documented exact inspector parameters for `Cat_Intro_Dialog`, `Cat_Avatar`, `Cat_Text_Speech`, and 3 difficulty buttons (`Easy_Level_Card`, `Medium_Level_Card`, `Hard_Level_Card`). Formulated step-by-step guidance for Button Text `Auto Size` and `Stretch-Stretch` padding.
 - **v18.12.11:** Alchemist Cat UI & Localization Calibration • Standardized language dropdowns, auto-detection score logic, word wrapping disable in Translator, public UI callbacks for OnClick Inspector integration, and horizontal layout row alignment.
 - **v18.12.10:** Advanced Dropdown Calibration & Text Wrapping Fixes • Standardized dropdown text wrapping to TextWrappingModes.NoWrap, suppressing obsolete warning CS0618 inside SettingsManager.cs. Fixed pivot offsets and item height scaling to prevent layout clipping and text overlapping in high-density Russian and Turkish language dropdowns. Verified dynamic item layout, spacing, and center alignment for all drop menus.
 - **v18.12.09:** Alchemist Cat Loading Screen & Kitten Silhouette Integration • Integrated step-by-step visual configuration instructions for the Loading_Panel interface in the Unity 6 main menu. Documented the precise procedures to configure the dark purple menu theme background and align the glowing Alchemist Cat silhouette watermark sprite centrally with optimal aspect ratio clamping.

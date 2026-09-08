@@ -174,9 +174,14 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         SilenceMenuMusicSources();
 
-        if (testModeResetOnStart)
+        // Проверяем: был ли завершен весь диалог с Котом до самого конца (1 = пройден, 0 = не пройден)
+        bool isTutorialCompleted = PlayerPrefs.GetInt("Tutorial_Full_Flow_Done", 0) == 1;
+
+        // Пока весь диалог не пройден с Котом до самого конца (или включен тестовый режим сброса),
+        // при каждом новом запуске игры сбрасывать абсолютно все ресурсы, календарь, уровни игрока, опыт и мастерство на начальные версии:
+        if (!isTutorialCompleted || testModeResetOnStart)
         {
-            ResetAllManagersAndGameState(); // Полный сброс всех менеджеров, параметров, мастерства и рангов до нуля при тест-старте
+            ResetAllManagersAndGameState(); // Полный сброс всех менеджеров, параметров, мастерства и рангов до нуля
         }
 
         currentGold = PlayerPrefs.GetInt("Player_Gold", 0);
@@ -767,6 +772,12 @@ public class DialogueSystem_Manager : MonoBehaviour
         PlayerPrefs.SetInt("Player_Crystals", currentCrystals);
         PlayerPrefs.Save();
 
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadResourcesFromPlayerPrefs();
+            GameManager.Instance.UpdateUI();
+        }
+
         UpdateResourceTextsInstant();
 
         yield return new WaitForSeconds(0.3f);
@@ -788,6 +799,12 @@ public class DialogueSystem_Manager : MonoBehaviour
         PlayerPrefs.SetInt("Player_Stones", currentStones);
         PlayerPrefs.SetInt("Player_Scrolls", currentScrolls);
         PlayerPrefs.Save();
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.LoadResourcesFromPlayerPrefs();
+            GameManager.Instance.UpdateUI();
+        }
 
         UpdateResourceTextsInstant();
 
@@ -1133,6 +1150,8 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (dialoguePanel != null) dialoguePanel.SetActive(false);
 
+        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время окна мини-игр
+
         if (minigamesPanel != null)
         {
             minigamesPanel.SetActive(true);
@@ -1144,6 +1163,40 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Скрытие всех верхних плашек интерфейса (Аватарки и правых кнопок) во время мини-игр
+    /// </summary>
+    public void HideHUDForMinigame()
+    {
+        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(false); // Скрытие плашки профиля и аватарки слева
+        if (calendarIconButton != null) calendarIconButton.SetActive(false); // Скрытие иконки календаря
+        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(false); // Скрытие иконки свитка
+        if (chestIconButton != null) chestIconButton.SetActive(false); // Скрытие иконки сундука
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(false); // Скрытие иконки знаний
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(false); // Скрытие иконки колеса игр
+    }
+
+    /// <summary>
+    /// Восстановление видимости верхних плашек интерфейса после выхода из мини-игры
+    /// </summary>
+    public void RestoreHUDAfterMinigame()
+    {
+        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(true); // Восстановление плашки профиля
+        if (calendarIconButton != null) calendarIconButton.SetActive(true); // Восстановление иконки календаря
+        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(true); // Восстановление свитка
+        if (chestIconButton != null) chestIconButton.SetActive(true); // Восстановление сундука
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(true); // Восстановление знаний
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(true); // Восстановление колеса игр
+
+        // Восстановление интерактивности кнопок
+        SetCalendarButtonInteractable(true);
+        SetSmallScrollInteractable(true);
+        SetChestButtonInteractable(true);
+        SetKnowledgeButtonInteractable(true);
+        SetMinigamesButtonInteractable(true);
+        if (avatarManager != null) avatarManager.SetAvatarButtonInteractable(true);
+    }
+
     public void OpenFishingUI()
     {
         if (buttonClickSound != null && SettingsManager.Instance != null)
@@ -1151,8 +1204,12 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (dialoguePanel != null) dialoguePanel.SetActive(false);
 
+        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время рыбалки
+
         if (AlchemyFishing_Minigame.Instance != null)
         {
+            PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
+            PlayerPrefs.Save(); // Сохранение факта завершения
             AlchemyFishing_Minigame.Instance.gameObject.SetActive(true);
             AlchemyFishing_Minigame.Instance.ShowDifficultySelection();
             return;
@@ -1161,6 +1218,8 @@ public class DialogueSystem_Manager : MonoBehaviour
         AlchemyFishing_Minigame fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
         if (fishing != null)
         {
+            PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
+            PlayerPrefs.Save(); // Сохранение факта завершения
             fishing.gameObject.SetActive(true);
             fishing.ShowDifficultySelection();
             return;
@@ -1172,6 +1231,8 @@ public class DialogueSystem_Manager : MonoBehaviour
             GameObject foundFishing = GameObject.Find(name);
             if (foundFishing != null)
             {
+                PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
+                PlayerPrefs.Save(); // Сохранение факта завершения
                 foundFishing.SetActive(true);
                 AlchemyFishing_Minigame comp = foundFishing.GetComponent<AlchemyFishing_Minigame>();
                 if (comp != null)
@@ -1920,6 +1981,12 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (Knowledge_Manager.Instance != null)
             Knowledge_Manager.Instance.ResetKnowledgeProgress();
+
+        if (DailyRewardSystem.Instance != null)
+            DailyRewardSystem.Instance.ResetDailyRewards();
+
+        if (GameManager.Instance != null)
+            GameManager.Instance.ResetAllData();
 
         if (topPanel != null) topPanel.SetActive(false);
         if (slotGold != null) slotGold.SetActive(false);

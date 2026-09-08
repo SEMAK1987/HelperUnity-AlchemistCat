@@ -115,6 +115,22 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         Instance = this; // Инициализация синглтона
     }
 
+    private void OnEnable() // При активации панели рыбалки
+    {
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
+        {
+            DialogueSystem_Manager.Instance.HideHUDForMinigame(); // Скрытие аватарки и кнопок справа
+        }
+    }
+
+    private void OnDisable() // При деактивации панели рыбалки
+    {
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
+        {
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление аватарки и кнопок справа
+        }
+    }
+
     private void Start() // Стартовая инициализация подписчиков и панелей
     {
         if (easyButton) easyButton.onClick.AddListener(() => StartFishingSession(FishingDifficulty.Easy)); // Выбор легкого уровня
@@ -375,6 +391,10 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
     public void HandleCloseClicked() // Обработка нажатия кнопки Закрыть
     {
-        ShowDifficultySelection(); // Возврат к выбору сложности
+        gameObject.SetActive(false); // Выключение панели рыбалки
+        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
+        {
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление UI
+        }
     }
 }

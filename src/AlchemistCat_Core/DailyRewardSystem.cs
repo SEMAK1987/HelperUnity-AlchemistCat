@@ -21,9 +21,21 @@ public class DailyRewardSystem : MonoBehaviour
     [Tooltip("Массив из 7 слотов дней (День 1 - День 7). Если пуст, находится автоматически.")]
     public Transform[] calendarDaySlots; // Массив UI-контейнеров для 7 дней недели наград
 
+    public static DailyRewardSystem Instance { get; private set; } // Публичный синглтон для глобального доступа и сброса
+
     private int currentStreak = 0; // Текущая серия непрерывных заходов в игру (дни 1-7)
     private int totalContinuousDays = 0; // Общий непрерывный счетчик дней без пропусков
     private DateTime lastClaimTime; // Время и дата последнего получения награды
+
+    private void Awake() // Инициализация синглтона
+    {
+        if (Instance != null && Instance != this) // Проверка на дубликат
+        {
+            Destroy(gameObject); // Защита от дубликатов
+            return;
+        }
+        Instance = this; // Назначение глобального экземпляра
+    }
 
     private void Start() // Инициализация компонентов при старте сцены
     {
@@ -303,5 +315,18 @@ public class DailyRewardSystem : MonoBehaviour
         PlayerPrefs.SetInt("Daily_TotalContinuousDays", totalContinuousDays); // Сохранение непрерывных дней
         PlayerPrefs.SetString("LastDailyClaim", lastClaimTime.ToString()); // Сохранение времени сбора
         PlayerPrefs.Save(); // Запись на постоянный диск
+    }
+
+    [ContextMenu("Сбросить Прогресс Наград (Reset Daily Rewards)")]
+    public void ResetDailyRewards() // Сброс системы наград к начальному состоянию
+    {
+        currentStreak = 0; // Обнуление серии
+        totalContinuousDays = 0; // Обнуление непрерывных дней
+        lastClaimTime = DateTime.Now.AddDays(-2); // Готовность к новому сбору
+        PlayerPrefs.DeleteKey("DailyStreak"); // Удаление ключа серии
+        PlayerPrefs.DeleteKey("Daily_TotalContinuousDays"); // Удаление ключа дней
+        PlayerPrefs.DeleteKey("LastDailyClaim"); // Удаление даты сбора
+        PlayerPrefs.Save(); // Сохранение
+        CheckDailyStatus(); // Обновление UI
     }
 }
