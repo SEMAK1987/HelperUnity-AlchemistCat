@@ -58,7 +58,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
     public RectTransform leftMovingBeam; // Левый луч, растущий от центра влево
     public RectTransform rightMovingBeam; // Правый луч, растущий от центра вправо
-    public float beamHeight = 80f; // Высота (толщина) энергетических полос
+    public float beamHeight = 42f; // Высота (толщина) энергетических полос строго внутри рамки
     public float baseHorizontalSpeed = 0.55f; // Плавная базовая скорость расхождения лучей от центра к краям
 
     [Header("=== Кнопка действия ===")]
@@ -160,6 +160,20 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (actionButton) actionButton.onClick.AddListener(OnRodOrActionButtonClicked); // Клик по кнопке действия
         if (claimAllToBackpackButton) claimAllToBackpackButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Забрать лут
 
+        // Привязка всех крестиков в дочерних панелях к HandleCloseClicked
+        if (activeFishingStagePanel != null)
+        {
+            Button[] stageButtons = activeFishingStagePanel.GetComponentsInChildren<Button>(true);
+            foreach (var b in stageButtons)
+            {
+                if (b.gameObject.name.ToLower().Contains("close") || b.gameObject.name.ToLower().Contains("back"))
+                {
+                    b.onClick.RemoveAllListeners();
+                    b.onClick.AddListener(HandleCloseClicked);
+                }
+            }
+        }
+
         // Автоматический поиск текста на удочке и бейджа попыток, если поле не перетащено в инспекторе
         if (actionButtonText == null && fishRodButton != null)
         {
@@ -195,13 +209,26 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
     public void ShowDifficultySelection() // Показ экрана выбора уровня сложности
     {
+        currentPhase = GamePhase.Idle; // Сброс фазы рыбалки
         if (difficultySelectPanel) difficultySelectPanel.SetActive(true); // Включение панели сложности
         if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Выключение игровой панели
         if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Выключение итогового окна
     }
 
-    public void HandleCloseClicked() // Обработка закрытия окна рыбалки
+    public void HandleCloseClicked() // Обработка закрытия окна рыбалки / возврат к выбору сложности
     {
+        // 1. Если игрок находится на этапе активной рыбалки на пруду или в окне итогов
+        if ((activeFishingStagePanel != null && activeFishingStagePanel.activeSelf) ||
+            (resultSummaryPopupPanel != null && resultSummaryPopupPanel.activeSelf))
+        {
+            if (difficultySelectPanel != null) // Если есть панель выбора сложности
+            {
+                ShowDifficultySelection(); // Возвращаемся на выбор сложности для смены режима
+                return;
+            }
+        }
+
+        // 2. Если уже на экране выбора сложности (или закрываем мини-игру полностью)
         gameObject.SetActive(false); // Скрытие панели рыбалки
         if (transform.parent != null && (transform.parent.name == "MinigamesPanel" || transform.parent.name.Contains("Minigames")))
         {
@@ -327,25 +354,30 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
             if (horizontalBarBg) // Фон горизонтальной шкалы
             {
-                float halfW = horizontalBarBg.rect.width * 0.5f; // Половина ширины золотой рамки
-                float maxSpan = Mathf.Max(50f, halfW - 35f); // Максимальное расширение до краев золотой рамки
-                float currentSpan = Mathf.Lerp(20f, maxSpan, horizontalSpread); // Текущая ширина полосы от центра
-                float h = beamHeight > 0 ? beamHeight : 80f; // Толщина (высота) энергетической полосы
+                float totalW = horizontalBarBg.rect.width; // Полная ширина золотой рамки
+                float halfW = totalW * 0.5f; // Половина ширины золотой рамки
+                
+                // Максимальный размах лучей строго во внутренней части рамки (68% от полуширины, чтобы не выходить за рамку)
+                float maxSpan = Mathf.Max(20f, halfW * 0.68f); 
+                float currentSpan = Mathf.Lerp(15f, maxSpan, horizontalSpread); // Текущая длина полосы от центра
+                
+                // Аккуратная высота полосы (не более 45px), чтобы не вылезать за верх/низ золотой рамки
+                float h = Mathf.Min(beamHeight > 0 ? beamHeight : 42f, 48f);
 
                 if (leftMovingBeam) // Левая половина: правый край зафиксирован строго в центре, растет влево
                 {
                     leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Фиксация правого края в центре
                     leftMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
-                    leftMovingBeam.localScale = new Vector3(-1f, 1f, 1f); // Разворот хвоста/стрелки влево
-                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение ширины полосы влево
+                    leftMovingBeam.localScale = Vector3.one; // Прямой масштаб (растяжение влево)
+                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины полосы влево
                 }
 
                 if (rightMovingBeam) // Правая половина: левый край зафиксирован строго в центре, растет вправо
                 {
                     rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Фиксация левого края в центре
                     rightMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
-                    rightMovingBeam.localScale = new Vector3(1f, 1f, 1f); // Направление хвоста/стрелки вправо
-                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение ширины полосы вправо
+                    rightMovingBeam.localScale = Vector3.one; // Прямой масштаб (растяжение вправо)
+                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины полосы вправо
                 }
             }
         }

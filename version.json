@@ -1,7 +1,7 @@
 {
-  "version": "18.12.52",
+  "version": "18.12.53",
   "release_date": "2026-09-08",
   "changelog": [
-    "v18.12.52: Fixed Fishing Minigame launch activation chain (parent MinigamesPanel enabling), unified horizontal beam outward continuous spread and multi-backend F9 cheat key."
+    "v18.12.53: Fixed Fishing Minigame Close button to return to Difficulty Selection screen, symmetric horizontal beam spreading along length without overflowing frame."
   ]
 }
