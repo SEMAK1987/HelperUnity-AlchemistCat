@@ -51,14 +51,14 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public RectTransform delimiterZone4; // Линия разделителя 4-го сектора (золотая зона)
     public RectTransform delimiterZone3; // Линия разделителя 3-го сектора
     public RectTransform delimiterZone2; // Линия разделителя 2-го сектора
-    public float baseVerticalSpeed = 3.5f; // Базовая скорость движения вертикального бегунка
+    public float baseVerticalSpeed = 1.0f; // Базовая плавная скорость движения вертикального бегунка
 
     [Header("=== Горизонтальная шкала поклевки (Шкала 2: 2 расходящихся луча) ===")]
     public GameObject horizontalBarContainer; // Контейнер горизонтальной шкалы поклевки
     public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
     public RectTransform leftMovingBeam; // Левый луч, движущийся от центра
     public RectTransform rightMovingBeam; // Правый луч, движущийся от центра
-    public float baseHorizontalSpeed = 4.0f; // Базовая скорость расхождения лучей
+    public float baseHorizontalSpeed = 1.1f; // Базовая плавная скорость расхождения лучей
 
     [Header("=== Кнопка действия ===")]
     public Button actionButton; // Большая кнопка "Подсечь!" / "Тянуть!"
@@ -142,6 +142,17 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (actionButton) actionButton.onClick.AddListener(OnRodOrActionButtonClicked); // Клик по кнопке действия
         if (claimAllToBackpackButton) claimAllToBackpackButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Забрать лут
 
+        // Автоматический поиск текста на удочке и бейджа попыток, если поле не перетащено в инспекторе
+        if (actionButtonText == null && fishRodButton != null)
+        {
+            actionButtonText = fishRodButton.GetComponentInChildren<TextMeshProUGUI>(); // Поиск дочернего текста кнопки удочки
+        }
+        if (attemptsCounterText == null && activeFishingStagePanel != null)
+        {
+            Transform badge = activeFishingStagePanel.transform.Find("Attempts_Badge"); // Поиск бейджа попыток в иерархии
+            if (badge != null) attemptsCounterText = badge.GetComponentInChildren<TextMeshProUGUI>(); // Поиск текста счетчика
+        }
+
         ShowDifficultySelection(); // Открываем меню выбора сложности на старте
     }
 
@@ -194,7 +205,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         // Разблокировка удочки
         if (fishRodButton) fishRodButton.interactable = true; // Разблокировка кликабельности удочки
         if (fishRodImage) fishRodImage.color = Color.white; // Яркий белый цвет удочки
-        if (actionButtonText) actionButtonText.text = "ЗАБРОСИТЬ УДОЧКУ!"; // Текст кнопки действия
+        if (actionButtonText) actionButtonText.text = "ЗАБРОС!"; // Лаконичный текст заброса на удочке/кнопке
     }
 
     public void OnRodOrActionButtonClicked() // Обработка клика по удочке или кнопке действия
@@ -202,22 +213,24 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         switch (currentPhase) // Переключение по фазам
         {
             case GamePhase.Idle: // Фаза 1: запуск заброса
-                // 1. Клик по удочке: удочка блокируется, появляется вертикальная шкала 1
+                // 1. Клик по удочке: запуск вертикальной шкалы дальности
                 currentPhase = GamePhase.VerticalCasting; // Переход в фазу вертикальной шкалы
-                if (fishRodButton) fishRodButton.interactable = false; // Блокировка удочки во время процесса
-                if (fishRodImage) fishRodImage.color = new Color(0.7f, 0.7f, 0.7f, 1f); // Затемнение удочки
+                if (fishRodButton) fishRodButton.interactable = true; // Удочка остается активной для нажатия СТОП
+                if (fishRodImage) fishRodImage.color = Color.white; // Яркий цвет удочки
                 if (verticalBarContainer) verticalBarContainer.SetActive(true); // Включение вертикальной шкалы
                 if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Выключение горизонтальной
-                if (actionButtonText) actionButtonText.text = "ОСТАНОВИТЬ ДАЛЬНОСТЬ (КЛИК)!"; // Текст подсказки
+                if (actionButtonText) actionButtonText.text = "СТОП!"; // Короткий текст фиксации дальности
                 break;
 
             case GamePhase.VerticalCasting: // Фаза 2: остановка дальности и запуск поклевки
                 // 2. Остановка шкалы 1: фиксируем дальность, прячем шкалу 1, запускаем шкалу 2
                 lockedVertical = verticalValue; // Фиксация дальности заброса
                 currentPhase = GamePhase.HorizontalCatching; // Переход в фазу подсечки
+                if (fishRodButton) fishRodButton.interactable = true; // Удочка остается активной для нажатия ПОДСЕЧЬ
+                if (fishRodImage) fishRodImage.color = Color.white; // Яркий цвет удочки
                 if (verticalBarContainer) verticalBarContainer.SetActive(false); // Прячем вертикальную шкалу
                 if (horizontalBarContainer) horizontalBarContainer.SetActive(true); // Показываем горизонтальную
-                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ НА КРАЯХ (КЛИК)!"; // Текст подсказки
+                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ!"; // Короткий текст подсечки
 
                 // Анимация заброса удочки и полет поплавка
                 StartCoroutine(AnimateRodCast(lockedVertical)); // Запуск анимации взмаха
@@ -227,6 +240,8 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 // 3. Остановка шкалы 2: подсекаем поплавок когда лучи на краях
                 lockedHorizontal = horizontalSpread; // Фиксация горизонтального расхождения
                 currentPhase = GamePhase.Splashing; // Фаза анимации всплеска
+                if (fishRodButton) fishRodButton.interactable = false; // Блокировка удочки во время вытягивания улова
+                if (fishRodImage) fishRodImage.color = new Color(0.8f, 0.8f, 0.8f, 1f); // Легкое затемнение при анимации вытягивания
                 if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Прячем шкалу
                 if (actionButtonText) actionButtonText.text = "ТЯНЕМ УЛОВ... 🌊"; // Текст процесса вытягивания
 

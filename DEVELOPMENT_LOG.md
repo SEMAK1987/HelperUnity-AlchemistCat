@@ -1,11 +1,16 @@
 # DEVELOPMENT LOG
 
-## [2026-09-08]
-- **Версия 18.12.49: Fix CS0111 Duplicate OnDisable in CatchMouse_Minigame.cs**:
-  - Объединены дублирующиеся методы `OnDisable()` в файле `CatchMouse_Minigame.cs`.
-  - Все операции остановки корутин (`StopAllCoroutines()`), очистки бегающих мышек (`ClearAllMice()`) и автоматического восстановления верхнего интерфейса HUD (`DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame()`) собраны в единый метод жизненного цикла Unity.
-  - Ошибка компиляции `error CS0111: Type 'CatchMouse_Minigame' already defines a member called 'OnDisable'` полностью устранена.
+## [2026-09-08] - v18.12.51
+- **Alchemy Fishing Minigame (`AlchemyFishing_Minigame.cs`)**:
+  - Упразднена лишняя центральная кнопка `Action_Main_Button`. Текст действия («ЗАБРОС!», «СТОП!», «ПОДСЕЧЬ!», «ТЯНЕМ УЛОВ... 🌊») перенесен непосредственно на саму Удочку (`FishRod_Visual_Button` ➔ `Text (TMP)`).
+  - Реализован автоматический fallback поиск дочернего `TextMeshProUGUI` удочки и бейджа `Attempts_Badge` в методе `Start()`, что исключает `MissingReferenceException` при неполных ссылках в инспекторе.
+  - Исправлен белый артефакт в верхней части экрана (на `Attempts_Badge` отключен пустой белый компонент `Image`).
+  - Интегрировано автоматическое скрытие аватара Кота и боковых кнопок HUD (`DialogueSystem_Manager.HideHUDForMinigame` / `RestoreHUDAfterMinigame`) на время работы мини-игр.
+- **Catch Mouse Minigame (`CatchMouse_Minigame.cs`)**:
+  - Устранена ошибка дублирования `OnDisable` (CS0111).
+  - Настроены 3 фазы сложности (Easy, Medium, Hard) с разворотом мышей и анимациями.
+- **Синхронизация окружения и коннекторов (v18.12.51)**:
+  - Актуализированы `UnityConnector.cs`, `blender_connector.py`, `server.ts`, `src/App.tsx`, `package.json`, `version.json`, `knowledge_base.json`, `metadata.json`, `PROJECT_MASTER_BLUEPRINT.md`, `AI_ASSISTANT_RECOVERY_GUIDE.md` и `AGENTS.md`.
 
-## [2026-05-14]
-- Версия 18.5.8: Zenith Multi-Tool Synergy & Settings Fix.
-
+## [2026-05-14] - v18.5.8
+- Zenith Multi-Tool Synergy & Settings Fix.

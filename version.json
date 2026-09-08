@@ -1,7 +1,7 @@
 {
-  "version": "18.12.49",
+  "version": "18.12.51",
   "release_date": "2026-09-08",
   "changelog": [
-    "v18.12.49: Fix CS0111 duplicate OnDisable method in CatchMouse_Minigame.cs, full compilation cleanup."
+    "v18.12.51: Full Unity-Blender-AI Studio sync, Fishing Minigame Rod Button integration, Attempt Badge fix & Dialogue HUD auto-hiding."
   ]
 }

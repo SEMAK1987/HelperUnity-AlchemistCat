@@ -1,6 +1,6 @@
 # Руководство по Восстановлению и Синхронизации ИИ-Помощника (Alchemist Cat Studio)
 
-## Версия: 18.12.47
+## Версия: 18.12.51
 **Дата обновления:** 2026-09-08
 
 ---
@@ -19,11 +19,13 @@
 
 | Скрипт | Назначение | Ключевые поля Inspector |
 |---|---|---|
+| `AlchemyFishing_Minigame.cs` | Алхимическая Рыбалка: 2 шкалы, 10 попыток, расчет зон | `fishRodButton`, `actionButtonText` (`FishRod_Visual_Button -> Text (TMP)`), `delimiterZone4`, `attemptsCounterText` |
+| `CatchMouse_Minigame.cs` | Мини-игра «Поймай Мышь» (Road_Track, 3 сложности) | `roadTrackPanel`, `mouseRunnerPrefab`, `scoreTextTMP`, `phaseNoticePanel` |
 | `DailyRewardSystem.cs` | Цикл 7 дней + супер-вехи (1, 3, 6, 8, 12 месяцев) | `claimButton`, `timerTextTMP`/`timerText`, `statusTextTMP`/`statusText`, `calendarDaySlots` |
 | `GameManager.cs` | Главный синглтон игры, ресурсы, опыт, прокачка | `goldText`, `crystalsText`, `stonesText`, `scrollsText`, `levelText`, `xpText`, `xpSlider`, `xpFillImage` |
 | `Calendar_Manager.cs` | Динамическая генерация календарной сетки дней | Настройки префабов дней, автоматическая разметка в Content |
 | `RecipeCrafting_Manager.cs` | Алхимические зелья, крафт, сундуки | `ResetCraftingAndChestProgress`, `OpenInventory` |
-| `DialogueSystem_Manager.cs` | Диалоговая ветвящаяся система кота | `speakerNameText`, `dialogueContentText`, `catAvatarImage`, `choiceButtons` |
+| `DialogueSystem_Manager.cs` | Диалоговая ветвящаяся система кота | `speakerNameText`, `dialogueContentText`, `catAvatarImage`, `choiceButtons`, `HideHUDForMinigame`, `RestoreHUDAfterMinigame` |
 | `UnityConnector.cs` | Мост синхронизации Unity с AI Assistant | `serverUrl`, `autoSyncOnStart` |
 | `blender_connector.py` | Экспорт моделей и анимаций из Blender в Unity | Автоматическая выгрузка FBX с запеканием масштабов |
 
@@ -36,18 +38,23 @@
    - Если это стандартный `Text` — используйте базовое поле.
    - Скрипты автоматически распознают и обновляют оба компонента.
 
-2. **Полоса опыта не перетаскивается в Slider:**
+2. **Белый прямоугольник сверху экрана в Рыбалке:**
+   - Выделите `Attempts_Badge` и выключите галочку на компоненте `Image` (или назначьте спрайт рамки).
+
+3. **Кнопка действия в Рыбалке на самой Удочке:**
+   - Перетащите `FishRod_Visual_Button` в `Fish Rod Button` и в `Action Button`.
+   - В поле `Action Button Text` перетащите дочерний `Text (TMP)` из-под `FishRod_Visual_Button`.
+
+4. **Полоса опыта не перетаскивается в Slider:**
    - Для объектов типа `Image` с `Image Type = Filled` (например, `Exp_Progress_Bar`) используйте поле `Xp Fill Image`.
    - Поле `Xp Slider` оставьте пустым (`None`).
-
-3. **Слоты календаря пусты в редакторе до запуска:**
-   - Ячейки дней генерируются кодом `Calendar_Manager` в рантайме. В инспекторе `Calendar Day Slots` можно оставить пустым (`0`).
 
 ---
 
 ## 4. Контрольный чеклист синхронизации
-- [x] `DailyRewardSystem.cs` обновлен с поддержкой TMP и вех 1-12 месяцев
-- [x] `GameManager.cs` обновлен с поддержкой `xpFillImage`
-- [x] `UnityConnector.cs` и `blender_connector.py` созданы и согласованы
-- [x] `AGENTS.md` зафиксировал обязательное автообновление скриптов
-- [x] База знаний `knowledge_base.json` и метаданные актуализированы
+- [x] `AlchemyFishing_Minigame.cs` обновлен: интеграция надписи «ЗАБРОС!» в удочку и авто-поиск
+- [x] `CatchMouse_Minigame.cs` исправлен (CS0111)
+- [x] `DialogueSystem_Manager.cs` скрывает/восстанавливает HUD на время мини-игр
+- [x] `DailyRewardSystem.cs` и `GameManager.cs` поддерживают Dual-UI
+- [x] `UnityConnector.cs` и `blender_connector.py` обновлены до v18.12.51
+- [x] `version.json`, `package.json`, `knowledge_base.json`, `metadata.json` синхронизированы
