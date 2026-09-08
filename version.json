@@ -1,7 +1,7 @@
 {
-  "version": "18.12.51",
+  "version": "18.12.52",
   "release_date": "2026-09-08",
   "changelog": [
-    "v18.12.51: Full Unity-Blender-AI Studio sync, Fishing Minigame Rod Button integration, Attempt Badge fix & Dialogue HUD auto-hiding."
+    "v18.12.52: Fixed Fishing Minigame launch activation chain (parent MinigamesPanel enabling), unified horizontal beam outward continuous spread and multi-backend F9 cheat key."
   ]
 }

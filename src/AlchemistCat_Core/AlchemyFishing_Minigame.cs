@@ -114,6 +114,23 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     private void Awake() // Инициализация при создании объекта
     {
         Instance = this; // Инициализация синглтона
+
+        // Автоматический поиск панелей, если не назначены в инспекторе
+        if (activeFishingStagePanel == null)
+        {
+            Transform t = transform.Find("Active_Fishing_Stage");
+            if (t != null) activeFishingStagePanel = t.gameObject;
+        }
+        if (difficultySelectPanel == null)
+        {
+            Transform t = transform.Find("Difficulty_Selection_Panel");
+            if (t != null) difficultySelectPanel = t.gameObject;
+        }
+        if (resultSummaryPopupPanel == null)
+        {
+            Transform t = transform.Find("Result_Summary_Popup_Panel");
+            if (t != null) resultSummaryPopupPanel = t.gameObject;
+        }
     }
 
     private void OnEnable() // При активации панели рыбалки
@@ -153,8 +170,27 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             Transform badge = activeFishingStagePanel.transform.Find("Attempts_Badge"); // Поиск бейджа попыток в иерархии
             if (badge != null) attemptsCounterText = badge.GetComponentInChildren<TextMeshProUGUI>(); // Поиск текста счетчика
         }
+    }
 
-        ShowDifficultySelection(); // Открываем меню выбора сложности на старте
+    public void OpenMinigame() // Открытие окна Алхимической Рыбалки
+    {
+        gameObject.SetActive(true); // Активация объекта игры
+        Transform p = transform.parent; // Поиск всех родителей
+        while (p != null)
+        {
+            p.gameObject.SetActive(true); // Гарантированное включение родительских панелей (MinigamesPanel)
+            p = p.parent;
+        }
+
+        // Если есть панель выбора сложности и кнопки на ней, показываем выбор сложности
+        if (difficultySelectPanel != null && (easyButton != null || mediumButton != null || hardButton != null))
+        {
+            ShowDifficultySelection(); // Показ выбора сложности
+        }
+        else // Иначе сразу запускаем игровую локацию с прудом
+        {
+            StartFishingSession(FishingDifficulty.Easy); // Сразу старт на легком уровне
+        }
     }
 
     public void ShowDifficultySelection() // Показ экрана выбора уровня сложности
@@ -162,6 +198,19 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (difficultySelectPanel) difficultySelectPanel.SetActive(true); // Включение панели сложности
         if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Выключение игровой панели
         if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Выключение итогового окна
+    }
+
+    public void HandleCloseClicked() // Обработка закрытия окна рыбалки
+    {
+        gameObject.SetActive(false); // Скрытие панели рыбалки
+        if (transform.parent != null && (transform.parent.name == "MinigamesPanel" || transform.parent.name.Contains("Minigames")))
+        {
+            transform.parent.gameObject.SetActive(false); // Закрытие родительской панели мини-игр
+        }
+        if (DialogueSystem_Manager.Instance != null) // Восстановление интерфейса
+        {
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление HUD
+        }
     }
 
     public void StartFishingSession(FishingDifficulty difficulty) // Старт сессии рыбалки из 10 попыток
@@ -420,14 +469,5 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
         // Кот начинает диалог про 3 новые локации (Лавка, Старый дом, Рынок)
         Debug.Log("Рыбалка завершена! Улов сложен в сундук инвентаря со стаками одинаковых предметов. Запуск квеста Поиска предметов в 3 локациях."); // Лог завершения
-    }
-
-    public void HandleCloseClicked() // Обработка нажатия кнопки Закрыть
-    {
-        gameObject.SetActive(false); // Выключение панели рыбалки
-        if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
-        {
-            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление UI
-        }
     }
 }

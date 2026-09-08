@@ -327,24 +327,27 @@ public class DialogueSystem_Manager : MonoBehaviour
     private void Update() // Безопасная обработка клавиш и кликов для быстрого пропуска диалогов и чит-теста
     {
         // Чит-клавиша F9: Мгновенное прохождение мини-игры с мышами и запуск диалога об Алхимической Рыбалке
+        bool f9Pressed = false;
+        try
+        {
+            if (Input.GetKeyDown(KeyCode.F9)) f9Pressed = true; // Стандартный ввод Unity Legacy
+        }
+        catch (System.Exception) { }
+
 #if ENABLE_INPUT_SYSTEM
-        var kb = UnityEngine.InputSystem.Keyboard.current; // Текущая клавиатура
-        if (kb != null && kb.f9Key.wasPressedThisFrame) // Нажатие F9
+        try
+        {
+            var kb = UnityEngine.InputSystem.Keyboard.current; // Пакет New Input System
+            if (kb != null && kb.f9Key.wasPressedThisFrame) f9Pressed = true;
+        }
+        catch (System.Exception) { }
+#endif
+
+        if (f9Pressed) // Если нажата клавиша F9
         {
             CheatPassMouseGameAndGoToFishing(); // Вызов чит-метода
             return; // Выход
         }
-#elif ENABLE_LEGACY_INPUT_MANAGER
-        try
-        {
-            if (Input.GetKeyDown(KeyCode.F9)) // Нажатие клавиши F9
-            {
-                CheatPassMouseGameAndGoToFishing(); // Вызов чит-метода
-                return; // Выход
-            }
-        }
-        catch (System.Exception) { } // Защита
-#endif
 
         if (!isTyping) return; // Если текст в данный момент не печатается, прерываем
 
@@ -1235,38 +1238,75 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время рыбалки
 
+        PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
+        PlayerPrefs.Save(); // Сохранение факта завершения
+
+        // 1. Активируем главное родительское окно MinigamesPanel
+        if (minigamesPanel != null)
+        {
+            minigamesPanel.SetActive(true);
+        }
+        else
+        {
+            GameObject mp = GameObject.Find("MinigamesPanel");
+            if (mp != null) mp.SetActive(true);
+            else
+            {
+                foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+                {
+                    if (go.name == "MinigamesPanel" && go.scene.isLoaded)
+                    {
+                        go.SetActive(true);
+                        break;
+                    }
+                }
+            }
+        }
+
+        // 2. Выключаем панель мышек, если была открыта
+        if (CatchMouse_Minigame.Instance != null)
+        {
+            CatchMouse_Minigame.Instance.gameObject.SetActive(false);
+        }
+
+        // 3. Ищем и открываем панель рыбалки
+        AlchemyFishing_Minigame fishing = null;
         if (AlchemyFishing_Minigame.Instance != null)
         {
-            PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
-            PlayerPrefs.Save(); // Сохранение факта завершения
-            AlchemyFishing_Minigame.Instance.gameObject.SetActive(true);
-            AlchemyFishing_Minigame.Instance.ShowDifficultySelection();
-            return;
+            fishing = AlchemyFishing_Minigame.Instance;
+        }
+        else
+        {
+            fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
         }
 
-        AlchemyFishing_Minigame fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
         if (fishing != null)
         {
-            PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
-            PlayerPrefs.Save(); // Сохранение факта завершения
-            fishing.gameObject.SetActive(true);
-            fishing.ShowDifficultySelection();
+            fishing.OpenMinigame();
             return;
         }
 
-        string[] fishingPanelNames = { "AlchemyFishing_Panel", "Fishing_Minigame_Panel", "FishingMinigamePanel", "Fishing_Panel", "AlchemyFishing" };
+        // 4. Запасной поиск по именам объекта
+        string[] fishingPanelNames = { "AlchemyFishing_Game_Panel", "AlchemyFishing_Panel", "Fishing_Minigame_Panel", "FishingMinigamePanel", "Fishing_Panel", "AlchemyFishing" };
         foreach (var name in fishingPanelNames)
         {
-            GameObject foundFishing = GameObject.Find(name);
-            if (foundFishing != null)
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
             {
-                PlayerPrefs.SetInt("Tutorial_Full_Flow_Done", 1); // Полное завершение обучающего диалога с Котом
-                PlayerPrefs.Save(); // Сохранение факта завершения
-                foundFishing.SetActive(true);
-                AlchemyFishing_Minigame comp = foundFishing.GetComponent<AlchemyFishing_Minigame>();
-                if (comp != null)
+                if (go.name == name && go.scene.isLoaded)
                 {
-                    comp.ShowDifficultySelection();
+                    Transform p = go.transform.parent;
+                    while (p != null)
+                    {
+                        p.gameObject.SetActive(true);
+                        p = p.parent;
+                    }
+
+                    go.SetActive(true);
+                    AlchemyFishing_Minigame comp = go.GetComponent<AlchemyFishing_Minigame>();
+                    if (comp != null)
+                    {
+                        comp.OpenMinigame();
+                    }
                     return;
                 }
             }
