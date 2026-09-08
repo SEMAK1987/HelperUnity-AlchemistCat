@@ -56,8 +56,9 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     [Header("=== Горизонтальная шкала поклевки (Шкала 2: 2 расходящихся луча) ===")]
     public GameObject horizontalBarContainer; // Контейнер горизонтальной шкалы поклевки
     public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
-    public RectTransform leftMovingBeam; // Левый луч, движущийся от центра
-    public RectTransform rightMovingBeam; // Правый луч, движущийся от центра
+    public RectTransform leftMovingBeam; // Левый луч, растущий от центра влево
+    public RectTransform rightMovingBeam; // Правый луч, растущий от центра вправо
+    public float beamHeight = 80f; // Высота (толщина) энергетических полос
     public float baseHorizontalSpeed = 0.55f; // Плавная базовая скорость расхождения лучей от центра к краям
 
     [Header("=== Кнопка действия ===")]
@@ -270,20 +271,33 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
         else if (currentPhase == GamePhase.HorizontalCatching) // Если активна горизонтальная шкала
         {
-            // 2 луча расходятся от центра (0) к краям (1) и обратно
+            // 2 луча непрерывно расходятся от центра (0) к краям (1) и обратно (как единая расширяющаяся волна)
             horizontalSpread += horizontalDirection * baseHorizontalSpeed * speedMultiplier * Time.deltaTime; // Расхождение лучей
             if (horizontalSpread >= 1f) { horizontalSpread = 1f; horizontalDirection = -1; } // Отскок от краев к центру
             else if (horizontalSpread <= 0f) { horizontalSpread = 0f; horizontalDirection = 1; } // Отскок от центра к краям
 
             if (horizontalBarBg) // Фон горизонтальной шкалы
             {
-                float halfW = horizontalBarBg.rect.width * 0.5f; // Половина ширины шкалы
-                float beamHalfWidth = leftMovingBeam ? leftMovingBeam.rect.width * 0.5f : 60f; // Полуширина спрайта луча
-                float maxTravel = Mathf.Max(20f, halfW - beamHalfWidth - 35f); // Ограничение хода строго внутри золотой рамки
+                float halfW = horizontalBarBg.rect.width * 0.5f; // Половина ширины золотой рамки
+                float maxSpan = Mathf.Max(50f, halfW - 35f); // Максимальное расширение до краев золотой рамки
+                float currentSpan = Mathf.Lerp(20f, maxSpan, horizontalSpread); // Текущая ширина полосы от центра
+                float h = beamHeight > 0 ? beamHeight : 80f; // Толщина (высота) энергетической полосы
 
-                float offset = horizontalSpread * maxTravel; // Текущее смещение от центра к краю
-                if (leftMovingBeam) leftMovingBeam.anchoredPosition = new Vector2(-offset, 0); // Левый луч
-                if (rightMovingBeam) rightMovingBeam.anchoredPosition = new Vector2(offset, 0); // Правый луч
+                if (leftMovingBeam) // Левая половина: правый край зафиксирован строго в центре, растет влево
+                {
+                    leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Фиксация правого края в центре
+                    leftMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
+                    leftMovingBeam.localScale = new Vector3(-1f, 1f, 1f); // Разворот хвоста/стрелки влево
+                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение ширины полосы влево
+                }
+
+                if (rightMovingBeam) // Правая половина: левый край зафиксирован строго в центре, растет вправо
+                {
+                    rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Фиксация левого края в центре
+                    rightMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
+                    rightMovingBeam.localScale = new Vector3(1f, 1f, 1f); // Направление хвоста/стрелки вправо
+                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение ширины полосы вправо
+                }
             }
         }
     }

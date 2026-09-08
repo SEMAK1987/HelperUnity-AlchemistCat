@@ -895,4 +895,14 @@ public class CatchMouse_Minigame : MonoBehaviour
             default: return null; // Отсутствие анимации
         }
     }
+
+    /// <summary>
+    /// Чит-метод для разработчика: мгновенный выигрыш на Легком уровне с начислением всех наград и переходом к диалогу рыбалки.
+    /// </summary>
+    [ContextMenu("⚡ ЧИТ: Мгновенно завершить игру (Easy)")]
+    public void CheatWinEasy() // Чит мгновенного прохождения мышей на легком уровне
+    {
+        selectedDifficulty = DifficultyLevel.Easy; // Выбор легкого уровня
+        ClaimRewardAndExit(); // Выдача наград и переход к диалогу рыбалки
+    }
 }
