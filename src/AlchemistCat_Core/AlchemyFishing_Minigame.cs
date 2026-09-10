@@ -6,15 +6,16 @@ using TMPro;
 
 public enum FishingDifficulty
 {
-    Easy, // Легкий уровень: +3000 Золота, 3 Камня, 1 Свиток (Зона 4: 35%, Скорость x1.0)
-    Medium, // Средний уровень: +5000 Золота, 5 Камней, 2 Свитка (Зона 4: 22%, Скорость x1.4)
-    Hard // Сложный уровень: +10000 Золота, 10 Камней, 5 Свитков, 1 Зелье Мастерства (+100 XP)
+    Easy,   // Легкий уровень: 10 попыток, скорость 0.30, Зона 4: 35%
+    Medium, // Средний уровень: 10 попыток, скорость 0.50, Зона 4: 22%
+    Hard    // Сложный уровень: 12 попыток, скорость 0.90, Зона 4: 12%
 }
 
 /// <summary>
-/// Алхимическая Рыбалка: 3 уровня сложности, 10 попыток за сессию,
-/// последовательное появление 2 шкал (вертикальная с 4 секторами -> горизонтальная с расходящимися лучами),
-/// блокировка удочки, подсчет улова и начисление наград в инвентарь.
+/// Алхимическая Рыбалка: 3 уровня сложности (Легкий - 10 попыток, Норма - 10, Сложный - 12),
+/// настраиваемые скорости расхождения (0.3 / 0.5 / 0.9), боковая панель текущих целей/улова,
+/// всплывающий тост единичного улова, разделители зон горизонтальной шкалы
+/// и справочник улова с кнопкой рыбки.
 /// </summary>
 public class AlchemyFishing_Minigame : MonoBehaviour
 {
@@ -23,20 +24,24 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     [Header("=== Главные панели ===")]
     public GameObject difficultySelectPanel; // Панель выбора сложности (Легко / Средне / Сложно)
     public GameObject activeFishingStagePanel; // Основная игровая панель процесса рыбалки
-    public GameObject resultSummaryPopupPanel; // Итоговое окно подсчета улова после 10 попыток
-    public Button closeButton; // Кнопка возврата в главное меню / закрытия
+    public GameObject resultSummaryPopupPanel; // Итоговое окно подсчета улова
+    public Button closeButton; // Кнопка возврата / закрытия
 
     [Header("=== Кнопки выбора сложности ===")]
     public Button easyButton; // Кнопка выбора легкой сложности
     public Button mediumButton; // Кнопка выбора средней сложности
     public Button hardButton; // Кнопка выбора сложной сложности
 
-    [Header("=== Счетчик попыток и ресурсов ===")]
+    [Header("=== Счетчик попыток и опыт ===")]
     public TextMeshProUGUI attemptsCounterText; // Текст счетчика попыток ("Попытка: 1 / 10")
     public TextMeshProUGUI totalSessionXpText; // Текст суммарного набранного опыта
-    private int currentAttempt = 1; // Текущий номер попытки из 10
-    private const int MAX_ATTEMPTS = 10; // Максимальное количество попыток за сессию
-    private FishingDifficulty currentDifficulty = FishingDifficulty.Medium; // Текущая выбранная сложность
+    private int currentAttempt = 1; // Текущий номер попытки
+    private FishingDifficulty currentDifficulty = FishingDifficulty.Easy; // Текущая выбранная сложность
+
+    [Header("=== Скорости горизонтальной шкалы по сложностям ===")]
+    public float speedEasy = 0.30f; // Скорость расхождения для легкого уровня
+    public float speedMedium = 0.50f; // Скорость расхождения для нормального уровня
+    public float speedHard = 0.90f; // Скорость расхождения для сложного уровня
 
     [Header("=== Удочка (FishRod_Visual в правом нижнем углу) ===")]
     public Button fishRodButton; // Кнопка удочки в нижнем углу экрана
@@ -58,15 +63,39 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public RectTransform horizontalBarBg; // Фон горизонтальной шкалы
     public RectTransform leftMovingBeam; // Левый луч, растущий от центра влево
     public RectTransform rightMovingBeam; // Правый луч, растущий от центра вправо
-    [Range(10f, 250f)] public float beamHeight = 90f; // Настраиваемая вручную высота (толщина) фиолетовых полос
+    [Range(10f, 250f)] public float beamHeight = 100f; // Настраиваемая вручную высота (толщина) фиолетовых полос
     [Range(0.2f, 1f)] public float maxBeamSpanRatio = 0.80f; // Максимальная длина расхождения лучей от центра
-    public float baseHorizontalSpeed = 0.55f; // Плавная базовая скорость расхождения лучей от центра к краям
+    public bool autoTaperBeams = true; // Автоматическое заострение концов полос в форме кристалла
+    [Range(0f, 100f)] public float beamTaperWidth = 45f; // Длина заострения на концах лучей
+
+    [Header("=== Разделители зон горизонтальной шкалы (по 2 с каждой стороны) ===")]
+    public RectTransform leftZoneDelimiter1; // Ближняя левая риска
+    public RectTransform leftZoneDelimiter2; // Дальняя левая риска
+    public RectTransform rightZoneDelimiter1; // Ближняя правая риска
+    public RectTransform rightZoneDelimiter2; // Дальняя правая риска
 
     [Header("=== Кнопка действия ===")]
     public Button actionButton; // Большая кнопка "Подсечь!" / "Тянуть!"
     public TextMeshProUGUI actionButtonText; // Текст на кнопке действия
 
-    [Header("=== Итоговое окно 10 попыток (Result_Summary_Popup_Panel) ===")]
+    [Header("=== Всплывающее окно единичного улова (Catch Toast) ===")]
+    public GameObject singleCatchToastPanel; // Панель всплывающего уведомления о пойманном предмете
+    public Image singleCatchIcon; // Иконка пойманного предмета
+    public TextMeshProUGUI singleCatchNameText; // Название пойманного предмета
+    public TextMeshProUGUI singleCatchXpText; // Опыт за пойманный предмет
+
+    [Header("=== Боковая панель улова / целей сессии ===")]
+    public GameObject sideLootPanel; // Боковая панель текущих целей/улова на пруду
+    public Transform sideLootContainer; // Контейнер с ячейками улова
+    public GameObject sideLootItemPrefab; // Префаб ячейки для боковой панели
+    public TextMeshProUGUI sideLootCounterText; // Текст общего количества улова ("Улов: 3/10")
+
+    [Header("=== Справочник улова / Атлас водоема (Значок Рыбки) ===")]
+    public Button pondCatchGuideButton; // Кнопка открытия справочника со значком рыбки
+    public GameObject pondCatchGuidePopup; // Всплывающее окно справочника зон и рыб
+    public Button pondCatchGuideCloseButton; // Кнопка закрытия справочника
+
+    [Header("=== Итоговое окно попыток (Result_Summary_Popup_Panel) ===")]
     public Transform summaryLootContainer; // Контейнер иконок пойманного лута
     public GameObject summaryItemPrefab; // Префаб ячейки лута в окне итогов
     public TextMeshProUGUI summaryGoldText; // Текст итогового золота
@@ -100,7 +129,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     private float lockedHorizontal = 0f; // Зафиксированное значение горизонтальной шкалы
 
     private List<LootResult> caughtSessionLoot = new List<LootResult>(); // Список наград за текущую сессию
-    private int totalSessionXpGained = 0; // Суммарно набранный опыт за 10 попыток
+    private int totalSessionXpGained = 0; // Суммарно набранный опыт
 
     [System.Serializable]
     public struct LootResult
@@ -110,6 +139,22 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         public int xp; // Опыт за предмет
         public Sprite sprite; // Спрайт иконки
         public Color rarityColor; // Цвет рамки редкости
+    }
+
+    public int GetMaxAttemptsForDifficulty(FishingDifficulty diff) // Максимум попыток для сложности
+    {
+        return diff == FishingDifficulty.Hard ? 12 : 10; // Сложный = 12, Легкий и Средний = 10
+    }
+
+    public float GetHorizontalSpeedForDifficulty(FishingDifficulty diff) // Скорость горизонтальной шкалы
+    {
+        switch (diff)
+        {
+            case FishingDifficulty.Easy: return speedEasy > 0 ? speedEasy : 0.30f; // Легкий 0.3
+            case FishingDifficulty.Medium: return speedMedium > 0 ? speedMedium : 0.50f; // Норма 0.5
+            case FishingDifficulty.Hard: return speedHard > 0 ? speedHard : 0.90f; // Сложный 0.9
+            default: return 0.50f;
+        }
     }
 
     private void Awake() // Инициализация при создании объекта
@@ -135,31 +180,60 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     }
 
 #if UNITY_EDITOR
-    private void OnValidate() // Безопасное отложенное обновление высоты лучей в редакторе Unity без SendMessage предупреждений
+    private void OnValidate() // Безопасное отложенное обновление высоты лучей в редакторе Unity
     {
         UnityEditor.EditorApplication.delayCall += () =>
         {
             if (this == null) return; // Проверка на уничтожение объекта
             ApplyBeamHeight(); // Применение высоты
+            PositionHorizontalDelimiters(); // Расстановка разделителей
         };
     }
 #endif
 
-    public void ApplyBeamHeight() // Метод применения высоты лучей
+    public void ApplyBeamHeight() // Метод применения высоты лучей и настройки формы заострения
     {
         if (leftMovingBeam != null && beamHeight > 0)
         {
             leftMovingBeam.sizeDelta = new Vector2(leftMovingBeam.sizeDelta.x, beamHeight); // Применение высоты левого луча
+            if (autoTaperBeams)
+            {
+                UI_TaperedBeamEffect tL = leftMovingBeam.GetComponent<UI_TaperedBeamEffect>();
+                if (tL == null) tL = leftMovingBeam.gameObject.AddComponent<UI_TaperedBeamEffect>();
+                tL.taperSide = UI_TaperedBeamEffect.TaperSide.Left;
+                tL.taperWidth = beamTaperWidth;
+                tL.enabled = true;
+            }
         }
         if (rightMovingBeam != null && beamHeight > 0)
         {
             rightMovingBeam.sizeDelta = new Vector2(rightMovingBeam.sizeDelta.x, beamHeight); // Применение высоты правого луча
+            if (autoTaperBeams)
+            {
+                UI_TaperedBeamEffect tR = rightMovingBeam.GetComponent<UI_TaperedBeamEffect>();
+                if (tR == null) tR = rightMovingBeam.gameObject.AddComponent<UI_TaperedBeamEffect>();
+                tR.taperSide = UI_TaperedBeamEffect.TaperSide.Right;
+                tR.taperWidth = beamTaperWidth;
+                tR.enabled = true;
+            }
         }
+    }
+
+    public void PositionHorizontalDelimiters() // Автоматическая расстановка рисок-разделителей на шкале поклевки
+    {
+        if (horizontalBarBg == null) return;
+        float halfW = horizontalBarBg.rect.width * 0.5f;
+
+        if (leftZoneDelimiter1 != null) leftZoneDelimiter1.anchoredPosition = new Vector2(-halfW * 0.35f, 0); // Ближняя левая
+        if (leftZoneDelimiter2 != null) leftZoneDelimiter2.anchoredPosition = new Vector2(-halfW * 0.68f, 0); // Дальняя левая
+        if (rightZoneDelimiter1 != null) rightZoneDelimiter1.anchoredPosition = new Vector2(halfW * 0.35f, 0); // Ближняя правая
+        if (rightZoneDelimiter2 != null) rightZoneDelimiter2.anchoredPosition = new Vector2(halfW * 0.68f, 0); // Дальняя правая
     }
 
     private void OnEnable() // При активации панели рыбалки
     {
         ApplyBeamHeight(); // Применение заданной толщины полос
+        PositionHorizontalDelimiters(); // Расстановка разделителей
         if (DialogueSystem_Manager.Instance != null) // Если диалоговый менеджер доступен
         {
             DialogueSystem_Manager.Instance.HideHUDForMinigame(); // Скрытие аватарки и кнопок справа
@@ -185,12 +259,16 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (actionButton) actionButton.onClick.AddListener(OnRodOrActionButtonClicked); // Клик по кнопке действия
         if (claimAllToBackpackButton) claimAllToBackpackButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Забрать лут
 
+        if (pondCatchGuideButton) pondCatchGuideButton.onClick.AddListener(OpenCatchGuide); // Открытие справочника
+        if (pondCatchGuideCloseButton) pondCatchGuideCloseButton.onClick.AddListener(CloseCatchGuide); // Закрытие справочника
+
         // Привязка всех крестиков в дочерних панелях к HandleCloseClicked
         if (activeFishingStagePanel != null)
         {
             Button[] stageButtons = activeFishingStagePanel.GetComponentsInChildren<Button>(true);
             foreach (var b in stageButtons)
             {
+                if (b == pondCatchGuideButton || b == pondCatchGuideCloseButton) continue;
                 if (b.gameObject.name.ToLower().Contains("close") || b.gameObject.name.ToLower().Contains("back"))
                 {
                     b.onClick.RemoveAllListeners();
@@ -199,36 +277,48 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             }
         }
 
-        // Автоматический поиск текста на удочке и бейджа попыток, если поле не перетащено в инспекторе
+        // Автоматический поиск текста на удочке и бейджа попыток
         if (actionButtonText == null && fishRodButton != null)
         {
-            actionButtonText = fishRodButton.GetComponentInChildren<TextMeshProUGUI>(); // Поиск дочернего текста кнопки удочки
+            actionButtonText = fishRodButton.GetComponentInChildren<TextMeshProUGUI>(); // Поиск дочернего текста
         }
         if (attemptsCounterText == null && activeFishingStagePanel != null)
         {
-            Transform badge = activeFishingStagePanel.transform.Find("Attempts_Badge"); // Поиск бейджа попыток в иерархии
-            if (badge != null) attemptsCounterText = badge.GetComponentInChildren<TextMeshProUGUI>(); // Поиск текста счетчика
+            Transform badge = activeFishingStagePanel.transform.Find("Attempts_Badge");
+            if (badge != null) attemptsCounterText = badge.GetComponentInChildren<TextMeshProUGUI>();
         }
+
+        ApplyBeamHeight(); // Применение высоты
+        PositionHorizontalDelimiters(); // Расстановка разделителей
+    }
+
+    public void OpenCatchGuide() // Открытие справочника зон и рыб
+    {
+        if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(true); // Показ окна справочника
+    }
+
+    public void CloseCatchGuide() // Закрытие справочника
+    {
+        if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(false); // Скрытие окна справочника
     }
 
     public void OpenMinigame() // Открытие окна Алхимической Рыбалки
     {
         gameObject.SetActive(true); // Активация объекта игры
-        Transform p = transform.parent; // Поиск всех родителей
+        Transform p = transform.parent;
         while (p != null)
         {
-            p.gameObject.SetActive(true); // Гарантированное включение родительских панелей (MinigamesPanel)
+            p.gameObject.SetActive(true); // Гарантированное включение родительских панелей
             p = p.parent;
         }
 
-        // Если есть панель выбора сложности и кнопки на ней, показываем выбор сложности
         if (difficultySelectPanel != null && (easyButton != null || mediumButton != null || hardButton != null))
         {
             ShowDifficultySelection(); // Показ выбора сложности
         }
-        else // Иначе сразу запускаем игровую локацию с прудом
+        else
         {
-            StartFishingSession(FishingDifficulty.Easy); // Сразу старт на легком уровне
+            StartFishingSession(FishingDifficulty.Easy); // Старт на легком уровне
         }
     }
 
@@ -238,6 +328,8 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (difficultySelectPanel) difficultySelectPanel.SetActive(true); // Включение панели сложности
         if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Выключение игровой панели
         if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Выключение итогового окна
+        if (singleCatchToastPanel) singleCatchToastPanel.SetActive(false); // Выключение тоста
+        if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(false); // Выключение справочника
     }
 
     public void HandleCloseClicked() // Обработка закрытия окна рыбалки / возврат к выбору сложности
@@ -246,26 +338,26 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if ((activeFishingStagePanel != null && activeFishingStagePanel.activeSelf) ||
             (resultSummaryPopupPanel != null && resultSummaryPopupPanel.activeSelf))
         {
-            if (difficultySelectPanel != null) // Если есть панель выбора сложности
+            if (difficultySelectPanel != null)
             {
-                ShowDifficultySelection(); // Возвращаемся на выбор сложности для смены режима
+                ShowDifficultySelection(); // Возвращаемся на выбор сложности
                 return;
             }
         }
 
-        // 2. Если уже на экране выбора сложности (или закрываем мини-игру полностью)
-        gameObject.SetActive(false); // Скрытие панели рыбалки
+        // 2. Если уже на экране выбора сложности (закрытие мини-игры)
+        gameObject.SetActive(false);
         if (transform.parent != null && (transform.parent.name == "MinigamesPanel" || transform.parent.name.Contains("Minigames")))
         {
-            transform.parent.gameObject.SetActive(false); // Закрытие родительской панели мини-игр
+            transform.parent.gameObject.SetActive(false);
         }
-        if (DialogueSystem_Manager.Instance != null) // Восстановление интерфейса
+        if (DialogueSystem_Manager.Instance != null)
         {
             DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление HUD
         }
     }
 
-    public void StartFishingSession(FishingDifficulty difficulty) // Старт сессии рыбалки из 10 попыток
+    public void StartFishingSession(FishingDifficulty difficulty) // Старт сессии рыбалки
     {
         currentDifficulty = difficulty; // Запоминаем выбранную сложность
         currentAttempt = 1; // Сброс номера попытки на 1
@@ -275,77 +367,77 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (difficultySelectPanel) difficultySelectPanel.SetActive(false); // Прячем выбор сложности
         if (activeFishingStagePanel) activeFishingStagePanel.SetActive(true); // Открываем экран рыбалки
         if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Прячем результаты
+        if (singleCatchToastPanel) singleCatchToastPanel.SetActive(false); // Прячем тост
+        if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(false); // Прячем справочник
 
-        // Настройка делителей зон в зависимости от сложности
         ConfigureDifficultySettings(); // Конфигурация шкал под уровень
+        UpdateSideLootUI(); // Обновление боковой панели улова
         ResetAttemptToIdle(); // Сброс в режим ожидания заброса
     }
 
     private void ConfigureDifficultySettings() // Конфигурация высоты зон и разделителей
     {
-        // Зона 4: Легкий = 35% высоты, Средний = 22%, Сложный = 12%
-        float z4Height = currentDifficulty == FishingDifficulty.Easy ? 0.35f : // 35% для легкого
-                         currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f; // 22% для среднего, 12% для сложного
+        float z4Height = currentDifficulty == FishingDifficulty.Easy ? 0.35f : 
+                         currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f;
 
-        if (delimiterZone4 && verticalBarBg) // Если разделитель и фон назначены
+        if (delimiterZone4 && verticalBarBg)
         {
-            float totalH = verticalBarBg.rect.height; // Полная высота шкалы
+            float totalH = verticalBarBg.rect.height;
             delimiterZone4.anchoredPosition = new Vector2(0, totalH * (1f - z4Height)); // Позиционирование 4 зоны
         }
     }
 
     private void ResetAttemptToIdle() // Сброс состояния попытки в ожидание клика по удочке
     {
-        currentPhase = GamePhase.Idle; // Установка состояния ожидания
-        if (attemptsCounterText) attemptsCounterText.text = $"Попытка: {currentAttempt} / {MAX_ATTEMPTS}"; // Текст счетчика попыток
+        currentPhase = GamePhase.Idle;
+        int maxAttempts = GetMaxAttemptsForDifficulty(currentDifficulty); // Максимальное количество попыток для текущего режима
+
+        if (attemptsCounterText) attemptsCounterText.text = $"Попытка: {currentAttempt} / {maxAttempts}"; // Текст счетчика попыток
         if (totalSessionXpText) totalSessionXpText.text = $"+{totalSessionXpGained} XP"; // Текст набранного опыта
 
         if (verticalBarContainer) verticalBarContainer.SetActive(false); // Прячем вертикальную шкалу
         if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Прячем горизонтальную шкалу
         if (bobberTransform) bobberTransform.gameObject.SetActive(false); // Прячем поплавок
+        if (singleCatchToastPanel) singleCatchToastPanel.SetActive(false); // Прячем тост
 
         // Разблокировка удочки
-        if (fishRodButton) fishRodButton.interactable = true; // Разблокировка кликабельности удочки
-        if (fishRodImage) fishRodImage.color = Color.white; // Яркий белый цвет удочки
-        if (actionButtonText) actionButtonText.text = "ЗАБРОС!"; // Лаконичный текст заброса на удочке/кнопке
+        if (fishRodButton) fishRodButton.interactable = true;
+        if (fishRodImage) fishRodImage.color = Color.white;
+        if (actionButtonText) actionButtonText.text = "ЗАБРОС!"; // Текст кнопки
     }
 
     public void OnRodOrActionButtonClicked() // Обработка клика по удочке или кнопке действия
     {
-        switch (currentPhase) // Переключение по фазам
+        switch (currentPhase)
         {
-            case GamePhase.Idle: // Фаза 1: запуск заброса
-                // 1. Клик по удочке: запуск вертикальной шкалы дальности
-                currentPhase = GamePhase.VerticalCasting; // Переход в фазу вертикальной шкалы
-                if (fishRodButton) fishRodButton.interactable = true; // Удочка остается активной для нажатия СТОП
-                if (fishRodImage) fishRodImage.color = Color.white; // Яркий цвет удочки
-                if (verticalBarContainer) verticalBarContainer.SetActive(true); // Включение вертикальной шкалы
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Выключение горизонтальной
-                if (actionButtonText) actionButtonText.text = "СТОП!"; // Короткий текст фиксации дальности
+            case GamePhase.Idle: // Фаза 1: запуск вертикальной шкалы
+                currentPhase = GamePhase.VerticalCasting;
+                if (fishRodButton) fishRodButton.interactable = true;
+                if (fishRodImage) fishRodImage.color = Color.white;
+                if (verticalBarContainer) verticalBarContainer.SetActive(true);
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(false);
+                if (actionButtonText) actionButtonText.text = "СТОП!";
                 break;
 
-            case GamePhase.VerticalCasting: // Фаза 2: остановка дальности и запуск поклевки
-                // 2. Остановка шкалы 1: фиксируем дальность, прячем шкалу 1, запускаем шкалу 2
-                lockedVertical = verticalValue; // Фиксация дальности заброса
-                currentPhase = GamePhase.HorizontalCatching; // Переход в фазу подсечки
-                if (fishRodButton) fishRodButton.interactable = true; // Удочка остается активной для нажатия ПОДСЕЧЬ
-                if (fishRodImage) fishRodImage.color = Color.white; // Яркий цвет удочки
-                if (verticalBarContainer) verticalBarContainer.SetActive(false); // Прячем вертикальную шкалу
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(true); // Показываем горизонтальную
-                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ!"; // Короткий текст подсечки
+            case GamePhase.VerticalCasting: // Фаза 2: фиксация дальности и запуск горизонтальной шкалы
+                lockedVertical = verticalValue;
+                currentPhase = GamePhase.HorizontalCatching;
+                if (fishRodButton) fishRodButton.interactable = true;
+                if (fishRodImage) fishRodImage.color = Color.white;
+                if (verticalBarContainer) verticalBarContainer.SetActive(false);
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(true);
+                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ!";
 
-                // Анимация заброса удочки и полет поплавка
                 StartCoroutine(AnimateRodCast(lockedVertical)); // Запуск анимации взмаха
                 break;
 
             case GamePhase.HorizontalCatching: // Фаза 3: подсечка и выуживание
-                // 3. Остановка шкалы 2: подсекаем поплавок когда лучи на краях
-                lockedHorizontal = horizontalSpread; // Фиксация горизонтального расхождения
-                currentPhase = GamePhase.Splashing; // Фаза анимации всплеска
-                if (fishRodButton) fishRodButton.interactable = false; // Блокировка удочки во время вытягивания улова
-                if (fishRodImage) fishRodImage.color = new Color(0.8f, 0.8f, 0.8f, 1f); // Легкое затемнение при анимации вытягивания
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Прячем шкалу
-                if (actionButtonText) actionButtonText.text = "ТЯНЕМ УЛОВ... 🌊"; // Текст процесса вытягивания
+                lockedHorizontal = horizontalSpread;
+                currentPhase = GamePhase.Splashing;
+                if (fishRodButton) fishRodButton.interactable = false;
+                if (fishRodImage) fishRodImage.color = new Color(0.8f, 0.8f, 0.8f, 1f);
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(false);
+                if (actionButtonText) actionButtonText.text = "ТЯНЕМ УЛОВ..."; // Без эмодзи (чистый текст)
 
                 StartCoroutine(ProcessCatchResult(lockedVertical, lockedHorizontal)); // Расчет улова
                 break;
@@ -354,56 +446,52 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
     private void Update() // Покадровое обновление движения бегунков
     {
-        float speedMultiplier = currentDifficulty == FishingDifficulty.Easy ? 1.0f : // Множитель легкой скорости
-                                currentDifficulty == FishingDifficulty.Medium ? 1.4f : 1.9f; // Множитель средней и сложной скорости
+        float vertSpeed = baseVerticalSpeed * (currentDifficulty == FishingDifficulty.Easy ? 1.0f : currentDifficulty == FishingDifficulty.Medium ? 1.4f : 1.9f);
+        float horizSpeed = GetHorizontalSpeedForDifficulty(currentDifficulty); // Получение скорости по сложности (0.3 / 0.5 / 0.9)
 
         if (currentPhase == GamePhase.VerticalCasting) // Если активна вертикальная шкала
         {
-            // Движение стрелки по вертикали 0..1
-            verticalValue += verticalDirection * baseVerticalSpeed * speedMultiplier * Time.deltaTime; // Смещение стрелки
-            if (verticalValue >= 1f) { verticalValue = 1f; verticalDirection = -1; } // Отскок от верхнего края
-            else if (verticalValue <= 0f) { verticalValue = 0f; verticalDirection = 1; } // Отскок от нижнего края
+            verticalValue += verticalDirection * vertSpeed * Time.deltaTime;
+            if (verticalValue >= 1f) { verticalValue = 1f; verticalDirection = -1; }
+            else if (verticalValue <= 0f) { verticalValue = 0f; verticalDirection = 1; }
 
-            if (verticalSliderArrow && verticalBarBg) // Если стрелка и фон заданы
+            if (verticalSliderArrow && verticalBarBg)
             {
-                float totalH = verticalBarBg.rect.height; // Полная высота шкалы
-                verticalSliderArrow.anchoredPosition = new Vector2(verticalSliderArrow.anchoredPosition.x, verticalValue * totalH); // Перемещение стрелки
+                float totalH = verticalBarBg.rect.height;
+                verticalSliderArrow.anchoredPosition = new Vector2(verticalSliderArrow.anchoredPosition.x, verticalValue * totalH);
             }
         }
         else if (currentPhase == GamePhase.HorizontalCatching) // Если активна горизонтальная шкала
         {
-            // 2 луча непрерывно расходятся от центра (0) к краям (1) и обратно (как единая расширяющаяся волна)
-            horizontalSpread += horizontalDirection * baseHorizontalSpeed * speedMultiplier * Time.deltaTime; // Расхождение лучей
-            if (horizontalSpread >= 1f) { horizontalSpread = 1f; horizontalDirection = -1; } // Отскок от краев к центру
-            else if (horizontalSpread <= 0f) { horizontalSpread = 0f; horizontalDirection = 1; } // Отскок от центра к краям
+            horizontalSpread += horizontalDirection * horizSpeed * Time.deltaTime;
+            if (horizontalSpread >= 1f) { horizontalSpread = 1f; horizontalDirection = -1; }
+            else if (horizontalSpread <= 0f) { horizontalSpread = 0f; horizontalDirection = 1; }
 
-            if (horizontalBarBg) // Фон горизонтальной шкалы
+            if (horizontalBarBg)
             {
-                float totalW = horizontalBarBg.rect.width; // Полная ширина золотой рамки
-                float halfW = totalW * 0.5f; // Половина ширины золотой рамки
+                float totalW = horizontalBarBg.rect.width;
+                float halfW = totalW * 0.5f;
                 
-                // Максимальный размах лучей строго во внутренней части рамки
                 float spanRatio = maxBeamSpanRatio > 0 ? maxBeamSpanRatio : 0.80f;
                 float maxSpan = Mathf.Max(20f, halfW * spanRatio); 
-                float currentSpan = Mathf.Lerp(15f, maxSpan, horizontalSpread); // Текущая длина полосы от центра
+                float currentSpan = Mathf.Lerp(15f, maxSpan, horizontalSpread);
                 
-                // Прямая высота полосы из инспектора (Beam Height), настраиваемая вручную без ограничений
-                float h = beamHeight > 0 ? beamHeight : 90f;
+                float h = beamHeight > 0 ? beamHeight : 100f; // Прямая высота из инспектора
 
-                if (leftMovingBeam) // Левая половина: правый край зафиксирован строго в центре, растет влево
+                if (leftMovingBeam)
                 {
-                    leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Фиксация правого края в центре
-                    leftMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
-                    leftMovingBeam.localScale = Vector3.one; // Прямой масштаб (растяжение влево)
-                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины и высоты полосы влево
+                    leftMovingBeam.pivot = new Vector2(1f, 0.5f);
+                    leftMovingBeam.anchoredPosition = Vector2.zero;
+                    leftMovingBeam.localScale = Vector3.one;
+                    leftMovingBeam.sizeDelta = new Vector2(currentSpan, h);
                 }
 
-                if (rightMovingBeam) // Правая половина: левый край зафиксирован строго в центре, растет вправо
+                if (rightMovingBeam)
                 {
-                    rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Фиксация левого края в центре
-                    rightMovingBeam.anchoredPosition = Vector2.zero; // Позиция строго в центре (X=0, Y=0)
-                    rightMovingBeam.localScale = Vector3.one; // Прямой масштаб (растяжение вправо)
-                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h); // Растяжение длины и высоты полосы вправо
+                    rightMovingBeam.pivot = new Vector2(0f, 0.5f);
+                    rightMovingBeam.anchoredPosition = Vector2.zero;
+                    rightMovingBeam.localScale = Vector3.one;
+                    rightMovingBeam.sizeDelta = new Vector2(currentSpan, h);
                 }
             }
         }
@@ -411,18 +499,17 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
     private IEnumerator AnimateRodCast(float power) // Корутина анимации взмаха удочки и броска поплавка
     {
-        if (fishRodTransform) // Если есть трансформ удочки
+        if (fishRodTransform)
         {
-            // Наклон удочки при замахе
             fishRodTransform.localRotation = Quaternion.Euler(0, 0, -20f); // Замах назад
-            yield return new WaitForSeconds(0.2f); // Пауза
-            fishRodTransform.localRotation = Quaternion.Euler(0, 0, 0); // Возврат в исходное положение
+            yield return new WaitForSeconds(0.2f);
+            fishRodTransform.localRotation = Quaternion.Euler(0, 0, 0); // Возврат
         }
 
-        if (bobberTransform) // Если есть поплавок
+        if (bobberTransform)
         {
-            bobberTransform.gameObject.SetActive(true); // Включение поплавка
-            bobberTransform.anchoredPosition = new Vector2(0, -50f + power * 120f); // Полет поплавка в воду
+            bobberTransform.gameObject.SetActive(true);
+            bobberTransform.anchoredPosition = new Vector2(0, -50f + power * 120f); // Полет поплавка
         }
     }
 
@@ -430,102 +517,168 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     {
         yield return new WaitForSeconds(0.8f); // Имитация времени выуживания
 
-        // Определение сектора заброса
-        float z4Threshold = 1f - (currentDifficulty == FishingDifficulty.Easy ? 0.35f : // Порог 4-й зоны для легкого
-                                  currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f); // Порог 4-й зоны для среднего/сложного
-        int sector = vVal >= z4Threshold ? 4 : vVal >= 0.50f ? 3 : vVal >= 0.25f ? 2 : 1; // Номер попавшего сектора
+        float z4Threshold = 1f - (currentDifficulty == FishingDifficulty.Easy ? 0.35f : 
+                                  currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f);
+        int sector = vVal >= z4Threshold ? 4 : vVal >= 0.50f ? 3 : vVal >= 0.25f ? 2 : 1;
 
-        // Точность по горизонтали (чем ближе лучи к краям 1.0, тем выше точность)
-        float edgeAccuracy = hVal; // Значение близости к краю
-        float roll = Random.value; // Случайное число от 0 до 1
+        float edgeAccuracy = hVal;
+        float roll = Random.value;
 
-        LootResult result = new LootResult(); // Структура выпавшего предмета
+        LootResult result = new LootResult();
 
-        if (sector == 4 && edgeAccuracy > 0.75f) // Попадание в 4 сектор при высокой точности
+        if (sector == 4 && edgeAccuracy > 0.70f) // Золотой 4-й сектор при точности
         {
-            if (roll < 0.08f) { result.itemId = "potion_3000"; result.itemName = "Драконье Зелье Опыта"; result.xp = 3000; result.sprite = potion3000Sprite; result.rarityColor = new Color(1f, 0.4f, 0f); } // Зелье 3000 XP
-            else if (roll < 0.25f) { result.itemId = "potion_1000"; result.itemName = "Мифическое Зелье Опыта"; result.xp = 1000; result.sprite = potion1000Sprite; result.rarityColor = new Color(0.7f, 0.3f, 1f); } // Зелье 1000 XP
-            else if (roll < 0.60f) { result.itemId = "potion_500"; result.itemName = "Легендарное Зелье Опыта"; result.xp = 500; result.sprite = potion500Sprite; result.rarityColor = new Color(1f, 0.85f, 0.2f); } // Зелье 500 XP
-            else { result.itemId = "potion_300"; result.itemName = "Магическое Зелье Опыта"; result.xp = 300; result.sprite = potion300Sprite; result.rarityColor = new Color(0.9f, 0.2f, 0.3f); } // Зелье 300 XP
+            if (roll < 0.08f) { result.itemId = "potion_3000"; result.itemName = "Драконье Зелье Опыта"; result.xp = 3000; result.sprite = potion3000Sprite; result.rarityColor = new Color(1f, 0.4f, 0f); }
+            else if (roll < 0.25f) { result.itemId = "potion_1000"; result.itemName = "Мифическое Зелье Опыта"; result.xp = 1000; result.sprite = potion1000Sprite; result.rarityColor = new Color(0.7f, 0.3f, 1f); }
+            else if (roll < 0.60f) { result.itemId = "potion_500"; result.itemName = "Легендарное Зелье Опыта"; result.xp = 500; result.sprite = potion500Sprite; result.rarityColor = new Color(1f, 0.85f, 0.2f); }
+            else { result.itemId = "potion_300"; result.itemName = "Магическое Зелье Опыта"; result.xp = 300; result.sprite = potion300Sprite; result.rarityColor = new Color(0.9f, 0.2f, 0.3f); }
         }
-        else if (sector >= 3) // Попадание в 3 сектор
+        else if (sector >= 3) // 3-й сектор
         {
-            if (roll < 0.30f) { result.itemId = "potion_100"; result.itemName = "Высокое Зелье Опыта"; result.xp = 100; result.sprite = potion100Sprite; result.rarityColor = new Color(0.6f, 0.3f, 0.9f); } // Зелье 100 XP
-            else if (roll < 0.70f) { result.itemId = "potion_50"; result.itemName = "Среднее Зелье Опыта"; result.xp = 50; result.sprite = potion50Sprite; result.rarityColor = new Color(0.2f, 0.6f, 1f); } // Зелье 50 XP
-            else { result.itemId = "rune_stone"; result.itemName = "Магический Рунный Камень"; result.xp = 25; result.sprite = runeStoneSprite; result.rarityColor = new Color(0.4f, 0.9f, 0.9f); } // Рунный камень
+            if (roll < 0.30f) { result.itemId = "potion_100"; result.itemName = "Высокое Зелье Опыта"; result.xp = 100; result.sprite = potion100Sprite; result.rarityColor = new Color(0.6f, 0.3f, 0.9f); }
+            else if (roll < 0.70f) { result.itemId = "potion_50"; result.itemName = "Среднее Зелье Опыта"; result.xp = 50; result.sprite = potion50Sprite; result.rarityColor = new Color(0.2f, 0.6f, 1f); }
+            else { result.itemId = "rune_stone"; result.itemName = "Магический Рунный Камень"; result.xp = 25; result.sprite = runeStoneSprite; result.rarityColor = new Color(0.4f, 0.9f, 0.9f); }
         }
-        else // 1-й и 2-й секторы (мусор)
+        else // 1-й и 2-й секторы (тина и ряска)
         {
-            if (roll < 0.5f) { result.itemId = "duckweed"; result.itemName = "Болотная тина"; result.xp = 0; result.sprite = duckweedSprite; result.rarityColor = Color.gray; } // Тина
-            else { result.itemId = "trash_bottle"; result.itemName = "Старая бутылка"; result.xp = 0; result.sprite = trashBottleSprite; result.rarityColor = Color.gray; } // Старая бутылка
+            if (roll < 0.5f) { result.itemId = "duckweed"; result.itemName = "Болотная тина"; result.xp = 5; result.sprite = duckweedSprite; result.rarityColor = Color.gray; }
+            else { result.itemId = "trash_bottle"; result.itemName = "Старая бутылка"; result.xp = 5; result.sprite = trashBottleSprite; result.rarityColor = Color.gray; }
         }
 
-        caughtSessionLoot.Add(result); // Добавление улова в сессионный список
-        totalSessionXpGained += result.xp; // Прибавление набранного опыта
+        caughtSessionLoot.Add(result); // Добавление в улов сессии
+        totalSessionXpGained += result.xp; // Прибавление опыта
 
-        // Завершение попытки
-        if (currentAttempt >= MAX_ATTEMPTS) // Если достигли 10 попыток
+        UpdateSideLootUI(); // Обновление боковой панели целей/улова
+
+        // Показ всплывающего окна улова на 1.5 секунды
+        yield return StartCoroutine(ShowSingleCatchToastCoroutine(result));
+
+        int maxAttempts = GetMaxAttemptsForDifficulty(currentDifficulty);
+        if (currentAttempt >= maxAttempts) // Если все попытки исчерпаны
         {
-            ShowSummaryPopup(); // Показываем окно итогов
+            ShowSummaryPopup(); // Показ окна итогов
         }
-        else // Если еще есть попытки
+        else
         {
-            currentAttempt++; // Переход к следующей попытке
+            currentAttempt++; // Следующая попытка
             ResetAttemptToIdle(); // Сброс в режим ожидания
         }
     }
 
-    private void ShowSummaryPopup() // Показ финального окна итогов после 10 попыток
+    private IEnumerator ShowSingleCatchToastCoroutine(LootResult res) // Показ всплывающего уведомления о пойманной рыбе/зелье
     {
-        currentPhase = GamePhase.Finished; // Установка завершенной фазы
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(true); // Включение итогового окна
-
-        // Начисление базовых наград по уровню сложности
-        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000; // Расчет золота
-        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10; // Расчет камней
-        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5; // Расчет свитков
-
-        if (summaryGoldText) summaryGoldText.text = $"+{gold:N0} Золота"; // Текст золота
-        if (summaryStonesText) summaryStonesText.text = $"+{stones} Камней"; // Текст камней
-        if (summaryScrollsText) summaryScrollsText.text = $"+{scrolls} Свитков"; // Текст свитков
-        if (summaryPotionBonusText) // Бонусное зелье мастерства
+        currentPhase = GamePhase.SingleResultToast;
+        if (singleCatchToastPanel)
         {
-            summaryPotionBonusText.gameObject.SetActive(currentDifficulty == FishingDifficulty.Hard); // Только на сложном
-            summaryPotionBonusText.text = "1 шт Зелье Опыта Мастерства (+100 XP)"; // Текст бонуса
+            singleCatchToastPanel.SetActive(true); // Включение тоста
+            if (singleCatchIcon)
+            {
+                singleCatchIcon.sprite = res.sprite; // Иконка предмета
+                singleCatchIcon.enabled = res.sprite != null;
+            }
+            if (singleCatchNameText) singleCatchNameText.text = $"Поймано: {res.itemName}"; // Название предмета
+            if (singleCatchXpText) singleCatchXpText.text = res.xp > 0 ? $"+{res.xp} XP" : ""; // Опыт
         }
+
+        yield return new WaitForSeconds(1.5f); // Длительность показа уведомления
+
+        if (singleCatchToastPanel) singleCatchToastPanel.SetActive(false); // Скрытие тоста
     }
 
-    public void ClaimAllAndProceedToQuest() // Забрать все награды в инвентарь и закрыть сессию
+    public void UpdateSideLootUI() // Обновление боковой панели улова/целей на экране пруда
     {
-        // 1. Начисление ресурсов и опыта в менеджер профиля
-        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000; // Расчет золота
-        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10; // Расчет камней
-        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5; // Расчет свитков
+        int maxAttempts = GetMaxAttemptsForDifficulty(currentDifficulty);
+        if (sideLootCounterText) sideLootCounterText.text = $"Улов: {caughtSessionLoot.Count} / {maxAttempts}"; // Счетчик улова
 
-        if (Avatar_Manager.Instance != null) // Если менеджер профиля доступен
+        if (sideLootContainer == null || sideLootItemPrefab == null) return;
+
+        // Очистка старых ячеек
+        foreach (Transform child in sideLootContainer)
         {
-            Avatar_Manager.Instance.AddGold(gold); // Начисление золота
-            Avatar_Manager.Instance.AddStones(stones); // Начисление камней
-            Avatar_Manager.Instance.AddScrolls(scrolls); // Начисление свитков
-            Avatar_Manager.Instance.AddExperience(totalSessionXpGained); // Начисление суммарного опыта
+            Destroy(child.gameObject);
         }
 
-        // 2. Добавление всех выловленных зелий в сундук/инвентарь (со стаком одинаковых предметов!)
-        if (Inventory_Manager.Instance != null) // Если инвентарь доступен
+        // Подсчет количества каждого пойманного предмета
+        Dictionary<string, (LootResult loot, int count)> groupedLoot = new Dictionary<string, (LootResult, int)>();
+        foreach (var item in caughtSessionLoot)
         {
-            Inventory_Manager.Instance.AddFishingSessionLoot(caughtSessionLoot); // Передача сессионного лута со стаками
-            if (currentDifficulty == FishingDifficulty.Hard) // Бонус сложного уровня
+            if (groupedLoot.ContainsKey(item.itemId))
             {
-                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Опыта Мастерства", 1, 100, potion100Sprite, new Color(1f, 0.85f, 0.2f)); // Добавление зелья мастерства
+                var entry = groupedLoot[item.itemId];
+                entry.count++;
+                groupedLoot[item.itemId] = entry;
+            }
+            else
+            {
+                groupedLoot[item.itemId] = (item, 1);
             }
         }
 
-        // Закрываем рыбалку
-        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Скрытие игрового экрана
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Скрытие итогового окна
-        if (difficultySelectPanel) difficultySelectPanel.SetActive(true); // Возврат к выбору сложности
+        // Создание аккуратных иконок с бейджами количества
+        foreach (var pair in groupedLoot.Values)
+        {
+            GameObject cell = Instantiate(sideLootItemPrefab, sideLootContainer);
+            Image img = cell.GetComponentInChildren<Image>();
+            TextMeshProUGUI txt = cell.GetComponentInChildren<TextMeshProUGUI>();
 
-        // Кот начинает диалог про 3 новые локации (Лавка, Старый дом, Рынок)
-        Debug.Log("Рыбалка завершена! Улов сложен в сундук инвентаря со стаками одинаковых предметов. Запуск квеста Поиска предметов в 3 локациях."); // Лог завершения
+            if (img && pair.loot.sprite != null)
+            {
+                img.sprite = pair.loot.sprite;
+                img.color = Color.white;
+            }
+            if (txt)
+            {
+                txt.text = $"x{pair.count}";
+            }
+        }
+    }
+
+    private void ShowSummaryPopup() // Показ финального окна итогов
+    {
+        currentPhase = GamePhase.Finished;
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(true);
+
+        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000;
+        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10;
+        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5;
+
+        if (summaryGoldText) summaryGoldText.text = $"+{gold:N0} Золота";
+        if (summaryStonesText) summaryStonesText.text = $"+{stones} Камней";
+        if (summaryScrollsText) summaryScrollsText.text = $"+{scrolls} Свитков";
+        if (summaryPotionBonusText)
+        {
+            summaryPotionBonusText.gameObject.SetActive(currentDifficulty == FishingDifficulty.Hard);
+            summaryPotionBonusText.text = "1 шт Зелье Опыта Мастерства (+100 XP)";
+        }
+    }
+
+    public void ClaimAllAndProceedToQuest() // Забрать все награды в инвентарь
+    {
+        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000;
+        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10;
+        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5;
+
+        if (Avatar_Manager.Instance != null)
+        {
+            Avatar_Manager.Instance.AddGold(gold);
+            Avatar_Manager.Instance.AddStones(stones);
+            Avatar_Manager.Instance.AddScrolls(scrolls);
+            Avatar_Manager.Instance.AddExperience(totalSessionXpGained);
+        }
+
+        if (Inventory_Manager.Instance != null)
+        {
+            Inventory_Manager.Instance.AddFishingSessionLoot(caughtSessionLoot);
+            if (currentDifficulty == FishingDifficulty.Hard)
+            {
+                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Опыта Мастерства", 1, 100, potion100Sprite, new Color(1f, 0.85f, 0.2f));
+            }
+        }
+
+        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false);
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false);
+        if (difficultySelectPanel) difficultySelectPanel.SetActive(true);
+
+        Debug.Log("Рыбалка завершена! Улов сохранен со стаками. Открытие квестов поиска предметов.");
     }
 }

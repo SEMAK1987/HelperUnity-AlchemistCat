@@ -1,7 +1,7 @@
 {
-  "version": "18.12.55",
+  "version": "18.12.57",
   "release_date": "2026-09-08",
   "changelog": [
-    "v18.12.55: Fixed Unity OnValidate SendMessage warning for RectTransform by deferring visual Beam Height update via EditorApplication.delayCall."
+    "v18.12.57: Added difficulty-based beam speeds (0.3/0.5/0.9) and attempts (10/10/12), removed emoji unicode warning, integrated instant single catch toast, live side loot goals container, 4 horizontal bar sector delimiters, and Pond Fish Catch Guide popup."
   ]
 }
