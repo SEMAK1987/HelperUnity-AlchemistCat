@@ -1,17 +1,17 @@
 # PROJECT MASTER BLUEPRINT: Unity & Blender AI Assistant (Total Knowledge Archive Edition)
 
-> **ВНИМАНИЕ:** Этот документ является "источников истины" для всего проекта. Он содержит полную структуру интерфейса, базу знаний агентов, инструкции по самовосстановлению и описание возможностей ИИ v18.12.51.
+> **ВНИМАНИЕ:** Этот документ является "источников истины" для всего проекта. Он содержит полную структуру интерфейса, базу знаний агентов, инструкции по самовосстановлению и описание возможностей ИИ v18.12.60.
 
 ## 1. Общая информация
-- **Версия Помощника:** 18.12.51
-- **Описание:** Гибридный ИИ-помощник нового поколения (v18.12.51 - Alchemist Cat Fishing Minigame Rod Button Action Integration, Dialogue HUD Auto-Hiding & Catch Mouse UI Calibration) для Unity 6 (6000.3.10f1), Blender 5.2 и Godot 4.4.
+- **Версия Помощника:** 18.12.60
+- **Описание:** Гибридный ИИ-помощник нового поколения (v18.12.60 - Alchemist Cat Cauldron Defense Full Inspector & UI Sync) для Unity 6 (6000.3.10f1), Blender 5.2 и Godot 4.4.
 - **Путь проекта:** Не задан
 - **Локальное хранилище:** Не задано
-- **Версия Unity:** Unity 6 (6000.3.10f1)
-- **Версия Blender:** Blender 5.2
-- **Версия GIMP:** GIMP 3.0
-- **Версия Redot:** Redot 4.4
-- **Флаги:** [QUANTUM_LINK_ACTIVE], [KNOWLEDGE_STORAGE_SYNC], [V18_12_51_ALCHEMIST_CAT_MASTER]
+- **Версия Unity:** unknown
+- **Версия Blender:** unknown
+- **Версия GIMP:** unknown
+- **Версия Redot:** unknown
+- **Флаги:** [QUANTUM_LINK_ACTIVE], [KNOWLEDGE_STORAGE_SYNC], [V18_12_60_FATE_MASTER]
 
 ## 2. Структура интерфейса
 ### Вкладки

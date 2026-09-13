@@ -1,7 +1,7 @@
 # Руководство по Восстановлению и Синхронизации ИИ-Помощника (Alchemist Cat Studio)
 
-## Версия: 18.12.51
-**Дата обновления:** 2026-09-08
+## Версия: 18.12.60
+**Дата обновления:** 2026-09-13
 
 ---
 
@@ -19,6 +19,7 @@
 
 | Скрипт | Назначение | Ключевые поля Inspector |
 |---|---|---|
+| `CauldronDefense_Minigame.cs` | Защита Котлов от дождя: 3 сложности, 5 котлов, зонтики | `Easy/Medium/Hard Button`, `Cauldron Roots [5]`, `Cauldron Buttons [5]`, `Umbrella Visuals [5]`, `Cloud Visuals [5]`, `Rain Particles [5]`, `Heart Icons [3]`, `Wave_Counter_Text` |
 | `AlchemyFishing_Minigame.cs` | Алхимическая Рыбалка: 2 шкалы, 10 попыток, расчет зон | `fishRodButton`, `actionButtonText` (`FishRod_Visual_Button -> Text (TMP)`), `delimiterZone4`, `attemptsCounterText` |
 | `CatchMouse_Minigame.cs` | Мини-игра «Поймай Мышь» (Road_Track, 3 сложности) | `roadTrackPanel`, `mouseRunnerPrefab`, `scoreTextTMP`, `phaseNoticePanel` |
 | `DailyRewardSystem.cs` | Цикл 7 дней + супер-вехи (1, 3, 6, 8, 12 месяцев) | `claimButton`, `timerTextTMP`/`timerText`, `statusTextTMP`/`statusText`, `calendarDaySlots` |
@@ -26,7 +27,7 @@
 | `Calendar_Manager.cs` | Динамическая генерация календарной сетки дней | Настройки префабов дней, автоматическая разметка в Content |
 | `RecipeCrafting_Manager.cs` | Алхимические зелья, крафт, сундуки | `ResetCraftingAndChestProgress`, `OpenInventory` |
 | `DialogueSystem_Manager.cs` | Диалоговая ветвящаяся система кота | `speakerNameText`, `dialogueContentText`, `catAvatarImage`, `choiceButtons`, `HideHUDForMinigame`, `RestoreHUDAfterMinigame` |
-| `UnityConnector.cs` | Мост синхронизации Unity с AI Assistant | `serverUrl`, `autoSyncOnStart` |
+| `UnityConnector.cs` | Мост синхронизации Unity с AI Assistant | `serverUrl`, `autoSyncOnStart`, `assistantVersion` |
 | `blender_connector.py` | Экспорт моделей и анимаций из Blender в Unity | Автоматическая выгрузка FBX с запеканием масштабов |
 
 ---
@@ -49,12 +50,17 @@
    - Для объектов типа `Image` с `Image Type = Filled` (например, `Exp_Progress_Bar`) используйте поле `Xp Fill Image`.
    - Поле `Xp Slider` оставьте пустым (`None`).
 
+5. **Настройка кнопок сложности в Защите Котлов:**
+   - В `On Click ()` кнопок `Easy_Button`, `Medium_Button`, `Hard_Button` перетащите объект `CauldronDefense_Game_Panel`.
+   - Выберите функции `CauldronDefense_Minigame -> StartEasyMode()`, `StartMediumMode()`, `StartHardMode()`.
+
 ---
 
 ## 4. Контрольный чеклист синхронизации
+- [x] `CauldronDefense_Minigame.cs` полностью привязан в Inspector (сложность, 5 слотов, зонтики, тучи, жизни)
 - [x] `AlchemyFishing_Minigame.cs` обновлен: интеграция надписи «ЗАБРОС!» в удочку и авто-поиск
-- [x] `CatchMouse_Minigame.cs` исправлен (CS0111)
+- [x] `CatchMouse_Minigame.cs` исправлен и синхронизирован
 - [x] `DialogueSystem_Manager.cs` скрывает/восстанавливает HUD на время мини-игр
 - [x] `DailyRewardSystem.cs` и `GameManager.cs` поддерживают Dual-UI
-- [x] `UnityConnector.cs` и `blender_connector.py` обновлены до v18.12.51
+- [x] `UnityConnector.cs` и `blender_connector.py` обновлены до v18.12.60
 - [x] `version.json`, `package.json`, `knowledge_base.json`, `metadata.json` синхронизированы

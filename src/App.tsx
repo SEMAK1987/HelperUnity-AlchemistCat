@@ -39,7 +39,7 @@ export const App: React.FC = () => {
                   Кот-Алхимик: Студия &amp; Игровой Ассистент
                 </h1>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold">
-                  v18.12.51
+                  v18.12.60
                 </span>
               </div>
               <p className="text-xs text-slate-400">
@@ -162,7 +162,7 @@ export const App: React.FC = () => {
 
       {/* Footer */}
       <footer className="border-t border-slate-900 bg-slate-950 py-4 text-center text-xs text-slate-500">
-        Кот-Алхимик: Studio v18.12.45 • Полная поддержка мобильных устройств и 4K мониторов • C# Unity Engine
+        Кот-Алхимик: Studio v18.12.60 • Полная поддержка мобильных устройств и 4K мониторов • C# Unity Engine
       </footer>
     </div>
   );

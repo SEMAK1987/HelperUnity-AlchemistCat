@@ -1,7 +1,8 @@
 {
-  "version": "18.12.57",
-  "release_date": "2026-09-08",
+  "version": "18.12.60",
+  "release_date": "2026-09-13",
   "changelog": [
+    "v18.12.60: Full Inspector synchronization and verification for CauldronDefense_Minigame.cs (Easy/Medium/Hard button OnClick bindings, 5 Cauldron slots with Umbrellas/Clouds/Particles, 3 Heart icons, and Dialogue/Laboratory integration).",
     "v18.12.57: Added difficulty-based beam speeds (0.3/0.5/0.9) and attempts (10/10/12), removed emoji unicode warning, integrated instant single catch toast, live side loot goals container, 4 horizontal bar sector delimiters, and Pond Fish Catch Guide popup."
   ]
 }
