@@ -113,6 +113,11 @@ public class HiddenObject_Minigame : MonoBehaviour
     public Button recordFlickerSpawnButton; // Мерцание (+1..10 Кристаллов)
     public Button closeRecordPopupButton; // Кнопка закрытия попапа рекордов
 
+    [Header("=== Переход к Защите Котлов и Диалоги ===")]
+    public GameObject cauldronDefenseGamePanel; // Ссылка на панель игры Защита Котлов (CauldronDefense_Game_Panel)
+    public GameObject dialogueContainer; // Панель диалога с Котом
+    public TextMeshProUGUI dialogueText; // Текстовое поле реплики Кота
+
     [Header("=== Спрайты зелий для выдачи в инвентарь ===")]
     public Sprite expPotion100Sprite; // Спрайт зелья опыта +100 XP
     public Sprite expPotion500Sprite; // Спрайт зелья опыта +500 XP
@@ -183,6 +188,26 @@ public class HiddenObject_Minigame : MonoBehaviour
                 locations[i].locationCardButton.onClick.AddListener(() => OpenLocationDifficultySelect(locIndex)); // Подписка на клик
             }
         }
+    }
+
+    /// <summary>
+    /// Открытие окна мини-игры «Поиск Предметов» с активацией меню локаций
+    /// </summary>
+    public void OpenMinigame()
+    {
+        gameObject.SetActive(true); // Активация объекта игры
+        Transform p = transform.parent;
+        while (p != null)
+        {
+            p.gameObject.SetActive(true); // Включение всех родительских панелей
+            p = p.parent;
+        }
+
+        if (hiddenObjectPanel != null) hiddenObjectPanel.SetActive(false); // Скрытие игрового полотна
+        if (difficultySelectPopup != null) difficultySelectPopup.SetActive(false); // Скрытие меню сложности
+        if (victoryPopupPanel != null) victoryPopupPanel.SetActive(false); // Скрытие окна победы
+        if (recordModeSelectPopup != null) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
+        if (locationSelectPopup != null) locationSelectPopup.SetActive(true); // Открытие окна выбора локации
     }
 
     /// <summary>
@@ -381,10 +406,12 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
     }
 
-    private void OnClaimRewardsClicked() // Обработка закрытия окна победы и проверка открытия эндгейм-режима
+    private void OnClaimRewardsClicked() // Обработка закрытия окна победы и переход к следующему испытанию
     {
         if (victoryPopupPanel) victoryPopupPanel.SetActive(false); // Скрытие окна победы
         if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false); // Скрытие игрового поля
+
+        string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени игрока
 
         // Проверка: пройдены ли все 3 локации на всех сложностях?
         bool allCompleted = true; // Флаг полной зачистки
@@ -403,6 +430,30 @@ public class HiddenObject_Minigame : MonoBehaviour
                 TriggerCatRecordUnlockDialog(); // Запуск диалога открытия рекордов
                 return; // Выход
             }
+        }
+
+        // Если все локации пройдены или игрок завершил этап — запускаем диалог перехода в Защиту Котлов через DialogueSystem_Manager
+        if (DialogueSystem_Manager.Instance != null) // Если центральный менеджер диалогов доступен
+        {
+            if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие выбора локаций
+            DialogueSystem_Manager.Instance.StartPostHiddenObjectDialogue(); // Запуск диалога Кота и переход в Защиту Котлов
+            Debug.Log($"Поиск предметов завершен! Запущен централизованный диалог Защиты Котлов для игрока {playerName}."); // Лог перехода
+            return; // Выход
+        }
+
+        // Фоллбэк: если назначена панель Защиты Котлов напрямую в инспекторе
+        if (cauldronDefenseGamePanel != null) // Если игра защиты котлов подключена
+        {
+            if (dialogueContainer != null && dialogueText != null) // Если диалог активен
+            {
+                dialogueContainer.SetActive(true); // Включение диалога
+                dialogueText.text = $"Мяу! Превосходно, {playerName}! Ты собрал все ингредиенты во всех 3 комнатах!\n\nНо над поляной сгущаются грозовые тучи! Скорей спешим на «Защиту Котлов»!\nВыбирай уровень сложности, следи за небом и вовремя жми «ЗАЩИТА!», чтобы раскрыть волшебные зонтики и спасти драгоценное зелье от дождя!"; // Реплика Кота
+            }
+
+            if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие выбора локаций
+            cauldronDefenseGamePanel.SetActive(true); // Включение игры Защиты Котлов
+            Debug.Log($"Поиск предметов завершен! Запущена Защита Котлов для игрока {playerName}."); // Лог перехода
+            return; // Выход
         }
 
         if (locationSelectPopup) locationSelectPopup.SetActive(true); // Возврат к выбору локации

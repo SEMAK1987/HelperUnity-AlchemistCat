@@ -138,7 +138,11 @@ public class DialogueSystem_Manager : MonoBehaviour
         public bool showMinigamesIcon = false;
         public bool isConfirmMinigamesStep = false;
         public bool isMinigamesWheelOpenStep = false;
-        public bool isConfirmFishingStep = false;
+        public bool isConfirmFishingStep = false; // Шаг подтверждения перехода в Рыбалку
+        public bool isConfirmHiddenObjectStep = false; // Шаг подтверждения перехода в Поиск Предметов
+        public bool isConfirmCauldronDefenseStep = false; // Шаг подтверждения перехода в Защиту Котлов
+        public bool isConfirmLaboratoryStep = false; // Шаг подтверждения перехода в Алхимическую Лабораторию
+        public bool isSelectAnyMinigameStep = false; // Шаг выбора любой мини-игры из Колеса / меню
     }
 
     private List<DialogStep> dialogueSteps = new List<DialogStep>();
@@ -159,11 +163,15 @@ public class DialogueSystem_Manager : MonoBehaviour
     // Фазы сценария
     public enum DialoguePhase
     {
-        IntroAndCalendar,    // Фаза 1: Приветствие, ресурсы, календарь
-        AvatarAndExp,        // Фаза 2: Опыт, уровень, аватарки
-        RecipeCrafting,      // Фаза 3: Первый опыт, списание ресурсов, котел и рецепт
-        MinigamesCatchMouse, // Фаза 6: Мини-игра «Поймай мышку»
-        MinigamesFishing     // Фаза 7: «Алхимическая Рыбалка»
+        IntroAndCalendar,       // Фаза 1: Приветствие, ресурсы, календарь
+        AvatarAndExp,           // Фаза 2: Опыт, уровень, аватарки
+        RecipeCrafting,         // Фаза 3: Первый опыт, списание ресурсов, котел и рецепт
+        MinigamesCatchMouse,    // Фаза 6: Мини-игра «Поймай мышку»
+        MinigamesFishing,       // Фаза 7: «Алхимическая Рыбалка»
+        MinigamesHiddenObject,  // Фаза 8: «Поиск Предметов» (3 комнаты)
+        MinigamesCauldronDefense, // Фаза 9: «Защита Котлов»
+        MinigamesLaboratory,    // Фаза 10: «Алхимическая Лаборатория»
+        MinigamesFreeChoice     // Фаза 11: Свободный выбор любой мини-игры
     }
 
     private DialoguePhase currentPhase = DialoguePhase.IntroAndCalendar;
@@ -486,6 +494,34 @@ public class DialogueSystem_Manager : MonoBehaviour
             return; // Выход
         }
 
+        // Если это шаг подтверждения Поиска Предметов
+        if (currentStep.isConfirmHiddenObjectStep) // Проверка шага поиска предметов
+        {
+            OpenHiddenObjectUI(); // Открытие окна Поиска Предметов
+            return; // Выход
+        }
+
+        // Если это шаг подтверждения Защиты Котлов
+        if (currentStep.isConfirmCauldronDefenseStep) // Проверка шага защиты котлов
+        {
+            OpenCauldronDefenseUI(); // Открытие окна Защиты Котлов
+            return; // Выход
+        }
+
+        // Если это шаг подтверждения Лаборатории
+        if (currentStep.isConfirmLaboratoryStep) // Проверка шага лаборатории
+        {
+            OpenLaboratoryUI(); // Открытие окна Алхимической Лаборатории
+            return; // Выход
+        }
+
+        // Если это шаг выбора любой мини-игры из меню/колеса
+        if (currentStep.isSelectAnyMinigameStep) // Проверка шага свободного выбора
+        {
+            OpenMinigamesWheelUI(); // Открытие меню Колеса Мини-Игр
+            return; // Выход
+        }
+
         currentStepIndex++; // Переход к следующему индексу реплики
         if (currentStepIndex < dialogueSteps.Count) // Если есть следующий шаг
         {
@@ -706,6 +742,14 @@ public class DialogueSystem_Manager : MonoBehaviour
                         nextStepButtonText.text = "Открыть Колесо Игр";
                     else if (step.isConfirmFishingStep)
                         nextStepButtonText.text = "Начать рыбалку!";
+                    else if (step.isConfirmHiddenObjectStep)
+                        nextStepButtonText.text = "Поиск предметов!";
+                    else if (step.isConfirmCauldronDefenseStep)
+                        nextStepButtonText.text = "Защитить котлы!";
+                    else if (step.isConfirmLaboratoryStep)
+                        nextStepButtonText.text = "В Лабораторию!";
+                    else if (step.isSelectAnyMinigameStep)
+                        nextStepButtonText.text = "Выбрать игру";
                     else
                         nextStepButtonText.text = "Далее";
                 }
@@ -1313,6 +1357,142 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Открытие мини-игры «Поиск предметов» (Hidden Object)
+    /// </summary>
+    public void OpenHiddenObjectUI()
+    {
+        if (buttonClickSound != null && SettingsManager.Instance != null)
+            SettingsManager.Instance.PlaySoundEffect(buttonClickSound);
+
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+
+        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время мини-игры
+
+        // 1. Активируем главное родительское окно MinigamesPanel
+        if (minigamesPanel != null) minigamesPanel.SetActive(true);
+
+        // 2. Ищем и открываем панель поиска предметов
+        HiddenObject_Minigame ho = null;
+        if (HiddenObject_Minigame.Instance != null) ho = HiddenObject_Minigame.Instance;
+        else ho = FindAnyObjectByType<HiddenObject_Minigame>(FindObjectsInactive.Include);
+
+        if (ho != null)
+        {
+            ho.gameObject.SetActive(true);
+            ho.OpenMinigame();
+            return;
+        }
+
+        // Запасной поиск объекта по именам
+        string[] panelNames = { "HiddenObject_Game_Panel", "HiddenObject_Panel", "HiddenObjectPanel", "HiddenObjectsPanel" };
+        foreach (var name in panelNames)
+        {
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go.name == name && go.scene.isLoaded)
+                {
+                    Transform p = go.transform.parent;
+                    while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    go.SetActive(true);
+                    HiddenObject_Minigame comp = go.GetComponent<HiddenObject_Minigame>();
+                    if (comp != null) comp.OpenMinigame();
+                    return;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Открытие мини-игры «Защита Котлов» (Cauldron Defense)
+    /// </summary>
+    public void OpenCauldronDefenseUI()
+    {
+        if (buttonClickSound != null && SettingsManager.Instance != null)
+            SettingsManager.Instance.PlaySoundEffect(buttonClickSound);
+
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+
+        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время мини-игры
+
+        // 1. Активируем главное родительское окно MinigamesPanel
+        if (minigamesPanel != null) minigamesPanel.SetActive(true);
+
+        // 2. Ищем и открываем панель защиты котлов
+        CauldronDefense_Minigame cd = null;
+        if (CauldronDefense_Minigame.Instance != null) cd = CauldronDefense_Minigame.Instance;
+        else cd = FindAnyObjectByType<CauldronDefense_Minigame>(FindObjectsInactive.Include);
+
+        if (cd != null)
+        {
+            cd.gameObject.SetActive(true);
+            cd.OpenMinigame();
+            return;
+        }
+
+        // Запасной поиск объекта по именам
+        string[] panelNames = { "CauldronDefense_Game_Panel", "CauldronDefense_Panel", "CauldronDefensePanel", "CauldronDefense" };
+        foreach (var name in panelNames)
+        {
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go.name == name && go.scene.isLoaded)
+                {
+                    Transform p = go.transform.parent;
+                    while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    go.SetActive(true);
+                    CauldronDefense_Minigame comp = go.GetComponent<CauldronDefense_Minigame>();
+                    if (comp != null) comp.OpenMinigame();
+                    return;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Открытие мини-игры «Алхимическая Лаборатория» (Laboratory Mixer)
+    /// </summary>
+    public void OpenLaboratoryUI()
+    {
+        if (buttonClickSound != null && SettingsManager.Instance != null)
+            SettingsManager.Instance.PlaySoundEffect(buttonClickSound);
+
+        if (dialoguePanel != null) dialoguePanel.SetActive(false);
+
+        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время мини-игры
+
+        // 1. Активируем главное родительское окно MinigamesPanel
+        if (minigamesPanel != null) minigamesPanel.SetActive(true);
+
+        // 2. Ищем и открываем панель лаборатории
+        Laboratory_Mixer lab = null;
+        if (Laboratory_Mixer.Instance != null) lab = Laboratory_Mixer.Instance;
+        else lab = FindAnyObjectByType<Laboratory_Mixer>(FindObjectsInactive.Include);
+
+        if (lab != null)
+        {
+            lab.gameObject.SetActive(true);
+            if (lab.laboratoryRootPanel != null) lab.laboratoryRootPanel.SetActive(true);
+            return;
+        }
+
+        // Запасной поиск объекта по именам
+        string[] panelNames = { "Laboratory_Game_Panel", "Laboratory_Panel", "LaboratoryPanel", "Laboratory_Minigame" };
+        foreach (var name in panelNames)
+        {
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go.name == name && go.scene.isLoaded)
+                {
+                    Transform p = go.transform.parent;
+                    while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    go.SetActive(true);
+                    return;
+                }
+            }
+        }
+    }
+
     public void OnCalendarIconButtonClicked()
     {
         if (isCraftingInProgress || (dialoguePanel != null && dialoguePanel.activeSelf))
@@ -1716,6 +1896,193 @@ public class DialogueSystem_Manager : MonoBehaviour
             showKnowledgeIcon = true,
             showMinigamesIcon = true,
             isConfirmFishingStep = true // Финальный шаг — переход к мини-игре Рыбалки
+        });
+
+        DisplayStep(0);
+    }
+
+    // -------------------------------------------------------------
+    // ФАЗА 8: ПОСЛЕ РЫБАЛКИ — АНОНС И ПЕРЕХОД В «ПОИСК ПРЕДМЕТОВ»
+    // -------------------------------------------------------------
+    public void StartPostFishingDialogue()
+    {
+        currentPhase = DialoguePhase.MinigamesHiddenObject;
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+
+        if (cauldronButton != null) cauldronButton.SetActive(false);
+        if (roomCatObject != null) roomCatObject.SetActive(false);
+
+        dialogueSteps.Clear();
+        currentStepIndex = 0;
+
+        string currentName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик"));
+
+        // 1. Кот восхищен уловом и предлагает исследовать комнаты
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = $"<size=84%>Мурр, {currentName}! Какой богатый улов из пруда стихий! Ты настоящий мастер удочки!\n\nНо в нашей алхимической хижине беспорядок — ингредиенты растерялись по комнатам. Поможешь мне их отыскать?</size>",
+            textEN = $"<size=84%>Purr, {currentName}! What a rich catch from the elemental pond! You are a true fishing master!\n\nHowever, our alchemy cottage is in chaos — ingredients got scattered across rooms. Will you help me find them?</size>",
+            textTR = $"<size=84%>Miyav, {currentName}! Elementler golunden harika bir av! Sen gercek bir balikcilik ustasisin!\n\nAncak simyaci kulubemiz cok daginik — malzemeler odalara dagildi. Onlari bulmama yardim eder misin?</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmHiddenObjectStep = false
+        });
+
+        // 2. Объяснение правил Поиска Предметов (3 комнаты, 3 сложности, подсказки и зум)
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=78%>Наша следующая игра — <b><color=#80FFDB>«Поиск Предметов»</color></b>!\n\n• <b>3 уникальные локации</b>: Лаборатория, Чердак и Библиотека Тайн.\n• <b>3 уровня сложности</b>: Легкий (5 предм.), Обычный (10 предм.), Сложный (15 предм.).\n• Ищи предметы из верхней панели, используй <b>Зум и подсказки</b> Кота!\n• А за полное прохождение откроется режим <b>«Становление Рекорда»</b> с наградами до 10 Кристаллов!</size>",
+            textEN = "<size=78%>Our next game is <b><color=#80FFDB>«Hidden Objects»</color></b>!\n\n• <b>3 unique locations</b>: Laboratory, Attic & Mystery Library.\n• <b>3 difficulty levels</b>: Easy (5 items), Normal (10 items), Hard (15 items).\n• Find target items, use <b>Zoom and Cat Hints</b>!\n• Complete all rooms to unlock monthly <b>Record Challenge</b> with up to 10 Crystals!</size>",
+            textTR = "<size=78%>Siradaki oyunumuz <b><color=#80FFDB>«Gizli Nesne Bulma»</color></b>!\n\n• <b>3 ozel oda</b>: Laboratuvar, Tavan Arasi ve Gizem Kutuphanesi.\n• <b>3 zorluk seviyesi</b>: Kolay (5 nesne), Normal (10 nesne), Zor (15 nesne).\n• Hedef nesneleri bul, <b>Yakinlastirma ve Ipucu</b> kullan!\n• Odalari tamamla ve 10 Kristale kadar odullu <b>Rekor Modunu</b> ac!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmHiddenObjectStep = true // Финальный шаг — переход к Поиску Предметов
+        });
+
+        DisplayStep(0);
+    }
+
+    // -------------------------------------------------------------
+    // ФАЗА 9: ПОСЛЕ ПОИСКА ПРЕДМЕТОВ — АНОНС И ПЕРЕХОД В «ЗАЩИТУ КОТЛОВ»
+    // -------------------------------------------------------------
+    public void StartPostHiddenObjectDialogue()
+    {
+        currentPhase = DialoguePhase.MinigamesCauldronDefense;
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+
+        if (cauldronButton != null) cauldronButton.SetActive(false);
+        if (roomCatObject != null) roomCatObject.SetActive(false);
+
+        dialogueSteps.Clear();
+        currentStepIndex = 0;
+
+        string currentName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик"));
+
+        // 1. Похвала за поиск и предупреждение о дожде
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = $"<size=84%>Мяу! Превосходно, {currentName}! Ты собрал все ингредиенты во всех комнатах!\n\nНо беда не ждет — над поляной сгущаются грозовые тучи! Скорей спешим защищать котлы с драгоценными эликсирами!</size>",
+            textEN = $"<size=84%>Meow! Outstanding, {currentName}! You found all the ingredients across all rooms!\n\nBut danger looms — stormy clouds gather over the clearing! Let's hurry to protect our precious bubbling cauldrons!</size>",
+            textTR = $"<size=84%>Miyav! Harika, {currentName}! Tum odalardaki malzemeleri topladin!\n\nFakat tehlike yaklasiyor — firtina bulutlari toplandi! Degerli kazanlarimizi korumak icin acele edelim!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmCauldronDefenseStep = false
+        });
+
+        // 2. Объяснение правил Защиты Котлов (Зонтики, тучки, 3 котла)
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=78%>Наша новая игра — <b><color=#80FFDB>«Защита Котлов»</color></b>!\n\n• На поляне стоят <b>3 алхимических котла</b> с бурлящими зельями.\n• Сверху налетают грозовые тучи и пытаются залить зелье дождем!\n• Следи за тем, над каким котлом появилась туча, и вовремя жми <b>«ЗАЩИТА!»</b>, чтобы раскрыть волшебный зонтик!\n• 3 уровня сложности (10, 15, 20 туч) и награды: Золото, Опыт Игрока и Опыт Мастерства!</size>",
+            textEN = "<size=78%>Our new game is <b><color=#80FFDB>«Cauldron Defense»</color></b>!\n\n• There are <b>3 bubbling alchemy cauldrons</b> on the field.\n• Rainclouds hover above trying to spoil our potions!\n• Watch which cauldron is under attack and tap <b>«DEFEND!»</b> to deploy magical umbrellas!\n• 3 difficulties (10, 15, 20 clouds) with rewards: Gold, Player XP & Mastery XP!</size>",
+            textTR = "<size=78%>Yeni oyunumuz <b><color=#80FFDB>«Kazan Savunmasi»</color></b>!\n\n• Alanda kaynayan <b>3 simyaci kazani</b> bulunuyor.\n• Yagmur bulutlari iksirleri bozmak icin ustlerine geliyor!\n• Hangi kazanin tehlikede oldugunu izle ve <b>«SAVUN!»</b> butonuna basarak buyulu semsiyeyi ac!\n• 3 zorluk seviyesi ve Altin, Oyuncu XP ile Ustalik XP odulleri!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmCauldronDefenseStep = true // Финальный шаг — переход к Защите Котлов
+        });
+
+        DisplayStep(0);
+    }
+
+    // -------------------------------------------------------------
+    // ФАЗА 10: ПОСЛЕ ЗАЩИТЫ КОТЛОВ — АНОНС И ПЕРЕХОД В «АЛХИМИЧЕСКУЮ ЛАБОРАТОРИЮ»
+    // -------------------------------------------------------------
+    public void StartPostCauldronDefenseDialogue()
+    {
+        currentPhase = DialoguePhase.MinigamesLaboratory;
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+
+        if (cauldronButton != null) cauldronButton.SetActive(false);
+        if (roomCatObject != null) roomCatObject.SetActive(false);
+
+        dialogueSteps.Clear();
+        currentStepIndex = 0;
+
+        string currentName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик"));
+
+        // 1. Похвала за отражение туч
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = $"<size=84%>Мурр! Ты спас все наши котлы от ливня, {currentName}! Все эссенции сохранены в целости и сохранности!\n\nТеперь пора заняться истинной высшей магией — созданием уникальных эликсиров в Лаборатории!</size>",
+            textEN = $"<size=84%>Purr! You saved all our cauldrons from the torrential rain, {currentName}! All essences were kept safe!\n\nNow it is time for true high alchemy — concocting unique elixirs in our Laboratory!</size>",
+            textTR = $"<size=84%>Miyav! Kazanlarimizi yagmurdan kurtardin, {currentName}! Butun ozler guvende!\n\nSimdi gercek yuksek simyaya gecme zamani — Laboratuvarda essiz iksirler yapalim!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmLaboratoryStep = false
+        });
+
+        // 2. Объяснение правил Лаборатории (10 дозаторов, 5 колб, 40 рецептов, Мировой Рынок)
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = "<size=78%>Добро пожаловать в <b><color=#80FFDB>«Алхимическую Лабораторию»</color></b>!\n\n• <b>10 магических дозаторов</b> с чистейшими эссенциями (Рубин, Сапфир, Изумруд, Лунный свет, Драконье пламя и др.).\n• <b>5 рабочих колб</b> для смешивания зелий по точным пропорциям (10% на шаг).\n• <b>40 уникальных рецептов</b> от простых лечебных настоев до легендарного Философского Камня!\n• Готовые зелья можно продавать на <b>Мировом Рынке</b> за горы Золота, Камней, Свитков и Кристаллов!</size>",
+            textEN = "<size=78%>Welcome to the <b><color=#80FFDB>«Alchemy Laboratory»</color></b>!\n\n• <b>10 magical dispensers</b> with pure essences (Ruby, Sapphire, Emerald, Moonlight, Dragon Flame, etc.).\n• <b>5 working flasks</b> to mix precise formula percentages (10% increments).\n• <b>40 unique recipes</b> from basic healing drafts to the legendary Philosopher's Stone!\n• Sell concocted elixirs on the <b>Global Market</b> for piles of Gold, Stones, Scrolls & Crystals!</size>",
+            textTR = "<size=78%><b><color=#80FFDB>«Simya Laboratuvarina»</color></b> hos geldin!\n\n• Saf ozlere sahip <b>10 buyulu dispenser</b> (Yakut, Safir, Zumrut, Ay Isigi, Ejderha Alevi vb.).\n• Hassas oranlarda karistirma yapmak icin <b>5 calisma kolbasi</b> (%10 adimlarla).\n• Basit sifa iksirlerinden efsanevi Felsefe Tasina kadar <b>40 ozel tarif</b>!\n• Iksirleri <b>Dunya Pazarinda</b> bolca Altin, Tas, Parşomen ve Kristal karsiliginda sat!</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isConfirmLaboratoryStep = true // Финальный шаг — переход в Лабораторию
+        });
+
+        DisplayStep(0);
+    }
+
+    // -------------------------------------------------------------
+    // ФАЗА 11: ПОСЛЕ ЛАБОРАТОРИИ — СВОБОДНЫЙ ВЫБОР ИГРЫ
+    // -------------------------------------------------------------
+    public void StartPostLaboratoryDialogue()
+    {
+        currentPhase = DialoguePhase.MinigamesFreeChoice;
+        if (dialoguePanel != null) dialoguePanel.SetActive(true);
+
+        if (cauldronButton != null) cauldronButton.SetActive(false);
+        if (roomCatObject != null) roomCatObject.SetActive(false);
+
+        dialogueSteps.Clear();
+        currentStepIndex = 0;
+
+        string currentName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик"));
+
+        dialogueSteps.Add(new DialogStep
+        {
+            textRU = $"<size=82%>Мурр, {currentName}! Ты отлично потрудился в Лаборатории и прошел все наши испытания!\n\nЕсли ты не устал, мы можем сыграть еще в любую из наших мини-игр:\n• <b>Поймай мышку</b>\n• <b>Алхимическая Рыбалка</b>\n• <b>Поиск предметов</b>\n• <b>Защита котлов</b>\n\nКакую игру выберешь?</size>",
+            textEN = $"<size=82%>Purr, {currentName}! You did a splendid job in the Laboratory and conquered all our challenges!\n\nIf you're not tired, we can play any of our minigames again:\n• <b>Catch The Mouse</b>\n• <b>Alchemy Fishing</b>\n• <b>Hidden Objects</b>\n• <b>Cauldron Defense</b>\n\nWhich one would you like to play?</size>",
+            textTR = $"<size=82%>Miyav, {currentName}! Laboratuvarda harika is cikardin ve tum sinavlari gectin!\n\nYorulmadiysan, mini oyunlarimizdan istedigini tekrar oynayabiliriz:\n• <b>Fare Yakala</b>\n• <b>Simyaci Balikciligi</b>\n• <b>Gizli Nesne Bulma</b>\n• <b>Kazan Savunmasi</b>\n\nHangisini secmek istersin?</size>",
+            revealResourceIndex = 4,
+            showCalendarIcon = true,
+            revealAvatarUI = true,
+            showSmallScrollIcon = true,
+            showChestIcon = true,
+            showKnowledgeIcon = true,
+            showMinigamesIcon = true,
+            isSelectAnyMinigameStep = true // Шаг открытия Колеса Игр
         });
 
         DisplayStep(0);

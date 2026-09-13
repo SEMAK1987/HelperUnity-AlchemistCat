@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using System.Collections.Generic;
 
 /// <summary>
@@ -7,10 +9,20 @@ using System.Collections.Generic;
 /// - 10 дозаторов эссенций
 /// - 40 зашитых рецептов (10 Простых, 10 Средних, 10 Сложных, 10 Невероятных)
 /// - Авто-инициализация базы, статус "Открыт/Неизвестен", смешивание и продажа открытых рецептов
+/// - Интеграция с диалоговой системой Кота и переход к следующим активностям
 /// </summary>
 public class Laboratory_Mixer : MonoBehaviour
 {
     public static Laboratory_Mixer Instance; // Статический синглтон лаборатории смешивания
+
+    [Header("=== Главные панели Лаборатории ===")]
+    public GameObject laboratoryRootPanel; // Корневой объект всей панели лаборатории
+    public Button closeLaboratoryButton; // Кнопка закрытия лаборатории (крестик)
+
+    [Header("=== Диалог Кота после завершения ===")]
+    public GameObject dialogueContainer; // Панель диалога с Котом
+    public TextMeshProUGUI dialogueText; // Текстовое поле для реплик Кота
+    public GameObject minigamesPanel; // Панель выбора мини-игр (MinigamesPanel)
 
     [System.Serializable]
     public class LabRecipe
@@ -46,9 +58,38 @@ public class Laboratory_Mixer : MonoBehaviour
     private void Awake() // Инициализация синглтона, колб, базы 40 рецептов и сохраненных открытий
     {
         Instance = this; // Инициализация синглтона
+        if (closeLaboratoryButton != null) closeLaboratoryButton.onClick.AddListener(CloseLaboratory); // Привязка крестика
         InitializeFlasks(); // Инициализация 5 колб пустыми значениями
         InitializeAll40Recipes(); // Загрузка базы 40 алхимических рецептов
         LoadDiscoveredRecipes(); // Загрузка статуса открытых рецептов из памяти
+    }
+
+    public void CloseLaboratory() // Закрытие лаборатории и возврат к Коту с предложением других игр
+    {
+        if (laboratoryRootPanel != null) laboratoryRootPanel.SetActive(false); // Скрытие панели
+        else gameObject.SetActive(false); // Запасное скрытие
+
+        string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени
+
+        // Централизованный диалог Кота с предложением сыграть в любую мини-игру
+        if (DialogueSystem_Manager.Instance != null) // Если центральный менеджер доступен
+        {
+            DialogueSystem_Manager.Instance.StartPostLaboratoryDialogue(); // Запуск диалога Кота
+            Debug.Log($"Лаборатория закрыта! Запущен централизованный диалог Кота для игрока {playerName}."); // Лог
+            return; // Выход
+        }
+
+        // Фоллбэк: локальный диалог
+        if (dialogueContainer != null && dialogueText != null) // Если диалог подключен
+        {
+            dialogueContainer.SetActive(true); // Включение диалога
+            dialogueText.text = $"Мурр, {playerName}! Ты отлично потрудился в Лаборатории!\n\nЕсли ты не устал, мы можем сыграть еще в любую из наших мини-игр: Поймай мышку, Рыбалку, Поиск предметов или Защиту котлов! Какую выберешь?"; // Реплика Кота
+        }
+
+        if (minigamesPanel != null) // Если меню мини-игр назначено
+        {
+            minigamesPanel.SetActive(true); // Включение меню мини-игр
+        }
     }
 
     // Метод для выбора активной колбы (0 - 4) по клику на саму колбу

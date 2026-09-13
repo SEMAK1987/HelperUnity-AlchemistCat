@@ -22,6 +22,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public static AlchemyFishing_Minigame Instance; // Синглтон мини-игры рыбалки
 
     [Header("=== Главные панели ===")]
+    public GameObject rootFishingGamePanel; // Корневой объект панели рыбалки (AlchemyFishing_Game_Panel)
     public GameObject difficultySelectPanel; // Панель выбора сложности (Легко / Средне / Сложно)
     public GameObject activeFishingStagePanel; // Основная игровая панель процесса рыбалки
     public GameObject resultSummaryPopupPanel; // Итоговое окно подсчета улова
@@ -295,11 +296,17 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public void OpenCatchGuide() // Открытие справочника зон и рыб
     {
         if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(true); // Показ окна справочника
+        if (fishRodButton) fishRodButton.interactable = false; // Блокировка удочки при открытом справочнике
+        if (actionButton) actionButton.interactable = false; // Блокировка кнопки действия
+        if (closeButton) closeButton.interactable = false; // Блокировка основного крестика
     }
 
     public void CloseCatchGuide() // Закрытие справочника
     {
         if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(false); // Скрытие окна справочника
+        if (fishRodButton) fishRodButton.interactable = currentPhase == GamePhase.Idle || currentPhase == GamePhase.VerticalCasting || currentPhase == GamePhase.HorizontalCatching; // Восстановление кликабельности
+        if (actionButton) actionButton.interactable = fishRodButton.interactable;
+        if (closeButton) closeButton.interactable = true; // Разблокировка основного крестика
     }
 
     public void OpenMinigame() // Открытие окна Алхимической Рыбалки
@@ -652,33 +659,54 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
     }
 
-    public void ClaimAllAndProceedToQuest() // Забрать все награды в инвентарь
-    {
-        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000;
-        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10;
-        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5;
+    [Header("=== Переход к следующим мини-играм и диалогам ===")]
+    public GameObject hiddenObjectGamePanel; // Ссылка на панель поиска предметов (HiddenObject_Game_Panel)
+    public GameObject dialogueContainer; // Панель диалога с Котом
+    public TextMeshProUGUI dialogueText; // Текст внутри диалога с Котом
 
-        if (Avatar_Manager.Instance != null)
+    public void ClaimAllAndProceedToQuest() // Забрать все награды в инвентарь и запустить Поиск предметов
+    {
+        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000; // Расчет золота
+        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10; // Расчет камней
+        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5; // Расчет свитков
+
+        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
         {
-            Avatar_Manager.Instance.AddGold(gold);
-            Avatar_Manager.Instance.AddStones(stones);
-            Avatar_Manager.Instance.AddScrolls(scrolls);
-            Avatar_Manager.Instance.AddExperience(totalSessionXpGained);
+            Avatar_Manager.Instance.AddGold(gold); // Начисление золота
+            Avatar_Manager.Instance.AddStones(stones); // Начисление камней
+            Avatar_Manager.Instance.AddScrolls(scrolls); // Начисление свитков
+            Avatar_Manager.Instance.AddExperience(totalSessionXpGained); // Начисление опыта
         }
 
-        if (Inventory_Manager.Instance != null)
+        if (Inventory_Manager.Instance != null) // Если инвентарь активен
         {
-            Inventory_Manager.Instance.AddFishingSessionLoot(caughtSessionLoot);
-            if (currentDifficulty == FishingDifficulty.Hard)
+            Inventory_Manager.Instance.AddFishingSessionLoot(caughtSessionLoot); // Сохранение улова
+            if (currentDifficulty == FishingDifficulty.Hard) // Бонус сложного уровня
             {
-                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Опыта Мастерства", 1, 100, potion100Sprite, new Color(1f, 0.85f, 0.2f));
+                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Опыта Мастерства", 1, 100, potion100Sprite, new Color(1f, 0.85f, 0.2f)); // Выдача зелья
             }
         }
 
-        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false);
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false);
-        if (difficultySelectPanel) difficultySelectPanel.SetActive(true);
+        if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Скрытие игровой сцены
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Скрытие окна итогов
+        if (rootFishingGamePanel != null) rootFishingGamePanel.SetActive(false); // Скрытие всей панели рыбалки
+        else gameObject.SetActive(false); // Запасное скрытие текущего объекта
 
-        Debug.Log("Рыбалка завершена! Улов сохранен со стаками. Открытие квестов поиска предметов.");
+        // Получение сохраненного имени игрока
+        string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени игрока
+
+        // Запуск централизованного диалога с Котом и подготовка перехода в Поиск Предметов через DialogueSystem_Manager
+        if (DialogueSystem_Manager.Instance != null) // Если центральный менеджер диалогов доступен
+        {
+            DialogueSystem_Manager.Instance.StartPostFishingDialogue(); // Запуск сюжетной линии и анонса Поиска Предметов
+        }
+        else if (dialogueContainer != null && dialogueText != null) // Фоллбэк: если диалог подключен локально
+        {
+            dialogueContainer.SetActive(true); // Включение локального диалога
+            dialogueText.text = $"Мурр! Превосходный улов, {playerName}! Твоя ловкость восхитительна!\n\nА теперь заглянем в «Поиск Предметов»! Тебя ждут 3 волшебные комнаты!\nВыбирай сложность, находи спрятанные ингредиенты и спасай зелья!"; // Реплика Кота
+            if (hiddenObjectGamePanel != null) hiddenObjectGamePanel.SetActive(true); // Включение панели
+        }
+
+        Debug.Log($"Рыбалка завершена для {playerName}! Улов отправлен в рюкзак. Запущен диалог Кота перед Поиском Предметов."); // Лог завершения
     }
 }
