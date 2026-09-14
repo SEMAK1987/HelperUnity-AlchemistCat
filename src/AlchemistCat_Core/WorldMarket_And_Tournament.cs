@@ -2,7 +2,10 @@ using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// Мировой Рынок и Еженедельный Турнир Лидеров (Ранг Адепт)
+/// Разработчик: Алхимический Кот (Alchemist Cat Core)
+/// Мировой Рынок, Покупки и Еженедельный Турнир Лидеров (Ранг Адепт):
+/// - Все купленные на рынке товары, выигранные трофеи и награды турнира идут прямо в единый Сундук Алхимика
+/// - Комиссия гильдии 1% (снижается до 0% при использовании Пыли Продаж)
 /// </summary>
 public class WorldMarket_And_Tournament : MonoBehaviour
 {
@@ -49,5 +52,63 @@ public class WorldMarket_And_Tournament : MonoBehaviour
         int commission = Mathf.Max(1, (int)(priceGold * 0.01f)); // Расчет 1% комиссии гильдии торговцев (минимум 1G)
         Debug.Log($"Предмет {itemName} выставлен на Мировой Рынок за {priceGold}G. Комиссия: {commission}G."); // Логирование успешного размещения
         return true; // Успешное размещение лота на рынке
+    }
+
+    /// <summary>
+    /// Покупка товара на рынке или во внутриигровом магазине: предмет направляется сразу в единый Сундук Алхимика
+    /// </summary>
+    public bool BuyMarketItem(string itemId, string itemName, int priceGold, int count = 1, int xp = 0, Sprite icon = null)
+    {
+        int currentGold = PlayerPrefs.GetInt("Player_Gold", 0);
+        if (currentGold < priceGold)
+        {
+            Debug.LogWarning($"Недостаточно золота для покупки {itemName}! Требуется: {priceGold}G, есть: {currentGold}G.");
+            return false;
+        }
+
+        // Списание золота
+        if (Avatar_Manager.Instance != null)
+        {
+            Avatar_Manager.Instance.SpendGold(priceGold);
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Player_Gold", currentGold - priceGold);
+            PlayerPrefs.Save();
+        }
+
+        // Отправка купленного предмета прямо в единый Сундук Алхимика
+        if (Inventory_Manager.Instance != null)
+        {
+            Inventory_Manager.Instance.AddItem(itemId, itemName, count, xp, icon, new Color(1f, 0.84f, 0f)); // Золотая рамка магазина
+            Debug.Log($"[РЫНОК/МАГАЗИН] Успешная покупка: {itemName} (x{count}) за {priceGold}G! Предмет отправлен в Сундук Алхимика.");
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// Зачисление наград турнира лидеров в ресурсы и единый Сундук Алхимика
+    /// </summary>
+    public void ClaimTournamentReward(int rankIndex)
+    {
+        if (rankIndex < 0 || rankIndex >= tournamentRewards.Count) return;
+        var reward = tournamentRewards[rankIndex];
+
+        if (Avatar_Manager.Instance != null)
+        {
+            Avatar_Manager.Instance.AddGold(reward.gold);
+            Avatar_Manager.Instance.AddStones(reward.stones);
+            Avatar_Manager.Instance.AddScrolls(reward.scrolls);
+            if (reward.crystals > 0) Avatar_Manager.Instance.AddCrystals(reward.crystals);
+        }
+
+        // Выдача кубка или медали турнира в единый сундук
+        if (Inventory_Manager.Instance != null)
+        {
+            Inventory_Manager.Instance.AddItem($"trophy_tournament_rank_{rankIndex + 1}", $"Кубок Турнира ({reward.rankRange})", 1, 500, null, new Color(0.9f, 0.3f, 1f));
+        }
+
+        Debug.Log($"[ТУРНИР] Награда за {reward.rankRange} получена и отправлена в Сундук Алхимика!");
     }
 }

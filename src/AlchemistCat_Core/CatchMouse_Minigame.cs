@@ -823,10 +823,17 @@ public class CatchMouse_Minigame : MonoBehaviour
         PlayerPrefs.SetInt("Player_Scrolls", scrolls); // Сохранение свитков в PlayerPrefs
         PlayerPrefs.Save(); // Запись на диск
 
-        // 2. Добавление зелья в инвентарь при сложном уровне
-        if (givePotion && RecipeCrafting_Manager.Instance != null) // Если положено зелье и менеджер крафта доступен
+        // 2. Добавление зелья в единый сундук Алхимика при сложном уровне
+        if (givePotion)
         {
-            RecipeCrafting_Manager.Instance.AddPotionToFirstEmptySlot("Player_Potion_XP_Mastery", "Зелье Мастерства (+100 XP)"); // Добавление зелья в слот
+            if (Inventory_Manager.Instance != null)
+            {
+                Inventory_Manager.Instance.AddItem("potion_mastery_100", "Зелье Мастерства (+100 XP)", 1, 100, null, new Color(0.2f, 0.9f, 0.6f)); // Награда идет в общий сундук
+            }
+            else if (RecipeCrafting_Manager.Instance != null)
+            {
+                RecipeCrafting_Manager.Instance.AddPotionToFirstEmptySlot("Player_Potion_XP_Mastery", "Зелье Мастерства (+100 XP)"); // Запасной слот в инвентаре
+            }
         }
 
         // 3. Обновление ресурсов в верхнем UI

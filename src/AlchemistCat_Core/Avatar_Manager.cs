@@ -294,6 +294,23 @@ public class Avatar_Manager : MonoBehaviour
         }
     }
 
+    public bool SpendGold(int amount) // Списание монет золота при покупках
+    {
+        int current = PlayerPrefs.GetInt("Player_Gold", 0); // Текущий запас золота
+        if (current < amount) return false; // Недостаточно средств
+        
+        if (GameManager.Instance != null) // Если менеджер активен
+        {
+            GameManager.Instance.AddGold(-amount); // Списание через менеджер с синхронизацией UI
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Player_Gold", current - amount); // Запись остатка золота
+            PlayerPrefs.Save(); // Сохранение на диск
+        }
+        return true; // Успешное списание
+    }
+
     public void AddStones(int amount) // Начисление камней
     {
         if (GameManager.Instance != null) // Если есть менеджер игры
@@ -306,6 +323,22 @@ public class Avatar_Manager : MonoBehaviour
             PlayerPrefs.SetInt("Player_Stones", current + amount); // Прибавление камней
             PlayerPrefs.Save(); // Запись на диск
         }
+    }
+
+    public bool SpendStones(int amount) // Списание камней
+    {
+        int current = PlayerPrefs.GetInt("Player_Stones", 0); // Чтение запаса камней
+        if (current < amount) return false; // Недостаточно камней
+        if (GameManager.Instance != null) // Если есть игровой менеджер
+        {
+            GameManager.Instance.AddResources(0, -amount, 0, 0); // Списание ресурса
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Player_Stones", current - amount); // Запись остатка
+            PlayerPrefs.Save(); // Запись на диск
+        }
+        return true; // Успешное списание
     }
 
     public void AddScrolls(int amount) // Начисление свитков
@@ -322,6 +355,22 @@ public class Avatar_Manager : MonoBehaviour
         }
     }
 
+    public bool SpendScrolls(int amount) // Списание свитков
+    {
+        int current = PlayerPrefs.GetInt("Player_Scrolls", 0); // Чтение запаса свитков
+        if (current < amount) return false; // Недостаточно свитков
+        if (GameManager.Instance != null) // Если есть игровой менеджер
+        {
+            GameManager.Instance.AddResources(0, 0, -amount, 0); // Списание свитков
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Player_Scrolls", current - amount); // Запись остатка свитков
+            PlayerPrefs.Save(); // Запись на диск
+        }
+        return true; // Успешное списание
+    }
+
     public void AddCrystals(int amount) // Начисление премиум кристаллов
     {
         if (GameManager.Instance != null) // Если менеджер активен
@@ -334,6 +383,22 @@ public class Avatar_Manager : MonoBehaviour
             PlayerPrefs.SetInt("Player_Crystals", current + amount); // Сохранение с кристаллами
             PlayerPrefs.Save(); // Запись на диск
         }
+    }
+
+    public bool SpendCrystals(int amount) // Списание премиум кристаллов
+    {
+        int current = PlayerPrefs.GetInt("Player_Crystals", 0); // Чтение запаса кристаллов
+        if (current < amount) return false; // Недостаточно кристаллов
+        if (GameManager.Instance != null) // Если менеджер активен
+        {
+            GameManager.Instance.AddCrystals(-amount); // Списание кристаллов
+        }
+        else
+        {
+            PlayerPrefs.SetInt("Player_Crystals", current - amount); // Запись остатка
+            PlayerPrefs.Save(); // Запись на диск
+        }
+        return true; // Успешное списание
     }
 
     public void GainPlayerExperience(int amount) // Обертка для получения опыта кота

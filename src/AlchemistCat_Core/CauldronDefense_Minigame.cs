@@ -313,6 +313,14 @@ public class CauldronDefense_Minigame : MonoBehaviour
             Avatar_Manager.Instance.AddExperience(playerXp); // Начисление опыта
         }
 
+        // Отправка наград за спасение котлов в единый сундук Алхимика
+        if (Inventory_Manager.Instance != null && won)
+        {
+            int savedCauldronsCount = currentDifficulty == DefenseDifficulty.Easy ? 3 : (currentDifficulty == DefenseDifficulty.Medium ? 4 : 5);
+            Inventory_Manager.Instance.AddItem("defense_potion_shield", "Зелье Защиты Котлов", 1, masteryXp, null, new Color(0.35f, 0.75f, 1f)); // Зелье в сундук
+            Inventory_Manager.Instance.AddItem("cauldron_essence_charge", "Очищенная Эссенция Котла", savedCauldronsCount, 25, null, new Color(0.9f, 0.4f, 0.8f)); // Эссенция в сундук
+        }
+
         if (resultSummaryPanel) resultSummaryPanel.SetActive(false); // Скрытие окна итогов
         if (gameRootPanel) gameRootPanel.SetActive(false); // Скрытие игры защиты котлов
         else gameObject.SetActive(false); // Запасное скрытие

@@ -5,7 +5,7 @@ using UnityEngine; // Базовый движок Unity
 using UnityEngine.Networking; // Сетевые запросы UnityWebRequest
 
 /// <summary>
-/// Разработчик: Алхимический Кот (Alchemist Cat Studio v18.12.60)
+/// Разработчик: Алхимический Кот (Alchemist Cat Studio v18.12.65)
 /// Модуль синхронизации Unity с ассистентом разработки, базой знаний и Blender пайплайном:
 /// - Автоматическая проверка статуса скриптов и целостности кодовой базы
 /// - Прием и передача 3D моделей, анимаций и материалов из Blender Connector

@@ -766,16 +766,29 @@ public class RecipeCrafting_Manager : MonoBehaviour
     }
 
     [ContextMenu("Сбросить Прогресс Крафта и Сундука (Reset Crafting & Chest)")]
-    public void ResetCraftingAndChestProgress() // Сброс прогресса первого крафта и колбы сундука для отладки
+    public void ResetCraftingAndChestProgress() // Сброс прогресса первого крафта, котла и колбы сундука для отладки
     {
+        isCraftingActive = false; // Сброс варки
+        isPotionReadyToClaim = false; // Сброс готовности зелья
+        isFirstCraftCompleted = false; // Сброс статуса завершения
+        isMasteryPotionConsumed = false; // Сброс флага
         PlayerPrefs.DeleteKey("Mastery_Flask_Consumed"); // Удаление флага выпитой колбы
         PlayerPrefs.DeleteKey("First_Recipe_Done"); // Удаление флага завершения рецепта
         PlayerPrefs.DeleteKey("Tutorial_Recipe_Done"); // Удаление флага туториала
+        PlayerPrefs.DeleteKey("Tutorial_Recipe_Crafted"); // Удаление ключа крафта
+        PlayerPrefs.DeleteKey("Tutorial_Chest_Opened"); // Удаление ключа сундука
         PlayerPrefs.Save(); // Сохранение на диск
-        isMasteryPotionConsumed = false; // Сброс флага
+
         if (masteryPotionItemObject != null) masteryPotionItemObject.SetActive(true); // Включение колбы
         if (inventoryCloseButton != null) inventoryCloseButton.interactable = false; // Блокировка кнопки выхода
-        Debug.Log("[RecipeCrafting_Manager] Прогресс крафта и колбы сундука успешно сброшен!"); // Логирование
+        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false); // Скрытие шкалы варки
+        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false); // Скрытие кнопки сбора
+        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false); // Скрытие плашки изготовления
+        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false); // Скрытие свитка
+        if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false); // Скрытие облачка кота
+        if (inventoryPanel != null) inventoryPanel.SetActive(false); // Скрытие инвентаря
+        if (tableCauldronGroup != null) tableCauldronGroup.SetActive(false); // Скрытие столика с котлом
+        Debug.Log("[RecipeCrafting_Manager] Прогресс крафта, котла и колбы сундука успешно сброшен!"); // Логирование
     }
 
     public void OpenInventory() // Открытие панели инвентаря сундука и инициализация слотов
@@ -1023,35 +1036,19 @@ public class RecipeCrafting_Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// Добавление зелья или предмета в первый свободный слот инвентаря
+    /// Добавление зелья или предмета в единый Сундук Алхимика
     /// </summary>
     public void AddPotionToFirstEmptySlot(string potionId, string potionTitle) // Сохранение добавленного зелья или предмета в память инвентаря
     {
+        if (Inventory_Manager.Instance != null)
+        {
+            Inventory_Manager.Instance.AddItem(potionId, potionTitle, 1, 100, xpBadge100, new Color(0.2f, 0.9f, 0.6f));
+        }
+
         int currentCount = PlayerPrefs.GetInt($"Item_Count_{potionId}", 0); // Текущее количество предмета
         PlayerPrefs.SetInt($"Item_Count_{potionId}", currentCount + 1); // Увеличение счетчика на 1
         PlayerPrefs.SetString($"Item_Name_{potionId}", potionTitle); // Сохранение имени предмета
         PlayerPrefs.Save(); // Запись в реестр PlayerPrefs
-        Debug.Log($"[INVENTORY] Награда {potionTitle} ({potionId}) успешно добавлена в инвентарь (Количество: {currentCount + 1})."); // Логирование
-    }
-
-    [ContextMenu("Сбросить Прогресс Крафта и Инвентаря")]
-    public void ResetCraftingAndChestProgress() // Полный сброс прогресса крафта, котла и инвентаря
-    {
-        isCraftingActive = false; // Сброс варки
-        isPotionReadyToClaim = false; // Сброс готовности зелья
-        isFirstCraftCompleted = false; // Сброс статуса завершения
-        isMasteryPotionConsumed = false; // Сброс выпитой колбы
-        PlayerPrefs.DeleteKey("Mastery_Flask_Consumed"); // Удаление ключа колбы
-        PlayerPrefs.DeleteKey("Tutorial_Recipe_Crafted"); // Удаление ключа крафта
-        PlayerPrefs.DeleteKey("Tutorial_Chest_Opened"); // Удаление ключа сундука
-        PlayerPrefs.Save(); // Запись на диск
-
-        if (craftingProgressBarContainer != null) craftingProgressBarContainer.SetActive(false); // Скрытие шкалы варки
-        if (claimPotionButtonObject != null) claimPotionButtonObject.SetActive(false); // Скрытие кнопки сбора
-        if (makeBadgeButtonObject != null) makeBadgeButtonObject.SetActive(false); // Скрытие плашки изготовления
-        if (recipeScrollPanel != null) recipeScrollPanel.SetActive(false); // Скрытие свитка
-        if (miniCatBubblePanel != null) miniCatBubblePanel.SetActive(false); // Скрытие облачка кота
-        if (inventoryPanel != null) inventoryPanel.SetActive(false); // Скрытие инвентаря
-        if (tableCauldronGroup != null) tableCauldronGroup.SetActive(false); // Скрытие столика с котлом
+        Debug.Log($"[СУНДУК АЛХИМИКА] Награда '{potionTitle}' ({potionId}) отправлена в единый сундук (Всего: {currentCount + 1})."); // Логирование
     }
 }

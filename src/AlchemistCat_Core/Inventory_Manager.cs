@@ -6,14 +6,15 @@ using TMPro;
 
 /// <summary>
 /// Разработчик: Алхимический Кот (Alchemist Cat Core)
-/// Система Инвентаря и Сундука игрока с поддержкой стака одинаковых предметов:
-/// - При добавлении одинаковых зелий/ресурсов они объединяются в один слот
-/// - Счетчик количества отображается в виде бейджа "x{count}"
-/// - Автоматическая сортировка по качеству и сохранение в PlayerPrefs
+/// Единый Мастер-Сундук Алхимика (The One Central Alchemist Chest):
+/// - Единая точка складирования всех предметов за все квесты, мини-игры, крафты и покупки
+/// - Автоматический стек одинаковых предметов с бейджем количества "x{count}"
+/// - Динамическое размещение в сетке слотов сундука с поддержкой до 100 ячеек
+/// - Сохранение и загрузка состояния инвентаря в PlayerPrefs
 /// </summary>
 public class Inventory_Manager : MonoBehaviour
 {
-    public static Inventory_Manager Instance { get; private set; } // Статический синглтон для доступа к инвентарю
+    public static Inventory_Manager Instance { get; private set; } // Статический синглтон для доступа к единому сундуку
 
     [System.Serializable]
     public class ItemStack
@@ -36,18 +37,18 @@ public class Inventory_Manager : MonoBehaviour
         }
     }
 
-    [Header("UI Панель Сундука / Инвентаря")]
+    [Header("UI Панель Сундука Алхимика")]
     public GameObject chestInventoryPanel; // Главный объект окна сундука
-    public Transform chestSlotsContainer; // Контейнер (Grid / Layout) со слотами предметов
+    public Transform chestSlotsContainer; // Контейнер со слотами предметов (Inventory_Slots_Content)
     public GameObject chestSlotPrefab; // Префаб одного слота инвентаря
     public Button closeChestButton; // Кнопка закрытия окна сундука
     public TextMeshProUGUI totalItemsCountText; // Текстовый счетчик общего количества предметов
     public TextMeshProUGUI totalChestXpText; // Текстовый счетчик суммарного опыта предметов
 
-    [Header("Список предметов в сундуке игрока")]
+    [Header("Список предметов в едином сундуке игрока")]
     public List<ItemStack> inventorySlots = new List<ItemStack>(); // Список всех слотов предметов в сундуке
 
-    private void Awake() // Инициализация синглтона и защита от уничтожения между сценами
+    private void Awake() // Инициализация синглтона и защита от уничтожения
     {
         if (Instance == null) // Проверка на первый созданный экземпляр
         {
@@ -65,109 +66,131 @@ public class Inventory_Manager : MonoBehaviour
         if (closeChestButton != null) // Если кнопка закрытия сундука назначена
             closeChestButton.onClick.AddListener(CloseChestPanel); // Назначение закрытия окна по кнопке
 
-        LoadInventory(); // Загрузка предметов из сохраненного файла/реестра
+        LoadInventory(); // Загрузка предметов из сохраненного реестра
     }
 
     /// <summary>
-    /// Добавить предмет в сундук с автоматическим стаком одинаковых
+    /// Добавить любой предмет в единый сундук Алхимика со стаком одинаковых предметов
     /// </summary>
-    public void AddItem(string itemId, string itemName, int count, int xpPerItem, Sprite icon, Color rarityColor) // Добавление предмета или увеличение количества в стеке
+    public void AddItem(string itemId, string itemName, int count, int xpPerItem, Sprite icon = null, Color? rarityColor = null) // Добавление предмета в сундук
     {
-        // Ищем, есть ли уже такой предмет в инвентаре
+        Color chosenColor = rarityColor.HasValue ? rarityColor.Value : new Color(0.95f, 0.77f, 0.05f, 1f); // Дефолтный цвет золота
+
+        // Ищем, есть ли уже такой предмет в сундуке
         ItemStack existingSlot = inventorySlots.Find(slot => slot.itemId == itemId); // Поиск существующего слота по ID
 
         if (existingSlot != null) // Если такой предмет уже есть в сундуке
         {
             // Одинаковые предметы вкладываются друг в друга! Увеличиваем счетчик
             existingSlot.count += count; // Увеличение количества предметов в стеке
-            Debug.Log($"[ИНВЕНТАРЬ] Предмет {itemName} сложен в стек! Новое количество: x{existingSlot.count}"); // Логирование стекирования
+            if (icon != null) existingSlot.icon = icon; // Обновление иконки при наличии
+            Debug.Log($"[СУНДУК АЛХИМИКА] Предмет '{itemName}' добавлен в общий стек! Новое количество: x{existingSlot.count}"); // Логирование
         }
         else // Если предмет новый
         {
-            // Создаем новую ячейку со счетчиком
-            ItemStack newStack = new ItemStack(itemId, itemName, count, xpPerItem, icon, rarityColor); // Создание нового объекта стека
-            inventorySlots.Add(newStack); // Добавление слота в общий список
-            Debug.Log($"[ИНВЕНТАРЬ] Создан новый слот для {itemName} (x{count})"); // Логирование нового слота
+            // Создаем новую ячейку в сундуке
+            ItemStack newStack = new ItemStack(itemId, itemName, count, xpPerItem, icon, chosenColor); // Создание нового объекта стека
+            inventorySlots.Add(newStack); // Добавление слота в общий список сундука
+            Debug.Log($"[СУНДУК АЛХИМИКА] Создан новый слот для '{itemName}' (x{count})"); // Логирование нового слота
         }
 
-        SaveInventory(); // Сохранение обновленного состава инвентаря
+        SaveInventory(); // Сохранение обновленного состава сундука
         UpdateChestUI(); // Перерисовка интерфейса сундука
+
+        // Синхронизация со скриптом RecipeCrafting_Manager при его наличии
+        if (RecipeCrafting_Manager.Instance != null)
+        {
+            RecipeCrafting_Manager.Instance.EnsureInventorySlots(); // Проверка ячеек инвентаря
+        }
     }
 
     /// <summary>
-    /// Массовое добавление улова из мини-игры рыбалки
+    /// Удобный метод для наград из квестов, мини-игр и покупок
     /// </summary>
-    public void AddFishingSessionLoot(List<AlchemyFishing_Minigame.LootResult> caughtLoot) // Массовое добавление улова из мини-игры рыбалки
+    public void AddRewardItem(string itemId, string itemName, int count = 1, int xpPerItem = 0, Sprite icon = null)
     {
+        AddItem(itemId, itemName, count, xpPerItem, icon, new Color(0.3f, 0.85f, 0.95f, 1f));
+    }
+
+    /// <summary>
+    /// Массовое добавление улова из мини-игры рыбалки в единый сундук
+    /// </summary>
+    public void AddFishingSessionLoot(List<AlchemyFishing_Minigame.LootResult> caughtLoot) // Массовое добавление улова в единый сундук
+    {
+        if (caughtLoot == null) return;
         foreach (var loot in caughtLoot) // Перебор всего выловленного лута
         {
-            AddItem(loot.itemId, loot.itemName, 1, loot.xp, loot.sprite, loot.rarityColor); // Добавление каждого предмета в инвентарь
+            AddItem(loot.itemId, loot.itemName, 1, loot.xp, loot.sprite, loot.rarityColor); // Добавление в сундук
         }
 
-        SaveInventory(); // Сохранение инвентаря после сессии рыбалки
+        SaveInventory(); // Сохранение сундука
         UpdateChestUI(); // Перерисовка сундука
     }
 
     /// <summary>
-    /// Отрисовка UI сундука со стаками предметов
+    /// Отрисовка UI единого сундука со стаками предметов
     /// </summary>
     public void UpdateChestUI() // Отрисовка ячеек сундука с бейджами количества и рамками редкости
     {
-        if (chestSlotsContainer == null || chestSlotPrefab == null) return; // Проверка наличия UI контейнера и префаба
-
-        // Очищаем старые ячейки
-        foreach (Transform child in chestSlotsContainer) // Перебор всех предыдущих UI слотов
-        {
-            Destroy(child.gameObject); // Уничтожение старого слота
-        }
+        if (chestSlotsContainer == null) return; // Проверка наличия контейнера
 
         int totalCount = 0; // Накопитель общего числа предметов
         int totalXp = 0; // Накопитель суммарного опыта
 
-        // Создаем визуальные ячейки для каждого стака
+        // Если в контейнере уже есть ячейки (например, подготовленные 100 слотов инвентаря)
+        int slotIndex = 0;
+        int childCount = chestSlotsContainer.childCount;
+
         foreach (var stack in inventorySlots) // Перебор каждого стека предметов
         {
-            totalCount += stack.count; // Прибавление количества предметов
+            totalCount += stack.count; // Прибавление количества
             totalXp += stack.xpPerItem * stack.count; // Прибавление опыта
 
-            GameObject slotObj = Instantiate(chestSlotPrefab, chestSlotsContainer); // Создание UI ячейки из префаба
-            
-            // Иконка
-            Image iconImg = slotObj.transform.Find("Item_Icon")?.GetComponent<Image>(); // Поиск компонента Image иконки
-            if (iconImg != null && stack.icon != null) // Если иконка найдена
+            Transform slotTransform = null;
+
+            if (slotIndex < childCount)
             {
-                iconImg.sprite = stack.icon; // Установка спрайта предмета
+                slotTransform = chestSlotsContainer.GetChild(slotIndex); // Используем существующую ячейку сетки
+            }
+            else if (chestSlotPrefab != null)
+            {
+                GameObject newSlotObj = Instantiate(chestSlotPrefab, chestSlotsContainer); // Создание новой UI ячейки
+                slotTransform = newSlotObj.transform;
             }
 
-            // Счетчик количества (x3, x4 и т.д.)
-            TextMeshProUGUI countBadge = slotObj.transform.Find("Count_Badge/Text")?.GetComponent<TextMeshProUGUI>(); // Поиск текста бейджа количества
-            if (countBadge != null) // Если бейдж найден
+            if (slotTransform != null)
             {
-                countBadge.text = $"x{stack.count}"; // Запись текста кратности
-                countBadge.transform.parent.gameObject.SetActive(stack.count > 1); // Показ бейджа только если предметов больше одного
+                // Настраиваем визуал предмета внутри слота
+                Image iconImg = slotTransform.Find("Item_Icon")?.GetComponent<Image>(); // Поиск иконки
+                if (iconImg != null && stack.icon != null)
+                {
+                    iconImg.sprite = stack.icon; // Установка спрайта
+                    iconImg.gameObject.SetActive(true);
+                }
+
+                TextMeshProUGUI countBadge = slotTransform.Find("Count_Badge/Text")?.GetComponent<TextMeshProUGUI>(); // Поиск бейджа
+                if (countBadge != null)
+                {
+                    countBadge.text = $"x{stack.count}"; // Запись количества
+                    countBadge.transform.parent.gameObject.SetActive(stack.count > 1); // Показ бейджа
+                }
+
+                TextMeshProUGUI titleText = slotTransform.Find("Item_Title")?.GetComponent<TextMeshProUGUI>(); // Поиск текста заголовка
+                if (titleText != null)
+                {
+                    titleText.text = stack.itemName; // Установка имени
+                    titleText.color = stack.rarityColor; // Окрашивание
+                }
             }
 
-            // Название предмета
-            TextMeshProUGUI titleText = slotObj.transform.Find("Item_Title")?.GetComponent<TextMeshProUGUI>(); // Поиск текста заголовка
-            if (titleText != null) // Если текст заголовка найден
-            {
-                titleText.text = stack.itemName; // Установка имени предмета
-                titleText.color = stack.rarityColor; // Окрашивание в цвет редкости
-            }
-
-            // Рамка редкости
-            Image borderImg = slotObj.transform.Find("Rarity_Border")?.GetComponent<Image>(); // Поиск рамки редкости
-            if (borderImg != null) // Если рамка есть
-            {
-                borderImg.color = stack.rarityColor; // Установка цвета рамки по редкости
-            }
+            slotIndex++;
         }
 
-        if (totalItemsCountText != null) // Если текстовый счетчик общего числа назначен
-            totalItemsCountText.text = $"Предметов в сундуке: {totalCount} шт ({inventorySlots.Count} слотов)"; // Отображение суммарного числа
+        if (totalItemsCountText != null) // Текстовый счетчик предметов
+            totalItemsCountText.text = $"Предметов в сундуке: {totalCount} шт ({inventorySlots.Count} слотов)";
 
-        if (totalChestXpText != null) // Если счетчик опыта назначен
-            totalChestXpText.text = $"Всего опыта в зельях: +{totalXp} XP"; // Отображение суммарного опыта
+        if (totalChestXpText != null) // Счетчик опыта
+            totalChestXpText.text = $"Всего опыта в зельях: +{totalXp} XP";
     }
 
     public void OpenChestPanel() // Открытие панели сундука и обновление списка предметов
@@ -177,6 +200,10 @@ public class Inventory_Manager : MonoBehaviour
             chestInventoryPanel.SetActive(true); // Включение окна
             UpdateChestUI(); // Перерисовка интерфейса
         }
+        else if (RecipeCrafting_Manager.Instance != null)
+        {
+            RecipeCrafting_Manager.Instance.OpenInventory(); // Открытие инвентаря через RecipeCrafting_Manager
+        }
     }
 
     public void CloseChestPanel() // Закрытие панели сундука
@@ -185,14 +212,35 @@ public class Inventory_Manager : MonoBehaviour
             chestInventoryPanel.SetActive(false); // Скрытие окна
     }
 
-    private void SaveInventory() // Сохранение списка предметов в постоянную память
+    private void SaveInventory() // Сохранение списка предметов в PlayerPrefs
     {
-        // Сериализация списка слотов в PlayerPrefs
-        // В реальном проекте используется SaveGameSystem / JsonUtility
+        PlayerPrefs.SetInt("Chest_Slot_Count", inventorySlots.Count); // Сохраняем число слотов
+        for (int i = 0; i < inventorySlots.Count; i++)
+        {
+            var slot = inventorySlots[i];
+            PlayerPrefs.SetString($"Chest_Slot_{i}_Id", slot.itemId);
+            PlayerPrefs.SetString($"Chest_Slot_{i}_Name", slot.itemName);
+            PlayerPrefs.SetInt($"Chest_Slot_{i}_Count", slot.count);
+            PlayerPrefs.SetInt($"Chest_Slot_{i}_XP", slot.xpPerItem);
+        }
+        PlayerPrefs.Save();
     }
 
     private void LoadInventory() // Загрузка сохраненных предметов из памяти
     {
-        // Загрузка состояния слотов инвентаря
+        inventorySlots.Clear();
+        int savedCount = PlayerPrefs.GetInt("Chest_Slot_Count", 0);
+        for (int i = 0; i < savedCount; i++)
+        {
+            string id = PlayerPrefs.GetString($"Chest_Slot_{i}_Id", "");
+            string name = PlayerPrefs.GetString($"Chest_Slot_{i}_Name", "");
+            int count = PlayerPrefs.GetInt($"Chest_Slot_{i}_Count", 1);
+            int xp = PlayerPrefs.GetInt($"Chest_Slot_{i}_XP", 0);
+
+            if (!string.IsNullOrEmpty(id))
+            {
+                inventorySlots.Add(new ItemStack(id, name, count, xp, null, new Color(0.95f, 0.77f, 0.05f, 1f)));
+            }
+        }
     }
 }

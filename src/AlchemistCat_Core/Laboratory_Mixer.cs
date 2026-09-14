@@ -250,7 +250,14 @@ public class Laboratory_Mixer : MonoBehaviour
             {
                 recipe.isDiscovered = true; // Открытие рецепта
                 SaveDiscoveredRecipe(recipe.id); // Сохранение факта открытия
-                Debug.Log($"🎉 УСПЕХ! Открыт рецепт: '{recipe.recipeName}' ({recipe.tier})! Теперь его можно продать!"); // Логирование победы
+
+                // Добавление созданного уникального зелья в единый Сундук Алхимика
+                if (Inventory_Manager.Instance != null)
+                {
+                    Inventory_Manager.Instance.AddItem($"potion_lab_{recipe.id}", recipe.recipeName, 1, recipe.rewardGold / 100, null, new Color(0.7f, 0.4f, 1f));
+                }
+
+                Debug.Log($"🎉 УСПЕХ! Открыт рецепт: '{recipe.recipeName}' ({recipe.tier})! Зелье отправлено в Сундук Алхимика!"); // Логирование победы
                 return; // Успешный выход
             }
         }
