@@ -640,22 +640,117 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
     }
 
-    private void ShowSummaryPopup() // Показ финального окна итогов
+    private void ShowSummaryPopup() // Показ финального окна итогов с кнопкой продолжения
     {
-        currentPhase = GamePhase.Finished;
-        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(true);
+        currentPhase = GamePhase.Finished; // Установка фазы завершения
+        if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(true); // Активация окна итогов
 
-        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000;
-        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10;
-        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5;
+        int gold = currentDifficulty == FishingDifficulty.Easy ? 3000 : currentDifficulty == FishingDifficulty.Medium ? 5000 : 10000; // Награда золотом
+        int stones = currentDifficulty == FishingDifficulty.Easy ? 3 : currentDifficulty == FishingDifficulty.Medium ? 5 : 10; // Награда камнями
+        int scrolls = currentDifficulty == FishingDifficulty.Easy ? 1 : currentDifficulty == FishingDifficulty.Medium ? 2 : 5; // Награда свитками
 
-        if (summaryGoldText) summaryGoldText.text = $"+{gold:N0} Золота";
-        if (summaryStonesText) summaryStonesText.text = $"+{stones} Камней";
-        if (summaryScrollsText) summaryScrollsText.text = $"+{scrolls} Свитков";
-        if (summaryPotionBonusText)
+        if (summaryGoldText) summaryGoldText.text = $"+{gold:N0} Золота"; // Заполнение текста золота
+        if (summaryStonesText) summaryStonesText.text = $"+{stones} Камней"; // Заполнение текста камней
+        if (summaryScrollsText) summaryScrollsText.text = $"+{scrolls} Свитков"; // Заполнение текста свитков
+        if (summaryPotionBonusText) // Бонусное зелье
         {
-            summaryPotionBonusText.gameObject.SetActive(currentDifficulty == FishingDifficulty.Hard);
-            summaryPotionBonusText.text = "1 шт Зелье Опыта Мастерства (+100 XP)";
+            summaryPotionBonusText.gameObject.SetActive(currentDifficulty == FishingDifficulty.Hard); // Показ только на сложном
+            summaryPotionBonusText.text = "1 шт Зелье Опыта Мастерства (+100 XP)"; // Текст бонуса
+        }
+
+        // Автоматический поиск, создание и привязка кнопки "Продолжить" в окне итогов
+        SetupSummaryContinueButton(); // Гарантированное отображение кнопки перехода к диалогу
+    }
+
+    /// <summary>
+    /// Автоматическая настройка кнопки "Забрать улов и продолжить диалог с Котом"
+    /// </summary>
+    public void SetupSummaryContinueButton() // Настройка кнопки продолжения в окне итогов
+    {
+        if (resultSummaryPopupPanel == null) return; // Проверка наличия панели итогов
+
+        // 1. Поиск существующей кнопки в окне итогов, если не назначена вручную
+        if (claimAllToBackpackButton == null)
+        {
+            Button[] buttons = resultSummaryPopupPanel.GetComponentsInChildren<Button>(true); // Поиск всех кнопок
+            foreach (var b in buttons)
+            {
+                if (b == null) continue;
+                string bName = b.gameObject.name.ToLower(); // Имя объекта кнопки
+                if (bName.Contains("claim") || bName.Contains("continue") || bName.Contains("next") || 
+                    bName.Contains("done") || bName.Contains("ok") || bName.Contains("button") || bName.Contains("backpack"))
+                {
+                    claimAllToBackpackButton = b; // Найдена подходящая кнопка
+                    break;
+                }
+            }
+        }
+
+        // 2. Если кнопки нет вовсе — динамически создаем стильную золотую кнопку
+        if (claimAllToBackpackButton == null)
+        {
+            GameObject btnObj = new GameObject("Claim_And_Continue_Dialogue_Button"); // Создание объекта кнопки
+            btnObj.transform.SetParent(resultSummaryPopupPanel.transform, false); // Помещение в панель итогов
+
+            RectTransform rect = btnObj.AddComponent<RectTransform>(); // Добавление RectTransform
+            rect.anchorMin = new Vector2(0.5f, 0.5f); // Центровка минимального якоря
+            rect.anchorMax = new Vector2(0.5f, 0.5f); // Центровка максимального якоря
+            rect.pivot = new Vector2(0.5f, 0.5f); // Центровка точки привязки
+            rect.anchoredPosition = new Vector2(0f, -170f); // Позиция внизу золотой рамки
+            rect.sizeDelta = new Vector2(440f, 64f); // Размер кнопки
+
+            Image btnImage = btnObj.AddComponent<Image>(); // Добавление фона кнопки
+            btnImage.color = new Color(0.95f, 0.70f, 0.15f, 1f); // Золотисто-янтарный цвет
+
+            claimAllToBackpackButton = btnObj.AddComponent<Button>(); // Добавление компонента Button
+            ColorBlock cb = claimAllToBackpackButton.colors; // Настройка цветов
+            cb.normalColor = new Color(1f, 0.80f, 0.20f, 1f);
+            cb.highlightedColor = new Color(1f, 0.92f, 0.45f, 1f);
+            cb.pressedColor = new Color(0.80f, 0.60f, 0.10f, 1f);
+            claimAllToBackpackButton.colors = cb;
+
+            GameObject textObj = new GameObject("Text_TMP"); // Создание текста на кнопке
+            textObj.transform.SetParent(btnObj.transform, false); // Помещение в кнопку
+            RectTransform textRect = textObj.AddComponent<RectTransform>(); // RectTransform текста
+            textRect.anchorMin = Vector2.zero; // Растяжение на всю кнопку
+            textRect.anchorMax = Vector2.one; // Растяжение на всю ширину и высоту кнопки
+            textRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>(); // Добавление TextMeshPro
+            tmp.text = "<b>Забрать улов и продолжить >></b>"; // Текст на кнопке
+            tmp.fontSize = 24f; // Размер шрифта
+            tmp.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
+            tmp.color = new Color(0.12f, 0.08f, 0.02f, 1f); // Темно-коричневый читаемый цвет
+        }
+
+        // 3. Гарантированное включение кнопки и привязка действия клика
+        if (claimAllToBackpackButton != null)
+        {
+            claimAllToBackpackButton.gameObject.SetActive(true); // Активация кнопки
+            claimAllToBackpackButton.interactable = true; // Разрешение взаимодействия
+            claimAllToBackpackButton.transform.SetAsLastSibling(); // Размещение поверх всех слоев
+            claimAllToBackpackButton.onClick.RemoveAllListeners(); // Очистка старых подписчиков
+            claimAllToBackpackButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Привязка перехода к квесту и диалогу
+
+            // Обновление надписи на кнопке
+            TextMeshProUGUI label = claimAllToBackpackButton.GetComponentInChildren<TextMeshProUGUI>(true);
+            if (label != null)
+            {
+                label.text = "<b>Забрать улов и продолжить >></b>"; // Русская надпись
+                label.color = new Color(0.12f, 0.08f, 0.02f, 1f); // Четкий контраст
+            }
+        }
+
+        // 4. Добавление фоллбэк-клика на всю область панели итогов
+        Button panelBgButton = resultSummaryPopupPanel.GetComponent<Button>(); // Проверка кликабельности фона
+        if (panelBgButton == null)
+        {
+            panelBgButton = resultSummaryPopupPanel.AddComponent<Button>(); // Добавление кнопки на фон панели
+            ColorBlock pcb = panelBgButton.colors;
+            pcb.normalColor = Color.white;
+            pcb.highlightedColor = Color.white;
+            panelBgButton.colors = pcb;
+            panelBgButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Клик в любом месте рамки также закрывает окно
         }
     }
 
@@ -687,10 +782,19 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             }
         }
 
+        PlayerPrefs.SetInt("Minigame_Fishing_Completed", 1); // Запись факта завершения рыбалки
+        PlayerPrefs.Save(); // Сохранение на диск
+
         if (activeFishingStagePanel) activeFishingStagePanel.SetActive(false); // Скрытие игровой сцены
         if (resultSummaryPopupPanel) resultSummaryPopupPanel.SetActive(false); // Скрытие окна итогов
         if (rootFishingGamePanel != null) rootFishingGamePanel.SetActive(false); // Скрытие всей панели рыбалки
         else gameObject.SetActive(false); // Запасное скрытие текущего объекта
+
+        // Восстановление HUD верхнего интерфейса
+        if (DialogueSystem_Manager.Instance != null)
+        {
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление аватарки и кнопок
+        }
 
         // Получение сохраненного имени игрока
         string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени игрока
@@ -707,6 +811,6 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             if (hiddenObjectGamePanel != null) hiddenObjectGamePanel.SetActive(true); // Включение панели
         }
 
-        Debug.Log($"Рыбалка завершена для {playerName}! Улов отправлен в рюкзак. Запущен диалог Кота перед Поиском Предметов."); // Лог завершения
+        Debug.Log($"[РЫБАЛКА ЗАВЕРШЕНА] Улов отправлен в сундук для {playerName}. Запущен диалог Кота перед Поиском Предметов."); // Лог завершения
     }
 }
