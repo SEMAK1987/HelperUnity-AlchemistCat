@@ -103,7 +103,8 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public TextMeshProUGUI summaryStonesText; // Текст итоговых камней
     public TextMeshProUGUI summaryScrollsText; // Текст итоговых свитков
     public TextMeshProUGUI summaryPotionBonusText; // Текст бонусных зелий
-    public Button claimAllToBackpackButton; // Кнопка "Забрать все в рюкзак"
+    public Button claimAllToBackpackButton; // Кнопка "Забрать все в рюкзак" (Claim_All_Button)
+    public Button claimAndContinueButton; // Кнопка "Забрать улов и продолжить >>" (Claim_And_Continue_Button)
 
     [Header("=== Спрайты наград ===")]
     public Sprite trashBottleSprite; // Спрайт старой бутылки (мусор)
@@ -177,6 +178,21 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         {
             Transform t = transform.Find("Result_Summary_Popup_Panel");
             if (t != null) resultSummaryPopupPanel = t.gameObject;
+        }
+
+        // Автопоиск кнопок завершения в окне итогов
+        if (resultSummaryPopupPanel != null)
+        {
+            if (claimAndContinueButton == null)
+            {
+                Transform t = resultSummaryPopupPanel.transform.Find("Claim_And_Continue_Button");
+                if (t != null) claimAndContinueButton = t.GetComponent<Button>();
+            }
+            if (claimAllToBackpackButton == null)
+            {
+                Transform t = resultSummaryPopupPanel.transform.Find("Claim_All_Button");
+                if (t != null) claimAllToBackpackButton = t.GetComponent<Button>();
+            }
         }
     }
 
@@ -524,33 +540,152 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     {
         yield return new WaitForSeconds(0.8f); // Имитация времени выуживания
 
-        float z4Threshold = 1f - (currentDifficulty == FishingDifficulty.Easy ? 0.35f : 
-                                  currentDifficulty == FishingDifficulty.Medium ? 0.22f : 0.12f);
-        int sector = vVal >= z4Threshold ? 4 : vVal >= 0.50f ? 3 : vVal >= 0.25f ? 2 : 1;
+        // Точное определение сектора по шкале высоты заброса (0.00 .. 1.00)
+        // Зона 4 (Золотая): верх шкалы
+        float z4Threshold = currentDifficulty == FishingDifficulty.Easy ? 0.65f : 
+                            currentDifficulty == FishingDifficulty.Medium ? 0.75f : 0.85f;
+        
+        float z3Threshold = 0.45f; // Зона 3: 0.45 .. z4Threshold (Середина водоема)
+        float z2Threshold = 0.25f; // Зона 2: 0.25 .. 0.45 (Близкий заброс)
+        // Зона 1: 0.00 .. 0.25 (Самый низ шкалы / берег и тина)
 
-        float edgeAccuracy = hVal;
-        float roll = Random.value;
+        int sector = 1;
+        if (vVal >= z4Threshold) sector = 4;
+        else if (vVal >= z3Threshold) sector = 3;
+        else if (vVal >= z2Threshold) sector = 2;
+        else sector = 1;
+
+        float edgeAccuracy = hVal; // Точность горизонтального расхождения (0.0 .. 1.0)
+        float roll = Random.value; // Случайное число для выбора внутри категории
 
         LootResult result = new LootResult();
 
-        if (sector == 4 && edgeAccuracy > 0.70f) // Золотой 4-й сектор при точности
+        // 🏆 1. ЗОЛОТАЯ ЗОНА 4 (Самый верхний заброс):
+        // Гарантированно выпадают мощные зелья: Драконье (+3000 XP), Мифическое (+1000 XP), Легендарное (+500 XP) или Магическое (+300 XP)
+        if (sector == 4)
         {
-            if (roll < 0.08f) { result.itemId = "potion_3000"; result.itemName = "Драконье Зелье Опыта"; result.xp = 3000; result.sprite = potion3000Sprite; result.rarityColor = new Color(1f, 0.4f, 0f); }
-            else if (roll < 0.25f) { result.itemId = "potion_1000"; result.itemName = "Мифическое Зелье Опыта"; result.xp = 1000; result.sprite = potion1000Sprite; result.rarityColor = new Color(0.7f, 0.3f, 1f); }
-            else if (roll < 0.60f) { result.itemId = "potion_500"; result.itemName = "Легендарное Зелье Опыта"; result.xp = 500; result.sprite = potion500Sprite; result.rarityColor = new Color(1f, 0.85f, 0.2f); }
-            else { result.itemId = "potion_300"; result.itemName = "Магическое Зелье Опыта"; result.xp = 300; result.sprite = potion300Sprite; result.rarityColor = new Color(0.9f, 0.2f, 0.3f); }
+            if (edgeAccuracy >= 0.75f || roll < 0.25f) // Отличная подсечка или удачный бросок
+            {
+                result.itemId = "potion_3000";
+                result.itemName = "Драконье Зелье Опыта";
+                result.xp = 3000;
+                result.sprite = potion3000Sprite != null ? potion3000Sprite : potion1000Sprite;
+                result.rarityColor = new Color(1f, 0.4f, 0f);
+            }
+            else if (edgeAccuracy >= 0.50f || roll < 0.55f)
+            {
+                result.itemId = "potion_1000";
+                result.itemName = "Мифическое Зелье Опыта";
+                result.xp = 1000;
+                result.sprite = potion1000Sprite != null ? potion1000Sprite : potion500Sprite;
+                result.rarityColor = new Color(0.7f, 0.3f, 1f);
+            }
+            else if (roll < 0.80f)
+            {
+                result.itemId = "potion_500";
+                result.itemName = "Легендарное Зелье Опыта";
+                result.xp = 500;
+                result.sprite = potion500Sprite != null ? potion500Sprite : potion300Sprite;
+                result.rarityColor = new Color(1f, 0.85f, 0.2f);
+            }
+            else
+            {
+                result.itemId = "potion_300";
+                result.itemName = "Магическое Зелье Опыта";
+                result.xp = 300;
+                result.sprite = potion300Sprite != null ? potion300Sprite : potion100Sprite;
+                result.rarityColor = new Color(0.9f, 0.2f, 0.3f);
+            }
         }
-        else if (sector >= 3) // 3-й сектор
+        // 🧪 2. ЗОНА 3 (Середина водоема: 0.45 .. z4Threshold):
+        // Выпадают Магический Рунный Камень, Зелье +100 XP и Зелье +50 XP
+        else if (sector == 3)
         {
-            if (roll < 0.30f) { result.itemId = "potion_100"; result.itemName = "Высокое Зелье Опыта"; result.xp = 100; result.sprite = potion100Sprite; result.rarityColor = new Color(0.6f, 0.3f, 0.9f); }
-            else if (roll < 0.70f) { result.itemId = "potion_50"; result.itemName = "Среднее Зелье Опыта"; result.xp = 50; result.sprite = potion50Sprite; result.rarityColor = new Color(0.2f, 0.6f, 1f); }
-            else { result.itemId = "rune_stone"; result.itemName = "Магический Рунный Камень"; result.xp = 25; result.sprite = runeStoneSprite; result.rarityColor = new Color(0.4f, 0.9f, 0.9f); }
+            if (edgeAccuracy >= 0.75f && roll < 0.40f) // При идеальной подсечке в центре даем Магическое зелье +300 XP
+            {
+                result.itemId = "potion_300";
+                result.itemName = "Магическое Зелье Опыта";
+                result.xp = 300;
+                result.sprite = potion300Sprite != null ? potion300Sprite : potion100Sprite;
+                result.rarityColor = new Color(0.9f, 0.2f, 0.3f);
+            }
+            else if (roll < 0.35f)
+            {
+                result.itemId = "rune_stone";
+                result.itemName = "Магический Рунный Камень";
+                result.xp = 50;
+                result.sprite = runeStoneSprite;
+                result.rarityColor = new Color(0.4f, 0.9f, 0.9f);
+            }
+            else if (roll < 0.70f)
+            {
+                result.itemId = "potion_100";
+                result.itemName = "Высокое Зелье Опыта";
+                result.xp = 100;
+                result.sprite = potion100Sprite;
+                result.rarityColor = new Color(0.6f, 0.3f, 0.9f);
+            }
+            else
+            {
+                result.itemId = "potion_50";
+                result.itemName = "Среднее Зелье Опыта";
+                result.xp = 50;
+                result.sprite = potion50Sprite;
+                result.rarityColor = new Color(0.2f, 0.6f, 1f);
+            }
         }
-        else // 1-й и 2-й секторы (тина и ряска)
+        // 💧 3. ЗОНА 2 (Близкая зона: 0.25 .. 0.45):
+        // Болотная тина, Старая бутылка и Малое зелье +10 XP
+        else if (sector == 2)
         {
-            if (roll < 0.5f) { result.itemId = "duckweed"; result.itemName = "Болотная тина"; result.xp = 5; result.sprite = duckweedSprite; result.rarityColor = Color.gray; }
-            else { result.itemId = "trash_bottle"; result.itemName = "Старая бутылка"; result.xp = 5; result.sprite = trashBottleSprite; result.rarityColor = Color.gray; }
+            if (roll < 0.40f)
+            {
+                result.itemId = "duckweed";
+                result.itemName = "Болотная тина";
+                result.xp = 5;
+                result.sprite = duckweedSprite;
+                result.rarityColor = Color.gray;
+            }
+            else if (roll < 0.75f)
+            {
+                result.itemId = "trash_bottle";
+                result.itemName = "Старая бутылка";
+                result.xp = 5;
+                result.sprite = trashBottleSprite;
+                result.rarityColor = Color.gray;
+            }
+            else
+            {
+                result.itemId = "potion_10";
+                result.itemName = "Малое Зелье Опыта";
+                result.xp = 10;
+                result.sprite = potion10Sprite != null ? potion10Sprite : potion50Sprite;
+                result.rarityColor = new Color(0.3f, 0.7f, 0.4f);
+            }
         }
+        // 🪵 4. ЗОНА 1 (Самый низ шкалы / берег: 0.00 .. 0.25):
+        // 100% Болотная тина и Старая бутылка (+5 XP)
+        else
+        {
+            if (roll < 0.50f)
+            {
+                result.itemId = "duckweed";
+                result.itemName = "Болотная тина";
+                result.xp = 5;
+                result.sprite = duckweedSprite;
+                result.rarityColor = Color.gray;
+            }
+            else
+            {
+                result.itemId = "trash_bottle";
+                result.itemName = "Старая бутылка";
+                result.xp = 5;
+                result.sprite = trashBottleSprite;
+                result.rarityColor = Color.gray;
+            }
+        }
+
+        Debug.Log($"[РЫБАЛКА] Сектор: {sector} (v={vVal:F2}, h={hVal:F2}) -> Поймано: {result.itemName} (+{result.xp} XP)");
 
         caughtSessionLoot.Add(result); // Добавление в улов сессии
         totalSessionXpGained += result.xp; // Прибавление опыта
@@ -561,13 +696,13 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         yield return StartCoroutine(ShowSingleCatchToastCoroutine(result));
 
         int maxAttempts = GetMaxAttemptsForDifficulty(currentDifficulty);
-        if (currentAttempt >= maxAttempts) // Если все попытки исчерпаны
+        if (caughtSessionLoot.Count >= maxAttempts) // Если выловлено максимальное количество предметов
         {
             ShowSummaryPopup(); // Показ окна итогов
         }
         else
         {
-            currentAttempt++; // Следующая попытка
+            currentAttempt = caughtSessionLoot.Count + 1; // Синхронизация текущей попытки строго со списком улова
             ResetAttemptToIdle(); // Сброс в режим ожидания
         }
     }
@@ -624,18 +759,51 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         // Создание аккуратных иконок с бейджами количества
         foreach (var pair in groupedLoot.Values)
         {
-            GameObject cell = Instantiate(sideLootItemPrefab, sideLootContainer);
-            Image img = cell.GetComponentInChildren<Image>();
-            TextMeshProUGUI txt = cell.GetComponentInChildren<TextMeshProUGUI>();
-
-            if (img && pair.loot.sprite != null)
+            GameObject cell = Instantiate(sideLootItemPrefab, sideLootContainer); // Создание ячейки
+            RectTransform cellRect = cell.GetComponent<RectTransform>(); // RectTransform ячейки
+            if (cellRect != null)
             {
-                img.sprite = pair.loot.sprite;
-                img.color = Color.white;
+                cellRect.localScale = Vector3.one; // Нормализация масштаба
             }
-            if (txt)
+
+            // Поиск или настройка иконки предмета
+            Image img = cell.GetComponentInChildren<Image>();
+            if (img != null)
             {
-                txt.text = $"x{pair.count}";
+                if (pair.loot.sprite != null)
+                {
+                    img.sprite = pair.loot.sprite; // Назначение спрайта предмета
+                    img.color = Color.white; // Белый цвет
+                    img.preserveAspect = true; // Сохранение пропорций без искажений
+                }
+                
+                // Ограничиваем размер иконки, чтобы она идеально вписывалась внутрь рамки
+                RectTransform imgRect = img.rectTransform;
+                if (imgRect != null)
+                {
+                    imgRect.anchorMin = new Vector2(0.5f, 0.5f);
+                    imgRect.anchorMax = new Vector2(0.5f, 0.5f);
+                    imgRect.pivot = new Vector2(0.5f, 0.5f);
+                    imgRect.sizeDelta = new Vector2(100f, 100f); // Аккуратный размер иконки внутри золотой рамки
+                    imgRect.localScale = Vector3.one;
+                }
+            }
+
+            // Настройка текста количества "x2", "x4"
+            TextMeshProUGUI txt = cell.GetComponentInChildren<TextMeshProUGUI>();
+            if (txt != null)
+            {
+                txt.text = $"x{pair.count}"; // Запись количества
+                txt.fontSize = 28f; // Четкий читаемый размер шрифта
+                txt.enableAutoSizing = false;
+                RectTransform txtRect = txt.rectTransform;
+                if (txtRect != null)
+                {
+                    txtRect.anchorMin = new Vector2(1f, 0.5f);
+                    txtRect.anchorMax = new Vector2(1f, 0.5f);
+                    txtRect.pivot = new Vector2(0f, 0.5f);
+                    txtRect.anchoredPosition = new Vector2(10f, 0f); // Размещение бейджа справа от иконки
+                }
             }
         }
     }
@@ -669,62 +837,36 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     {
         if (resultSummaryPopupPanel == null) return; // Проверка наличия панели итогов
 
-        // 1. Поиск существующей кнопки в окне итогов, если не назначена вручную
+        // 1. Поиск кнопки Claim_And_Continue_Button, если не назначена вручную
+        if (claimAndContinueButton == null)
+        {
+            Transform t = resultSummaryPopupPanel.transform.Find("Claim_And_Continue_Button");
+            if (t != null) claimAndContinueButton = t.GetComponent<Button>();
+        }
+
+        // 2. Поиск стандартной кнопки Claim_All_Button, если не назначена вручную
         if (claimAllToBackpackButton == null)
         {
-            Button[] buttons = resultSummaryPopupPanel.GetComponentsInChildren<Button>(true); // Поиск всех кнопок
-            foreach (var b in buttons)
+            Transform t = resultSummaryPopupPanel.transform.Find("Claim_All_Button");
+            if (t != null) claimAllToBackpackButton = t.GetComponent<Button>();
+        }
+
+        // 3. Если назначена или найдена специальная кнопка Claim_And_Continue_Button
+        if (claimAndContinueButton != null)
+        {
+            claimAndContinueButton.gameObject.SetActive(true); // Активация кнопки
+            claimAndContinueButton.interactable = true; // Разрешение взаимодействия
+            claimAndContinueButton.transform.SetAsLastSibling(); // Вынос поверх всех слоев
+            claimAndContinueButton.onClick.RemoveAllListeners(); // Очистка старых событий
+            claimAndContinueButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Привязка завершения рыбалки и диалога
+
+            // Скрываем старую кнопку Claim_All_Button во избежание наложения
+            if (claimAllToBackpackButton != null && claimAllToBackpackButton != claimAndContinueButton)
             {
-                if (b == null) continue;
-                string bName = b.gameObject.name.ToLower(); // Имя объекта кнопки
-                if (bName.Contains("claim") || bName.Contains("continue") || bName.Contains("next") || 
-                    bName.Contains("done") || bName.Contains("ok") || bName.Contains("button") || bName.Contains("backpack"))
-                {
-                    claimAllToBackpackButton = b; // Найдена подходящая кнопка
-                    break;
-                }
+                claimAllToBackpackButton.gameObject.SetActive(false); // Скрытие дублирующей старой кнопки
             }
         }
-
-        // 2. Если кнопки нет вовсе — динамически создаем стильную золотую кнопку
-        if (claimAllToBackpackButton == null)
-        {
-            GameObject btnObj = new GameObject("Claim_And_Continue_Dialogue_Button"); // Создание объекта кнопки
-            btnObj.transform.SetParent(resultSummaryPopupPanel.transform, false); // Помещение в панель итогов
-
-            RectTransform rect = btnObj.AddComponent<RectTransform>(); // Добавление RectTransform
-            rect.anchorMin = new Vector2(0.5f, 0.5f); // Центровка минимального якоря
-            rect.anchorMax = new Vector2(0.5f, 0.5f); // Центровка максимального якоря
-            rect.pivot = new Vector2(0.5f, 0.5f); // Центровка точки привязки
-            rect.anchoredPosition = new Vector2(0f, -170f); // Позиция внизу золотой рамки
-            rect.sizeDelta = new Vector2(440f, 64f); // Размер кнопки
-
-            Image btnImage = btnObj.AddComponent<Image>(); // Добавление фона кнопки
-            btnImage.color = new Color(0.95f, 0.70f, 0.15f, 1f); // Золотисто-янтарный цвет
-
-            claimAllToBackpackButton = btnObj.AddComponent<Button>(); // Добавление компонента Button
-            ColorBlock cb = claimAllToBackpackButton.colors; // Настройка цветов
-            cb.normalColor = new Color(1f, 0.80f, 0.20f, 1f);
-            cb.highlightedColor = new Color(1f, 0.92f, 0.45f, 1f);
-            cb.pressedColor = new Color(0.80f, 0.60f, 0.10f, 1f);
-            claimAllToBackpackButton.colors = cb;
-
-            GameObject textObj = new GameObject("Text_TMP"); // Создание текста на кнопке
-            textObj.transform.SetParent(btnObj.transform, false); // Помещение в кнопку
-            RectTransform textRect = textObj.AddComponent<RectTransform>(); // RectTransform текста
-            textRect.anchorMin = Vector2.zero; // Растяжение на всю кнопку
-            textRect.anchorMax = Vector2.one; // Растяжение на всю ширину и высоту кнопки
-            textRect.sizeDelta = Vector2.zero;
-
-            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>(); // Добавление TextMeshPro
-            tmp.text = "<b>Забрать улов и продолжить >></b>"; // Текст на кнопке
-            tmp.fontSize = 24f; // Размер шрифта
-            tmp.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
-            tmp.color = new Color(0.12f, 0.08f, 0.02f, 1f); // Темно-коричневый читаемый цвет
-        }
-
-        // 3. Гарантированное включение кнопки и привязка действия клика
-        if (claimAllToBackpackButton != null)
+        else if (claimAllToBackpackButton != null) // 4. Иначе используем стандартную кнопку
         {
             claimAllToBackpackButton.gameObject.SetActive(true); // Активация кнопки
             claimAllToBackpackButton.interactable = true; // Разрешение взаимодействия
@@ -740,8 +882,45 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 label.color = new Color(0.12f, 0.08f, 0.02f, 1f); // Четкий контраст
             }
         }
+        else // 5. Если кнопки нет вовсе — динамически создаем стильную золотую кнопку
+        {
+            GameObject btnObj = new GameObject("Claim_And_Continue_Dialogue_Button"); // Создание объекта кнопки
+            btnObj.transform.SetParent(resultSummaryPopupPanel.transform, false); // Помещение в панель итогов
 
-        // 4. Добавление фоллбэк-клика на всю область панели итогов
+            RectTransform rect = btnObj.AddComponent<RectTransform>(); // Добавление RectTransform
+            rect.anchorMin = new Vector2(0.5f, 0.5f); // Центровка минимального якоря
+            rect.anchorMax = new Vector2(0.5f, 0.5f); // Центровка максимального якоря
+            rect.pivot = new Vector2(0.5f, 0.5f); // Центровка точки привязки
+            rect.anchoredPosition = new Vector2(0f, -170f); // Позиция внизу золотой рамки
+            rect.sizeDelta = new Vector2(440f, 64f); // Размер кнопки
+
+            Image btnImage = btnObj.AddComponent<Image>(); // Добавление фона кнопки
+            btnImage.color = new Color(0.95f, 0.70f, 0.15f, 1f); // Золотисто-янтарный цвет
+
+            claimAndContinueButton = btnObj.AddComponent<Button>(); // Добавление компонента Button
+            ColorBlock cb = claimAndContinueButton.colors; // Настройка цветов
+            cb.normalColor = new Color(1f, 0.80f, 0.20f, 1f);
+            cb.highlightedColor = new Color(1f, 0.92f, 0.45f, 1f);
+            cb.pressedColor = new Color(0.80f, 0.60f, 0.10f, 1f);
+            claimAndContinueButton.colors = cb;
+
+            GameObject textObj = new GameObject("Text_TMP"); // Создание текста на кнопке
+            textObj.transform.SetParent(btnObj.transform, false); // Помещение в кнопку
+            RectTransform textRect = textObj.AddComponent<RectTransform>(); // RectTransform текста
+            textRect.anchorMin = Vector2.zero; // Растяжение на всю кнопку
+            textRect.anchorMax = Vector2.one; // Растяжение на всю ширину и высоту кнопки
+            textRect.sizeDelta = Vector2.zero;
+
+            TextMeshProUGUI tmp = textObj.AddComponent<TextMeshProUGUI>(); // Добавление TextMeshPro
+            tmp.text = "<b>Забрать улов и продолжить >></b>"; // Текст на кнопке
+            tmp.fontSize = 24f; // Размер шрифта
+            tmp.alignment = TextAlignmentOptions.Center; // Выравнивание по центру
+            tmp.color = new Color(0.12f, 0.08f, 0.02f, 1f); // Темно-коричневый читаемый цвет
+
+            claimAndContinueButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Привязка действия
+        }
+
+        // 6. Добавление фоллбэк-клика на всю область панели итогов
         Button panelBgButton = resultSummaryPopupPanel.GetComponent<Button>(); // Проверка кликабельности фона
         if (panelBgButton == null)
         {
