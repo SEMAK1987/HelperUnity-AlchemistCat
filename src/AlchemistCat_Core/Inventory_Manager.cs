@@ -48,6 +48,10 @@ public class Inventory_Manager : MonoBehaviour
     [Header("Список предметов в едином сундуке игрока")]
     public List<ItemStack> inventorySlots = new List<ItemStack>(); // Список всех слотов предметов в сундуке
 
+    [Header("Звуковые эффекты предметов")]
+    public AudioClip potionDrinkSound; // Звук выпивания зелья опыта
+    public AudioClip itemUseSound; // Звук использования предмета / тины / бутылки
+
     private void Awake() // Инициализация синглтона и защита от уничтожения
     {
         if (Instance == null) // Проверка на первый созданный экземпляр
@@ -128,21 +132,48 @@ public class Inventory_Manager : MonoBehaviour
     }
 
     /// <summary>
-    /// Отрисовка UI единого сундука со стаками предметов
+    /// Отрисовка UI единого сундука со стаками предметов и интерактивным кликом для использования
     /// </summary>
-    public void UpdateChestUI() // Отрисовка ячеек сундука с бейджами количества и рамками редкости
+    public void UpdateChestUI() // Отрисовка ячеек сундука с бейджами количества, рамками редкости и кнопками использования
     {
-        if (chestSlotsContainer == null) return; // Проверка наличия контейнера
+        // Автоматический поиск контейнера слотов, если он не назначен в инспекторе
+        if (chestSlotsContainer == null)
+        {
+            if (RecipeCrafting_Manager.Instance != null && RecipeCrafting_Manager.Instance.inventorySlotsContent != null)
+            {
+                chestSlotsContainer = RecipeCrafting_Manager.Instance.inventorySlotsContent; // Подключение контейнера слотов из RecipeCrafting_Manager
+            }
+            else
+            {
+                GameObject foundObj = GameObject.Find("Inventory_Slots_Content"); // Поиск по имени в сцене
+                if (foundObj == null) foundObj = GameObject.Find("Content"); // Запасной поиск
+                if (foundObj != null) chestSlotsContainer = foundObj.transform;
+            }
+        }
+
+        if (chestSlotsContainer == null) return; // Если контейнер не найден, выходим
 
         int totalCount = 0; // Накопитель общего числа предметов
         int totalXp = 0; // Накопитель суммарного опыта
 
-        // Если в контейнере уже есть ячейки (например, подготовленные 100 слотов инвентаря)
         int slotIndex = 0;
         int childCount = chestSlotsContainer.childCount;
 
+        // Если в 1-м слоте находится еще не выпитая Колба Мастерства туториала, смещаем заполнение улова
+        bool isMasteryFlaskPending = PlayerPrefs.GetInt("Mastery_Flask_Consumed", 0) == 0;
+        if (isMasteryFlaskPending && childCount > 0)
+        {
+            Transform firstSlot = chestSlotsContainer.GetChild(0);
+            if (firstSlot != null && firstSlot.Find("Mastery_Potion_Item") != null)
+            {
+                slotIndex = 1; // Пропускаем 1-ю ячейку с колбой мастерства
+            }
+        }
+
         foreach (var stack in inventorySlots) // Перебор каждого стека предметов
         {
+            if (stack == null || stack.count <= 0) continue; // Пропуск пустых
+
             totalCount += stack.count; // Прибавление количества
             totalXp += stack.xpPerItem * stack.count; // Прибавление опыта
 
@@ -160,30 +191,87 @@ public class Inventory_Manager : MonoBehaviour
 
             if (slotTransform != null)
             {
+                // Включаем ячейку
+                slotTransform.gameObject.SetActive(true);
+
                 // Настраиваем визуал предмета внутри слота
                 Image iconImg = slotTransform.Find("Item_Icon")?.GetComponent<Image>(); // Поиск иконки
-                if (iconImg != null && stack.icon != null)
+                if (iconImg == null) iconImg = slotTransform.GetComponentInChildren<Image>();
+
+                if (iconImg != null)
                 {
-                    iconImg.sprite = stack.icon; // Установка спрайта
-                    iconImg.gameObject.SetActive(true);
+                    if (stack.icon != null)
+                    {
+                        iconImg.sprite = stack.icon; // Установка спрайта
+                        iconImg.color = Color.white; // Белый цвет
+                        iconImg.gameObject.SetActive(true);
+                    }
+                    else
+                    {
+                        iconImg.gameObject.SetActive(true);
+                        iconImg.color = stack.rarityColor; // Запасная цветовая подсветка
+                    }
                 }
 
-                TextMeshProUGUI countBadge = slotTransform.Find("Count_Badge/Text")?.GetComponent<TextMeshProUGUI>(); // Поиск бейджа
+                // Настройка бейджа количества "x{count}"
+                Transform badgeTrans = slotTransform.Find("Count_Badge");
+                TextMeshProUGUI countBadge = badgeTrans != null 
+                    ? badgeTrans.GetComponentInChildren<TextMeshProUGUI>() 
+                    : slotTransform.Find("Count_Text")?.GetComponent<TextMeshProUGUI>();
+
                 if (countBadge != null)
                 {
                     countBadge.text = $"x{stack.count}"; // Запись количества
-                    countBadge.transform.parent.gameObject.SetActive(stack.count > 1); // Показ бейджа
+                    if (badgeTrans != null) badgeTrans.gameObject.SetActive(stack.count > 1);
+                    else countBadge.gameObject.SetActive(stack.count > 1);
                 }
 
-                TextMeshProUGUI titleText = slotTransform.Find("Item_Title")?.GetComponent<TextMeshProUGUI>(); // Поиск текста заголовка
+                // Настройка подписи названия
+                TextMeshProUGUI titleText = slotTransform.Find("Item_Title")?.GetComponent<TextMeshProUGUI>();
                 if (titleText != null)
                 {
                     titleText.text = stack.itemName; // Установка имени
                     titleText.color = stack.rarityColor; // Окрашивание
                 }
+
+                // Навешивание кнопки клика по ячейке для использования предмета
+                Button slotBtn = slotTransform.GetComponent<Button>();
+                if (slotBtn == null) slotBtn = slotTransform.gameObject.AddComponent<Button>();
+
+                string currentId = stack.itemId; // Фиксация строкового ID для замыкания
+                slotBtn.onClick.RemoveAllListeners(); // Очистка старых событий
+                slotBtn.onClick.AddListener(() => UseItem(currentId)); // Привязка использования предмета по клику
+                slotBtn.interactable = true; // Активация интерактивности
             }
 
             slotIndex++;
+        }
+
+        // Очистка / скрытие остальных незанятых ячеек инвентаря
+        for (int i = slotIndex; i < childCount; i++)
+        {
+            Transform extraSlot = chestSlotsContainer.GetChild(i);
+            if (extraSlot != null)
+            {
+                // Не трогаем колбу мастерства в первом слоте
+                if (i == 0 && isMasteryFlaskPending) continue;
+
+                Image extraIcon = extraSlot.Find("Item_Icon")?.GetComponent<Image>();
+                if (extraIcon != null) extraIcon.gameObject.SetActive(false);
+
+                Transform extraBadge = extraSlot.Find("Count_Badge");
+                if (extraBadge != null) extraBadge.gameObject.SetActive(false);
+
+                TextMeshProUGUI extraTitle = extraSlot.Find("Item_Title")?.GetComponent<TextMeshProUGUI>();
+                if (extraTitle != null) extraTitle.text = "";
+
+                Button extraBtn = extraSlot.GetComponent<Button>();
+                if (extraBtn != null)
+                {
+                    extraBtn.onClick.RemoveAllListeners();
+                    extraBtn.interactable = false;
+                }
+            }
         }
 
         if (totalItemsCountText != null) // Текстовый счетчик предметов
@@ -191,6 +279,69 @@ public class Inventory_Manager : MonoBehaviour
 
         if (totalChestXpText != null) // Счетчик опыта
             totalChestXpText.text = $"Всего опыта в зельях: +{totalXp} XP";
+    }
+
+    /// <summary>
+    /// Использование предмета из сундука по нажатию мышкой:
+    /// - Пустая бутылка: дает +5 XP игрока
+    /// - Болотная тина: дает +10 XP игрока
+    /// - Зелья опыта: дают +10 .. +3000 XP игрока
+    /// </summary>
+    public void UseItem(string itemId) // Метод использования предмета по клику игрока
+    {
+        ItemStack stack = inventorySlots.Find(s => s.itemId == itemId);
+        if (stack == null || stack.count <= 0) return;
+
+        int xpToGive = stack.xpPerItem;
+
+        // Точное начисление опыта согласно запросу:
+        if (itemId == "trash_bottle") // Нажатие на Пустую бутылку дает 5 XP игрока
+        {
+            xpToGive = 5;
+        }
+        else if (itemId == "duckweed") // Нажатие на Болотную тину дает 10 XP игрока
+        {
+            xpToGive = 10;
+        }
+
+        // Начисление опыта кота
+        if (xpToGive > 0 && Avatar_Manager.Instance != null)
+        {
+            Avatar_Manager.Instance.GainPlayerExperience(xpToGive); // Начисление в шкалу опыта игрока
+        }
+
+        // Воспроизведение звука использования/выпивания
+        if (SettingsManager.Instance != null)
+        {
+            if (potionDrinkSound != null)
+            {
+                SettingsManager.Instance.PlaySoundEffect(potionDrinkSound); // Воспроизведение назначенного звука выпивания зелья
+            }
+            else if (RecipeCrafting_Manager.Instance != null && RecipeCrafting_Manager.Instance.potionConsumeSound != null)
+            {
+                SettingsManager.Instance.PlaySoundEffect(RecipeCrafting_Manager.Instance.potionConsumeSound); // Запасной звук зелья из менеджера крафта
+            }
+            else if (itemUseSound != null)
+            {
+                SettingsManager.Instance.PlaySoundEffect(itemUseSound); // Воспроизведение звука использования предмета
+            }
+            else if (Avatar_Manager.Instance != null && Avatar_Manager.Instance.selectSound != null)
+            {
+                SettingsManager.Instance.PlaySoundEffect(Avatar_Manager.Instance.selectSound); // Запасной звук клика
+            }
+        }
+
+        // Уменьшение количества в стеке
+        stack.count--;
+        if (stack.count <= 0)
+        {
+            inventorySlots.Remove(stack); // Удаление пустого стека
+        }
+
+        SaveInventory(); // Сохранение изменений в PlayerPrefs
+        UpdateChestUI(); // Немедленная перерисовка ячеек
+
+        Debug.Log($"[СУНДУК АЛХИМИКА] Использован '{stack.itemName}', получено +{xpToGive} XP игрока! Осталось: {(stack.count > 0 ? stack.count : 0)}");
     }
 
     public void OpenChestPanel() // Открытие панели сундука и обновление списка предметов

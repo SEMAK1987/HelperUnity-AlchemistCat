@@ -95,6 +95,8 @@ public class AlchemyFishing_Minigame : MonoBehaviour
     public Button pondCatchGuideButton; // Кнопка открытия справочника со значком рыбки
     public GameObject pondCatchGuidePopup; // Всплывающее окно справочника зон и рыб
     public Button pondCatchGuideCloseButton; // Кнопка закрытия справочника
+    public TextMeshProUGUI pondCatchGuideTableText; // Текст с подробной таблицей вероятностей (TextMeshPro)
+    public UnityEngine.UI.Text pondCatchGuideLegacyTableText; // Запасной компонент текста (Legacy UI Text)
 
     [Header("=== Итоговое окно попыток (Result_Summary_Popup_Panel) ===")]
     public Transform summaryLootContainer; // Контейнер иконок пойманного лута
@@ -307,14 +309,67 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
         ApplyBeamHeight(); // Применение высоты
         PositionHorizontalDelimiters(); // Расстановка разделителей
+        UpdateGuideTableText(); // Предварительное обновление текста таблицы улова
     }
 
     public void OpenCatchGuide() // Открытие справочника зон и рыб
     {
+        UpdateGuideTableText(); // Обновление текста таблицы зон и вероятностей
         if (pondCatchGuidePopup) pondCatchGuidePopup.SetActive(true); // Показ окна справочника
         if (fishRodButton) fishRodButton.interactable = false; // Блокировка удочки при открытом справочнике
         if (actionButton) actionButton.interactable = false; // Блокировка кнопки действия
         if (closeButton) closeButton.interactable = false; // Блокировка основного крестика
+    }
+
+    /// <summary>
+    /// Генерация и обновление структурированной таблицы вероятностей шкалы поклевки (значок Рыбки)
+    /// </summary>
+    public void UpdateGuideTableText() // Заполнение понятной игрокам таблицы зон улова с поддержкой TMP и Legacy Text
+    {
+        // Автопоиск текстового компонента, если не привязан в инспекторе
+        if (pondCatchGuideTableText == null && pondCatchGuideLegacyTableText == null && pondCatchGuidePopup != null)
+        {
+            Transform t = pondCatchGuidePopup.transform.Find("Zones_Info_Text"); // Поиск по точному имени из иерархии
+            if (t != null) pondCatchGuideTableText = t.GetComponent<TextMeshProUGUI>(); // Получение компонента TMP
+            
+            if (pondCatchGuideTableText == null)
+            {
+                pondCatchGuideTableText = pondCatchGuidePopup.GetComponentInChildren<TextMeshProUGUI>(true); // Поиск первого подходящего TMP
+            }
+            if (pondCatchGuideTableText == null)
+            {
+                pondCatchGuideLegacyTableText = pondCatchGuidePopup.GetComponentInChildren<UnityEngine.UI.Text>(true); // Поиск Legacy Text
+            }
+        }
+
+        string tableContent = 
+            "<b><size=20><color=#FFD700>🎯 Таблица выпадения на шкале поклевки</color></size></b>\n" +
+            "<i>(действует для всех уровней сложности)</i>\n\n" +
+            "<b><color=#FFAA55>1. 🌟 За 2-й полоской (0.75 – 1.00):</color></b>\n" +
+            " • Магическое Зелье Опыта (40%) ➔ <b>+300 XP</b>\n" +
+            " • Легендарное Зелье Опыта (30%) ➔ <b>+500 XP</b>\n" +
+            " • Мифическое Зелье Опыта (20%) ➔ <b>+1000 XP</b>\n" +
+            " • Драконье Зелье Опыта (10%) ➔ <b>+3000 XP</b>\n\n" +
+            "<b><color=#55CCFF>2. 🧪 От 1-й до 2-й полоски (0.50 – 0.75):</color></b>\n" +
+            " • Среднее Зелье Опыта (50%) ➔ <b>+50 XP</b>\n" +
+            " • Высокое Зелье Опыта (30%) ➔ <b>+100 XP</b>\n" +
+            " • Магический Рунный Камень (20%) ➔ <b>+50 XP</b>\n\n" +
+            "<b><color=#77DD77>3. 💧 За 1-й полоской (0.35 – 0.50):</color></b>\n" +
+            " • Малое Зелье Опыта (50%) ➔ <b>+10 XP</b>\n" +
+            " • Мусор (50%): Тина (25%) / Бутылка (25%) ➔ <b>+10 / +5 XP</b>\n\n" +
+            "<b><color=#CCCCCC>4. 🪵 0 Позиция (Центр: 0.00 – 0.35):</color></b>\n" +
+            " • Болотная тина (50%) ➔ <b>+10 XP</b>\n" +
+            " • Старая пустая бутылка (50%) ➔ <b>+5 XP</b>\n\n" +
+            "<i>💡 Весь улов отправляется в Сундук. Нажмите на предмет в инвентаре, чтобы получить опыт кота!</i>";
+
+        if (pondCatchGuideTableText != null) // Если назначен TextMeshPro
+        {
+            pondCatchGuideTableText.text = tableContent; // Установка текста
+        }
+        else if (pondCatchGuideLegacyTableText != null) // Если назначен Legacy Text
+        {
+            pondCatchGuideLegacyTableText.text = tableContent; // Установка текста
+        }
     }
 
     public void CloseCatchGuide() // Закрытие справочника
@@ -536,156 +591,142 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
     }
 
-    private IEnumerator ProcessCatchResult(float vVal, float hVal) // Корутина расчета выловленного предмета
+    private IEnumerator ProcessCatchResult(float vVal, float hVal) // Корутина расчета выловленного предмета по горизонтальной шкале подсечки
     {
         yield return new WaitForSeconds(0.8f); // Имитация времени выуживания
 
-        // Точное определение сектора по шкале высоты заброса (0.00 .. 1.00)
-        // Зона 4 (Золотая): верх шкалы
-        float z4Threshold = currentDifficulty == FishingDifficulty.Easy ? 0.65f : 
-                            currentDifficulty == FishingDifficulty.Medium ? 0.75f : 0.85f;
-        
-        float z3Threshold = 0.45f; // Зона 3: 0.45 .. z4Threshold (Середина водоема)
-        float z2Threshold = 0.25f; // Зона 2: 0.25 .. 0.45 (Близкий заброс)
-        // Зона 1: 0.00 .. 0.25 (Самый низ шкалы / берег и тина)
+        // Точное определение сектора по шкале подсечки (hVal: 0.00 .. 1.00) в соответствии с разметкой
+        // 0 - Позиция 0 (Центр до риски 1: 0.00 .. 0.35)
+        // 1 - За полоской 1 (0.35 .. 0.50)
+        // 2 - От 1 полоски до 2 полоски (0.50 .. 0.75)
+        // 3 - За 2 полоской (0.75 .. 1.00)
+        float hSpread = Mathf.Clamp01(hVal); // Значение горизонтальной подсечки (0..1)
+        float roll = Random.value; // Случайное число для вероятностей внутри выбранного сектора
 
-        int sector = 1;
-        if (vVal >= z4Threshold) sector = 4;
-        else if (vVal >= z3Threshold) sector = 3;
-        else if (vVal >= z2Threshold) sector = 2;
-        else sector = 1;
+        LootResult result = new LootResult(); // Объект результата вылова
 
-        float edgeAccuracy = hVal; // Точность горизонтального расхождения (0.0 .. 1.0)
-        float roll = Random.value; // Случайное число для выбора внутри категории
-
-        LootResult result = new LootResult();
-
-        // 🏆 1. ЗОЛОТАЯ ЗОНА 4 (Самый верхний заброс):
-        // Гарантированно выпадают мощные зелья: Драконье (+3000 XP), Мифическое (+1000 XP), Легендарное (+500 XP) или Магическое (+300 XP)
-        if (sector == 4)
+        // 🌟 1. ЗА 2 ПОЛОСКОЙ (0.75 .. 1.00):
+        // Магическое (+300 XP) - 40%, Легендарное (+500 XP) - 30%, Мифическое (+1000 XP) - 20%, Драконье (+3000 XP) - 10%
+        if (hSpread >= 0.75f)
         {
-            if (edgeAccuracy >= 0.75f || roll < 0.25f) // Отличная подсечка или удачный бросок
+            if (roll < 0.10f) // 10% вероятность
             {
-                result.itemId = "potion_3000";
-                result.itemName = "Драконье Зелье Опыта";
-                result.xp = 3000;
-                result.sprite = potion3000Sprite != null ? potion3000Sprite : potion1000Sprite;
-                result.rarityColor = new Color(1f, 0.4f, 0f);
+                result.itemId = "potion_3000"; // ID предмета
+                result.itemName = "Драконье Зелье Опыта"; // Имя предмета
+                result.xp = 3000; // Опыт предмета
+                result.sprite = potion3000Sprite != null ? potion3000Sprite : potion1000Sprite; // Спрайт
+                result.rarityColor = new Color(1f, 0.4f, 0f); // Оранжево-красный цвет редкости
             }
-            else if (edgeAccuracy >= 0.50f || roll < 0.55f)
+            else if (roll < 0.30f) // 20% вероятность (0.10 .. 0.30)
             {
-                result.itemId = "potion_1000";
-                result.itemName = "Мифическое Зелье Опыта";
-                result.xp = 1000;
-                result.sprite = potion1000Sprite != null ? potion1000Sprite : potion500Sprite;
-                result.rarityColor = new Color(0.7f, 0.3f, 1f);
+                result.itemId = "potion_1000"; // ID предмета
+                result.itemName = "Мифическое Зелье Опыта"; // Имя предмета
+                result.xp = 1000; // Опыт предмета
+                result.sprite = potion1000Sprite != null ? potion1000Sprite : potion500Sprite; // Спрайт
+                result.rarityColor = new Color(0.7f, 0.3f, 1f); // Пурпурный цвет редкости
             }
-            else if (roll < 0.80f)
+            else if (roll < 0.60f) // 30% вероятность (0.30 .. 0.60)
             {
-                result.itemId = "potion_500";
-                result.itemName = "Легендарное Зелье Опыта";
-                result.xp = 500;
-                result.sprite = potion500Sprite != null ? potion500Sprite : potion300Sprite;
-                result.rarityColor = new Color(1f, 0.85f, 0.2f);
+                result.itemId = "potion_500"; // ID предмета
+                result.itemName = "Легендарное Зелье Опыта"; // Имя предмета
+                result.xp = 500; // Опыт предмета
+                result.sprite = potion500Sprite != null ? potion500Sprite : potion300Sprite; // Спрайт
+                result.rarityColor = new Color(1f, 0.85f, 0.2f); // Золотой цвет редкости
             }
-            else
+            else // 40% вероятность (0.60 .. 1.00)
             {
-                result.itemId = "potion_300";
-                result.itemName = "Магическое Зелье Опыта";
-                result.xp = 300;
-                result.sprite = potion300Sprite != null ? potion300Sprite : potion100Sprite;
-                result.rarityColor = new Color(0.9f, 0.2f, 0.3f);
+                result.itemId = "potion_300"; // ID предмета
+                result.itemName = "Магическое Зелье Опыта"; // Имя предмета
+                result.xp = 300; // Опыт предмета
+                result.sprite = potion300Sprite != null ? potion300Sprite : potion100Sprite; // Спрайт
+                result.rarityColor = new Color(0.9f, 0.2f, 0.3f); // Рубиновый цвет редкости
             }
         }
-        // 🧪 2. ЗОНА 3 (Середина водоема: 0.45 .. z4Threshold):
-        // Выпадают Магический Рунный Камень, Зелье +100 XP и Зелье +50 XP
-        else if (sector == 3)
+        // 🧪 2. ОТ 1 ПОЛОСКИ ДО 2 ПОЛОСКИ (0.50 .. 0.75):
+        // Магический Рунный Камень (+50 XP) - 20%, Среднее Зелье Опыта (+50 XP) - 50%, Высокое Зелье Опыта (+100 XP) - 30%
+        else if (hSpread >= 0.50f)
         {
-            if (edgeAccuracy >= 0.75f && roll < 0.40f) // При идеальной подсечке в центре даем Магическое зелье +300 XP
+            if (roll < 0.20f) // 20% вероятность
             {
-                result.itemId = "potion_300";
-                result.itemName = "Магическое Зелье Опыта";
-                result.xp = 300;
-                result.sprite = potion300Sprite != null ? potion300Sprite : potion100Sprite;
-                result.rarityColor = new Color(0.9f, 0.2f, 0.3f);
+                result.itemId = "rune_stone"; // ID предмета
+                result.itemName = "Магический Рунный Камень"; // Имя предмета
+                result.xp = 50; // Опыт предмета
+                result.sprite = runeStoneSprite; // Спрайт рунного камня
+                result.rarityColor = new Color(0.4f, 0.9f, 0.9f); // Бирюзовый цвет редкости
             }
-            else if (roll < 0.35f)
+            else if (roll < 0.70f) // 50% вероятность (0.20 .. 0.70)
             {
-                result.itemId = "rune_stone";
-                result.itemName = "Магический Рунный Камень";
-                result.xp = 50;
-                result.sprite = runeStoneSprite;
-                result.rarityColor = new Color(0.4f, 0.9f, 0.9f);
+                result.itemId = "potion_50"; // ID предмета
+                result.itemName = "Среднее Зелье Опыта"; // Имя предмета
+                result.xp = 50; // Опыт предмета
+                result.sprite = potion50Sprite; // Спрайт зелья 50 XP
+                result.rarityColor = new Color(0.2f, 0.6f, 1f); // Синий цвет редкости
             }
-            else if (roll < 0.70f)
+            else // 30% вероятность (0.70 .. 1.00)
             {
-                result.itemId = "potion_100";
-                result.itemName = "Высокое Зелье Опыта";
-                result.xp = 100;
-                result.sprite = potion100Sprite;
-                result.rarityColor = new Color(0.6f, 0.3f, 0.9f);
-            }
-            else
-            {
-                result.itemId = "potion_50";
-                result.itemName = "Среднее Зелье Опыта";
-                result.xp = 50;
-                result.sprite = potion50Sprite;
-                result.rarityColor = new Color(0.2f, 0.6f, 1f);
+                result.itemId = "potion_100"; // ID предмета
+                result.itemName = "Высокое Зелье Опыта"; // Имя предмета
+                result.xp = 100; // Опыт предмета
+                result.sprite = potion100Sprite; // Спрайт зелья 100 XP
+                result.rarityColor = new Color(0.6f, 0.3f, 0.9f); // Фиолетовый цвет редкости
             }
         }
-        // 💧 3. ЗОНА 2 (Близкая зона: 0.25 .. 0.45):
-        // Болотная тина, Старая бутылка и Малое зелье +10 XP
-        else if (sector == 2)
+        // 💧 3. ЗА ПОЛОСКОЙ 1 (0.35 .. 0.50):
+        // 50% вероятность: Болотная тина (+10 XP) или Старая пустая бутылка (+5 XP)
+        // 50% вероятность: Малое Зелье Опыта (+10 XP)
+        else if (hSpread >= 0.35f)
         {
-            if (roll < 0.40f)
+            if (roll < 0.50f) // 50% шанс на мусор
             {
-                result.itemId = "duckweed";
-                result.itemName = "Болотная тина";
-                result.xp = 5;
-                result.sprite = duckweedSprite;
-                result.rarityColor = Color.gray;
+                if (roll < 0.25f) // 25% Болотная тина (+10 XP)
+                {
+                    result.itemId = "duckweed"; // ID предмета
+                    result.itemName = "Болотная тина"; // Имя предмета
+                    result.xp = 10; // Нажатие на тину дает 10 XP игрока
+                    result.sprite = duckweedSprite; // Спрайт тины
+                    result.rarityColor = new Color(0.4f, 0.75f, 0.3f); // Травяной цвет
+                }
+                else // 25% Старая бутылка (+5 XP)
+                {
+                    result.itemId = "trash_bottle"; // ID предмета
+                    result.itemName = "Старая бутылка"; // Имя предмета
+                    result.xp = 5; // Нажатие на бутылку дает 5 XP игрока
+                    result.sprite = trashBottleSprite; // Спрайт бутылки
+                    result.rarityColor = Color.gray; // Серый цвет
+                }
             }
-            else if (roll < 0.75f)
+            else // 50% шанс на Малое Зелье Опыта (+10 XP)
             {
-                result.itemId = "trash_bottle";
-                result.itemName = "Старая бутылка";
-                result.xp = 5;
-                result.sprite = trashBottleSprite;
-                result.rarityColor = Color.gray;
-            }
-            else
-            {
-                result.itemId = "potion_10";
-                result.itemName = "Малое Зелье Опыта";
-                result.xp = 10;
-                result.sprite = potion10Sprite != null ? potion10Sprite : potion50Sprite;
-                result.rarityColor = new Color(0.3f, 0.7f, 0.4f);
+                result.itemId = "potion_10"; // ID предмета
+                result.itemName = "Малое Зелье Опыта"; // Имя предмета
+                result.xp = 10; // Опыт предмета
+                result.sprite = potion10Sprite != null ? potion10Sprite : potion50Sprite; // Спрайт
+                result.rarityColor = new Color(0.3f, 0.7f, 0.4f); // Зеленый цвет редкости
             }
         }
-        // 🪵 4. ЗОНА 1 (Самый низ шкалы / берег: 0.00 .. 0.25):
-        // 100% Болотная тина и Старая бутылка (+5 XP)
+        // 🪵 4. В 0 ПОЗИЦИИ (Центр до риски 1: 0.00 .. 0.35):
+        // 100% самое плохое: 50% Болотная тина (+10 XP) и 50% Старая пустая бутылка (+5 XP)
         else
         {
-            if (roll < 0.50f)
+            if (roll < 0.50f) // 50% вероятность
             {
-                result.itemId = "duckweed";
-                result.itemName = "Болотная тина";
-                result.xp = 5;
-                result.sprite = duckweedSprite;
-                result.rarityColor = Color.gray;
+                result.itemId = "duckweed"; // ID предмета
+                result.itemName = "Болотная тина"; // Имя предмета
+                result.xp = 10; // Нажатие на тину дает 10 XP игрока
+                result.sprite = duckweedSprite; // Спрайт тины
+                result.rarityColor = new Color(0.4f, 0.75f, 0.3f); // Травяной цвет
             }
-            else
+            else // 50% вероятность
             {
-                result.itemId = "trash_bottle";
-                result.itemName = "Старая бутылка";
-                result.xp = 5;
-                result.sprite = trashBottleSprite;
-                result.rarityColor = Color.gray;
+                result.itemId = "trash_bottle"; // ID предмета
+                result.itemName = "Старая бутылка"; // Имя предмета
+                result.xp = 5; // Нажатие на пустую бутылку дает 5 XP игрока
+                result.sprite = trashBottleSprite; // Спрайт пустой бутылки
+                result.rarityColor = Color.gray; // Серый цвет
             }
         }
 
-        Debug.Log($"[РЫБАЛКА] Сектор: {sector} (v={vVal:F2}, h={hVal:F2}) -> Поймано: {result.itemName} (+{result.xp} XP)");
+        Debug.Log($"[РЫБАЛКА] Шкала hSpread={hSpread:F2} (vVal={vVal:F2}) -> Выловлено: {result.itemName} (+{result.xp} XP)"); // Логирование улова
 
         caughtSessionLoot.Add(result); // Добавление в улов сессии
         totalSessionXpGained += result.xp; // Прибавление опыта
@@ -920,16 +961,12 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             claimAndContinueButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Привязка действия
         }
 
-        // 6. Добавление фоллбэк-клика на всю область панели итогов
-        Button panelBgButton = resultSummaryPopupPanel.GetComponent<Button>(); // Проверка кликабельности фона
-        if (panelBgButton == null)
+        // 6. Защита от случайного закрытия по клику мимо кнопки: отключаем кликабельность фона панели
+        Button panelBgButton = resultSummaryPopupPanel.GetComponent<Button>(); // Проверка компонента Button на самом фоне
+        if (panelBgButton != null)
         {
-            panelBgButton = resultSummaryPopupPanel.AddComponent<Button>(); // Добавление кнопки на фон панели
-            ColorBlock pcb = panelBgButton.colors;
-            pcb.normalColor = Color.white;
-            pcb.highlightedColor = Color.white;
-            panelBgButton.colors = pcb;
-            panelBgButton.onClick.AddListener(ClaimAllAndProceedToQuest); // Клик в любом месте рамки также закрывает окно
+            panelBgButton.onClick.RemoveAllListeners(); // Очистка любых случайных слушателей на фоне
+            panelBgButton.interactable = false; // Отключение фона, чтобы работала ТОЛЬКО сама кнопка
         }
     }
 

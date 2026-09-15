@@ -825,6 +825,12 @@ public class RecipeCrafting_Manager : MonoBehaviour
         {
             inventoryCloseButton.interactable = isMasteryPotionConsumed; // Блокировка/разблокировка выхода
         }
+
+        // Обновление и отображение предметов из единого сундука (улов рыбалки, зелья, тина, бутылки)
+        if (Inventory_Manager.Instance != null)
+        {
+            Inventory_Manager.Instance.UpdateChestUI(); // Отрисовка всех предметов сундука в сетку ячеек
+        }
     }
 
     private void HideTopResources() // Скрытие верхней панели ресурсов при открытии полноэкранных окон
