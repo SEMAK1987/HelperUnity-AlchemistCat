@@ -159,12 +159,16 @@ public class HiddenObject_Minigame : MonoBehaviour
     {
         if (Instance == null) Instance = this; // Инициализация синглтона
         else if (Instance != this) { Destroy(gameObject); return; } // Уничтожение дубликата
+
+        InitializeDefaultConfigurationsIfEmpty(); // Инициализация локаций и дефолтных предметов
+        EnsureUIHierarchy(); // Проверка и связка иерархии UI панелей
+        SetupButtons(); // Настройка подписчиков на кнопки
     }
 
     private void Start() // Стартовая настройка конфигурации, кнопок и сохранений
     {
-        InitializeDefaultConfigurationsIfEmpty(); // Инициализация локаций и предметов по умолчанию
-        EnsureUIHierarchy(); // Проверка и авто-сборка интерфейса
+        InitializeDefaultConfigurationsIfEmpty(); // Повторная проверка локаций
+        EnsureUIHierarchy(); // Повторная проверка UI
         SetupButtons(); // Настройка кликов кнопок интерфейса
         LoadCompletionProgress(); // Загрузка сохраненного прогресса прохождения локаций
     }
@@ -174,7 +178,7 @@ public class HiddenObject_Minigame : MonoBehaviour
         EnsureUIHierarchy(); // Гарантированная готовность всех элементов
         if (!isGameRunning) // Если раунд не идет
         {
-            ShowLocationSelectionScreen(); // Открытие меню выбора локаций
+            ShowLocationSelectionScreen(); // Открытие меню выбора комнат
         }
     }
 
@@ -205,12 +209,22 @@ public class HiddenObject_Minigame : MonoBehaviour
     /// </summary>
     public void ShowLocationSelectionScreen()
     {
-        if (hiddenObjectPanel != null) hiddenObjectPanel.SetActive(false); // Скрытие игрового полотна
+        EnsureUIHierarchy(); // Гарантированная проверка ссылок перед переключением
+
         if (difficultySelectPopup != null) difficultySelectPopup.SetActive(false); // Скрытие меню сложности
         if (victoryPopupPanel != null) victoryPopupPanel.SetActive(false); // Скрытие окна победы
         if (recordModeSelectPopup != null) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
         if (catRecordUnlockedDialog != null) catRecordUnlockedDialog.SetActive(false); // Скрытие диалога кота
-        if (locationSelectPopup != null) locationSelectPopup.SetActive(true); // Открытие окна выбора локации
+
+        if (locationSelectPopup != null) // Если панель выбора локаций существует
+        {
+            locationSelectPopup.SetActive(true); // Открытие окна выбора локации
+            if (hiddenObjectPanel != null && hiddenObjectPanel != gameObject) hiddenObjectPanel.SetActive(false); // Скрытие игрового полотна только если это отдельный дочерний объект
+        }
+        else if (hiddenObjectPanel != null) // Если единая панель
+        {
+            hiddenObjectPanel.SetActive(true); // Включение главной панели
+        }
 
         RefreshLocationCardsUI(); // Обновление плашек прогресса на карточках
     }

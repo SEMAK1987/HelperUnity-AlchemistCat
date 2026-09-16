@@ -486,7 +486,30 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
     private void ResetAttemptToIdle() // Сброс состояния попытки в ожидание клика по удочке
     {
-        currentPhase = GamePhase.Idle;
+        currentPhase = GamePhase.Idle; // Возврат в исходное состояние ожидания
+        verticalValue = 0.5f; // Сброс вертикальной шкалы в начальное положение (середина)
+        verticalDirection = 1; // Направление движения вверх
+        horizontalSpread = 0f; // Полный сброс горизонтальной полоски в центр (0 расхождение лучей)
+        horizontalDirection = 1; // Направление расхождения лучей от центра к краям
+
+        // Сброс визуального положения лучей в центр (15px начальный размер)
+        if (leftMovingBeam != null)
+        {
+            float h = beamHeight > 0 ? beamHeight : 100f; // Применение высоты
+            leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Опорная точка справа
+            leftMovingBeam.anchoredPosition = Vector2.zero; // Центрирование
+            leftMovingBeam.localScale = Vector3.one; // Нормализация масштаба
+            leftMovingBeam.sizeDelta = new Vector2(15f, h); // Сброс размера в центр
+        }
+        if (rightMovingBeam != null)
+        {
+            float h = beamHeight > 0 ? beamHeight : 100f; // Применение высоты
+            rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Опорная точка слева
+            rightMovingBeam.anchoredPosition = Vector2.zero; // Центрирование
+            rightMovingBeam.localScale = Vector3.one; // Нормализация масштаба
+            rightMovingBeam.sizeDelta = new Vector2(15f, h); // Сброс размера в центр
+        }
+
         int maxAttempts = GetMaxAttemptsForDifficulty(currentDifficulty); // Максимальное количество попыток для текущего режима
 
         if (attemptsCounterText) attemptsCounterText.text = $"Попытка: {currentAttempt} / {maxAttempts}"; // Текст счетчика попыток
@@ -498,8 +521,8 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         if (singleCatchToastPanel) singleCatchToastPanel.SetActive(false); // Прячем тост
 
         // Разблокировка удочки
-        if (fishRodButton) fishRodButton.interactable = true;
-        if (fishRodImage) fishRodImage.color = Color.white;
+        if (fishRodButton) fishRodButton.interactable = true; // Разблокировка кнопки удочки
+        if (fishRodImage) fishRodImage.color = Color.white; // Белый активный цвет
         if (actionButtonText) actionButtonText.text = "ЗАБРОС!"; // Текст кнопки
     }
 
@@ -508,22 +531,66 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         switch (currentPhase)
         {
             case GamePhase.Idle: // Фаза 1: запуск вертикальной шкалы
-                currentPhase = GamePhase.VerticalCasting;
-                if (fishRodButton) fishRodButton.interactable = true;
-                if (fishRodImage) fishRodImage.color = Color.white;
-                if (verticalBarContainer) verticalBarContainer.SetActive(true);
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(false);
-                if (actionButtonText) actionButtonText.text = "СТОП!";
+                currentPhase = GamePhase.VerticalCasting; // Переход в фазу заброса
+                verticalValue = 0.5f; // Гарантированный старт вертикального бегунка с центра
+                verticalDirection = 1; // Движение вверх
+                horizontalSpread = 0f; // Гарантированный сброс горизонтальной шкалы в центр
+                horizontalDirection = 1; // Начало движения лучей из центра к краям
+
+                // Сброс визуальных лучей в центральное положение перед забросом
+                if (leftMovingBeam != null)
+                {
+                    float h = beamHeight > 0 ? beamHeight : 100f; // Высота
+                    leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Опорная точка
+                    leftMovingBeam.anchoredPosition = Vector2.zero; // Центрирование
+                    leftMovingBeam.localScale = Vector3.one; // Масштаб
+                    leftMovingBeam.sizeDelta = new Vector2(15f, h); // Стартовый размер в центре
+                }
+                if (rightMovingBeam != null)
+                {
+                    float h = beamHeight > 0 ? beamHeight : 100f; // Высота
+                    rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Опорная точка
+                    rightMovingBeam.anchoredPosition = Vector2.zero; // Центрирование
+                    rightMovingBeam.localScale = Vector3.one; // Масштаб
+                    rightMovingBeam.sizeDelta = new Vector2(15f, h); // Стартовый размер в центре
+                }
+
+                if (fishRodButton) fishRodButton.interactable = true; // Активность удочки
+                if (fishRodImage) fishRodImage.color = Color.white; // Белый цвет
+                if (verticalBarContainer) verticalBarContainer.SetActive(true); // Включение вертикальной шкалы
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(false); // Выключение горизонтальной шкалы
+                if (actionButtonText) actionButtonText.text = "СТОП!"; // Текст кнопки
                 break;
 
             case GamePhase.VerticalCasting: // Фаза 2: фиксация дальности и запуск горизонтальной шкалы
-                lockedVertical = verticalValue;
-                currentPhase = GamePhase.HorizontalCatching;
-                if (fishRodButton) fishRodButton.interactable = true;
-                if (fishRodImage) fishRodImage.color = Color.white;
-                if (verticalBarContainer) verticalBarContainer.SetActive(false);
-                if (horizontalBarContainer) horizontalBarContainer.SetActive(true);
-                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ!";
+                lockedVertical = verticalValue; // Фиксация дальности заброса
+                horizontalSpread = 0f; // Старт горизонтальной шкалы строго из центра (0.0)
+                horizontalDirection = 1; // Начало расхождения лучей от центра к краям
+
+                // Сброс визуальных лучей в центральное положение в момент появления шкалы подсечки
+                if (leftMovingBeam != null)
+                {
+                    float h = beamHeight > 0 ? beamHeight : 100f; // Высота
+                    leftMovingBeam.pivot = new Vector2(1f, 0.5f); // Опорная точка
+                    leftMovingBeam.anchoredPosition = Vector2.zero; // Центрирование
+                    leftMovingBeam.localScale = Vector3.one; // Масштаб
+                    leftMovingBeam.sizeDelta = new Vector2(15f, h); // Стартовый размер в центре
+                }
+                if (rightMovingBeam != null)
+                {
+                    float h = beamHeight > 0 ? beamHeight : 100f; // Высота
+                    rightMovingBeam.pivot = new Vector2(0f, 0.5f); // Опорная точка
+                    rightMovingBeam.anchoredPosition = Vector2.zero; // Центрирование
+                    rightMovingBeam.localScale = Vector3.one; // Масштаб
+                    rightMovingBeam.sizeDelta = new Vector2(15f, h); // Стартовый размер в центре
+                }
+
+                currentPhase = GamePhase.HorizontalCatching; // Переход в фазу подсечки
+                if (fishRodButton) fishRodButton.interactable = true; // Активность удочки
+                if (fishRodImage) fishRodImage.color = Color.white; // Белый цвет
+                if (verticalBarContainer) verticalBarContainer.SetActive(false); // Выключение вертикальной шкалы
+                if (horizontalBarContainer) horizontalBarContainer.SetActive(true); // Включение горизонтальной шкалы
+                if (actionButtonText) actionButtonText.text = "ПОДСЕЧЬ!"; // Текст кнопки
 
                 StartCoroutine(AnimateRodCast(lockedVertical)); // Запуск анимации взмаха
                 break;

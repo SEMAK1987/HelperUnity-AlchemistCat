@@ -1,7 +1,9 @@
 {
-  "version": "18.12.75",
+  "version": "18.12.85",
   "release_date": "2026-09-16",
   "changelog": [
+    "v18.12.85: Fixed Hidden Object Minigame panel activation and hierarchy synchronization from dialogue triggers. Added robust Awake/OnEnable UI initialization and safe fallback handling.",
+    "v18.12.80: Fixed Alchemy Fishing horizontal beam reset — on each cast and attempt the indicator and spread variables (horizontalSpread, leftMovingBeam, rightMovingBeam) cleanly reset to the center (0.0 / 15px) instead of starting from the previous caught position.",
     "v18.12.75: Fixed CS0618 warning for TMP_Text.enableWordWrapping. Added Smart Non-Overlapping Procedural Placement with collision avoidance and optional Custom Spawn Points (Transform / Vector2 coordinates) for each of the 3 rooms (Shop, House, Market).",
     "v18.12.70: Fixed Hidden Object transition from Dialogue system with robust UI auto-hierarchy generation, 3 room cards (Shop, House, Market), 3 difficulty tiers (Easy, Normal, Hard), dynamic procedural fallback items/backgrounds, Zoom/Pan handling, hint system, victory rewards, and transition to Cauldron Defense."
   ]
