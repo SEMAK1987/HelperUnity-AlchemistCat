@@ -1396,11 +1396,18 @@ public class DialogueSystem_Manager : MonoBehaviour
                     while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
                     go.SetActive(true);
                     HiddenObject_Minigame comp = go.GetComponent<HiddenObject_Minigame>();
-                    if (comp != null) comp.OpenMinigame();
+                    if (comp == null) comp = go.AddComponent<HiddenObject_Minigame>();
+                    comp.OpenMinigame();
                     return;
                 }
             }
         }
+
+        // Если объект не был создан на сцене заранее — создаем надежный экземпляр динамически
+        GameObject fallbackHoObj = new GameObject("HiddenObject_Game_Panel", typeof(RectTransform));
+        if (minigamesPanel != null) fallbackHoObj.transform.SetParent(minigamesPanel.transform, false);
+        HiddenObject_Minigame fallbackComp = fallbackHoObj.AddComponent<HiddenObject_Minigame>();
+        fallbackComp.OpenMinigame();
     }
 
     /// <summary>

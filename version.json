@@ -1,8 +1,8 @@
 {
-  "version": "18.12.65",
-  "release_date": "2026-09-14",
+  "version": "18.12.75",
+  "release_date": "2026-09-16",
   "changelog": [
-    "v18.12.65: Unified Central Alchemist Chest Architecture (The One Central Chest for all quests, minigames, craftings, and purchases). Synchronized Inventory_Manager.cs, RecipeCrafting_Manager.cs, CatchMouse_Minigame.cs, AlchemyFishing_Minigame.cs, CauldronDefense_Minigame.cs, HiddenObject_Minigame.cs, Laboratory_Mixer.cs, and WorldMarket_And_Tournament.cs.",
-    "v18.12.60: Full Inspector synchronization and verification for CauldronDefense_Minigame.cs (Easy/Medium/Hard button OnClick bindings, 5 Cauldron slots with Umbrellas/Clouds/Particles, 3 Heart icons, and Dialogue/Laboratory integration)."
+    "v18.12.75: Fixed CS0618 warning for TMP_Text.enableWordWrapping. Added Smart Non-Overlapping Procedural Placement with collision avoidance and optional Custom Spawn Points (Transform / Vector2 coordinates) for each of the 3 rooms (Shop, House, Market).",
+    "v18.12.70: Fixed Hidden Object transition from Dialogue system with robust UI auto-hierarchy generation, 3 room cards (Shop, House, Market), 3 difficulty tiers (Easy, Normal, Hard), dynamic procedural fallback items/backgrounds, Zoom/Pan handling, hint system, victory rewards, and transition to Cauldron Defense."
   ]
 }

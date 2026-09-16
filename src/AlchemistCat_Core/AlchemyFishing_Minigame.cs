@@ -343,15 +343,38 @@ public class AlchemyFishing_Minigame : MonoBehaviour
             }
         }
 
+        // Настройка процентов в зависимости от выбранного уровня сложности
+        string diffName = currentDifficulty == FishingDifficulty.Medium ? "Средний уровень" : (currentDifficulty == FishingDifficulty.Hard ? "Сложный уровень" : "Легкий уровень");
+        
+        string zone4Line1 = "- Магическое (40%): +300 XP | Легендарное (30%): +500 XP";
+        string zone4Line2 = "- Мифическое (20%): +1000 XP | Драконье (10%): +3000 XP";
+        string zone3Line1 = "- Среднее зелье (50%): +50 XP | Высокое зелье (30%): +100 XP";
+        string zone3Line2 = "- Магический Рунный Камень (20%): +50 XP";
+
+        if (currentDifficulty == FishingDifficulty.Medium)
+        {
+            zone4Line1 = "- Магическое (47%): +300 XP | Легендарное (28%): +500 XP";
+            zone4Line2 = "- Мифическое (17%): +1000 XP | Драконье (8%): +3000 XP";
+            zone3Line1 = "- Среднее зелье (54%): +50 XP | Высокое зелье (28%): +100 XP";
+            zone3Line2 = "- Магический Рунный Камень (18%): +50 XP";
+        }
+        else if (currentDifficulty == FishingDifficulty.Hard)
+        {
+            zone4Line1 = "- Магическое (54%): +300 XP | Легендарное (25%): +500 XP";
+            zone4Line2 = "- Мифическое (15%): +1000 XP | Драконье (6%): +3000 XP";
+            zone3Line1 = "- Среднее зелье (60%): +50 XP | Высокое зелье (25%): +100 XP";
+            zone3Line2 = "- Магический Рунный Камень (15%): +50 XP";
+        }
+
         // Высококонтрастный текст в синей цветовой гамме (максимальная читаемость на фоне воды и кувшинок)
         string tableContent = 
-            "<color=#001F7F><b><size=115%>ТАБЛИЦА ДОБЫЧИ НА ШКАЛЕ (Все уровни сложности)</size></b></color>\n" +
+            $"<color=#001F7F><b><size=115%>ТАБЛИЦА ДОБЫЧИ НА ШКАЛЕ ({diffName})</size></b></color>\n" +
             "<color=#002E9E><b>1. За 2-й полоской (0.75 - 1.00) [Края шкалы]:</b></color>\n" +
-            "<color=#0044DD><b>- Магическое (40%): +300 XP | Легендарное (30%): +500 XP</b></color>\n" +
-            "<color=#0044DD><b>- Мифическое (20%): +1000 XP | Драконье (10%): +3000 XP</b></color>\n" +
+            $"<color=#0044DD><b>{zone4Line1}</b></color>\n" +
+            $"<color=#0044DD><b>{zone4Line2}</b></color>\n" +
             "<color=#002E9E><b>2. От 1-й до 2-й полоски (0.50 - 0.75) [Средняя зона]:</b></color>\n" +
-            "<color=#0044DD><b>- Среднее зелье (50%): +50 XP | Высокое зелье (30%): +100 XP</b></color>\n" +
-            "<color=#0044DD><b>- Магический Рунный Камень (20%): +50 XP</b></color>\n" +
+            $"<color=#0044DD><b>{zone3Line1}</b></color>\n" +
+            $"<color=#0044DD><b>{zone3Line2}</b></color>\n" +
             "<color=#002E9E><b>3. За 1-й полоской (0.35 - 0.50) [Переходная зона]:</b></color>\n" +
             "<color=#0044DD><b>- Малое зелье (50%): +10 XP | Мусор (50%): Тина / Бутылка (+10 / +5 XP)</b></color>\n" +
             "<color=#002E9E><b>4. Центр шкалы (0.00 - 0.35) [0-Позиция]:</b></color>\n" +
@@ -601,11 +624,21 @@ public class AlchemyFishing_Minigame : MonoBehaviour
 
         LootResult result = new LootResult(); // Объект результата вылова
 
-        // 🌟 1. ЗА 2 ПОЛОСКОЙ (0.75 .. 1.00):
-        // Магическое (+300 XP) - 40%, Легендарное (+500 XP) - 30%, Мифическое (+1000 XP) - 20%, Драконье (+3000 XP) - 10%
+        // 🌟 1. ЗА 2 ПОЛОСКОЙ (0.75 .. 1.00) [Края шкалы]:
+        // Легкий: Драконье (10%), Мифическое (20%), Легендарное (30%), Магическое (40%)
+        // Средний: Драконье (8%), Мифическое (17%), Легендарное (28%), Магическое (47%)
+        // Сложный: Драконье (6%), Мифическое (15%), Легендарное (25%), Магическое (54%)
         if (hSpread >= 0.75f)
         {
-            if (roll < 0.10f) // 10% вероятность
+            float dragonChance = currentDifficulty == FishingDifficulty.Medium ? 0.08f : (currentDifficulty == FishingDifficulty.Hard ? 0.06f : 0.10f);
+            float mythicChance = currentDifficulty == FishingDifficulty.Medium ? 0.17f : (currentDifficulty == FishingDifficulty.Hard ? 0.15f : 0.20f);
+            float legChance    = currentDifficulty == FishingDifficulty.Medium ? 0.28f : (currentDifficulty == FishingDifficulty.Hard ? 0.25f : 0.30f);
+
+            float threshold1 = dragonChance; // Порог выпадения Драконьего зелья
+            float threshold2 = threshold1 + mythicChance; // Порог выпадения Мифического зелья
+            float threshold3 = threshold2 + legChance; // Порог выпадения Легендарного зелья
+
+            if (roll < threshold1) // Драконье зелье
             {
                 result.itemId = "potion_3000"; // ID предмета
                 result.itemName = "Драконье Зелье Опыта"; // Имя предмета
@@ -613,7 +646,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 result.sprite = potion3000Sprite != null ? potion3000Sprite : potion1000Sprite; // Спрайт
                 result.rarityColor = new Color(1f, 0.4f, 0f); // Оранжево-красный цвет редкости
             }
-            else if (roll < 0.30f) // 20% вероятность (0.10 .. 0.30)
+            else if (roll < threshold2) // Мифическое зелье
             {
                 result.itemId = "potion_1000"; // ID предмета
                 result.itemName = "Мифическое Зелье Опыта"; // Имя предмета
@@ -621,7 +654,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 result.sprite = potion1000Sprite != null ? potion1000Sprite : potion500Sprite; // Спрайт
                 result.rarityColor = new Color(0.7f, 0.3f, 1f); // Пурпурный цвет редкости
             }
-            else if (roll < 0.60f) // 30% вероятность (0.30 .. 0.60)
+            else if (roll < threshold3) // Легендарное зелье
             {
                 result.itemId = "potion_500"; // ID предмета
                 result.itemName = "Легендарное Зелье Опыта"; // Имя предмета
@@ -629,7 +662,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 result.sprite = potion500Sprite != null ? potion500Sprite : potion300Sprite; // Спрайт
                 result.rarityColor = new Color(1f, 0.85f, 0.2f); // Золотой цвет редкости
             }
-            else // 40% вероятность (0.60 .. 1.00)
+            else // Магическое зелье (оставшийся шанс)
             {
                 result.itemId = "potion_300"; // ID предмета
                 result.itemName = "Магическое Зелье Опыта"; // Имя предмета
@@ -638,11 +671,19 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 result.rarityColor = new Color(0.9f, 0.2f, 0.3f); // Рубиновый цвет редкости
             }
         }
-        // 🧪 2. ОТ 1 ПОЛОСКИ ДО 2 ПОЛОСКИ (0.50 .. 0.75):
-        // Магический Рунный Камень (+50 XP) - 20%, Среднее Зелье Опыта (+50 XP) - 50%, Высокое Зелье Опыта (+100 XP) - 30%
+        // 🧪 2. ОТ 1 ПОЛОСКИ ДО 2 ПОЛОСКИ (0.50 .. 0.75) [Средняя зона]:
+        // Легкий: Рунный Камень (20%), Среднее Зелье (50%), Высокое Зелье (30%)
+        // Средний: Рунный Камень (18%), Среднее Зелье (54%), Высокое Зелье (28%)
+        // Сложный: Рунный Камень (15%), Среднее Зелье (60%), Высокое Зелье (25%)
         else if (hSpread >= 0.50f)
         {
-            if (roll < 0.20f) // 20% вероятность
+            float runeChance   = currentDifficulty == FishingDifficulty.Medium ? 0.18f : (currentDifficulty == FishingDifficulty.Hard ? 0.15f : 0.20f);
+            float mediumChance = currentDifficulty == FishingDifficulty.Medium ? 0.54f : (currentDifficulty == FishingDifficulty.Hard ? 0.60f : 0.50f);
+
+            float threshold1 = runeChance; // Порог выпадения Рунного Камня
+            float threshold2 = threshold1 + mediumChance; // Порог выпадения Среднего Зелья
+
+            if (roll < threshold1) // Магический Рунный Камень
             {
                 result.itemId = "rune_stone"; // ID предмета
                 result.itemName = "Магический Рунный Камень"; // Имя предмета
@@ -650,7 +691,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 result.sprite = runeStoneSprite; // Спрайт рунного камня
                 result.rarityColor = new Color(0.4f, 0.9f, 0.9f); // Бирюзовый цвет редкости
             }
-            else if (roll < 0.70f) // 50% вероятность (0.20 .. 0.70)
+            else if (roll < threshold2) // Среднее Зелье Опыта
             {
                 result.itemId = "potion_50"; // ID предмета
                 result.itemName = "Среднее Зелье Опыта"; // Имя предмета
@@ -658,7 +699,7 @@ public class AlchemyFishing_Minigame : MonoBehaviour
                 result.sprite = potion50Sprite; // Спрайт зелья 50 XP
                 result.rarityColor = new Color(0.2f, 0.6f, 1f); // Синий цвет редкости
             }
-            else // 30% вероятность (0.70 .. 1.00)
+            else // Высокое Зелье Опыта (оставшийся шанс)
             {
                 result.itemId = "potion_100"; // ID предмета
                 result.itemName = "Высокое Зелье Опыта"; // Имя предмета
