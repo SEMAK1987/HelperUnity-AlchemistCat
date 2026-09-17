@@ -1,7 +1,14 @@
 {
-  "version": "18.12.85",
-  "release_date": "2026-09-16",
+  "version": "18.12.96",
+  "release_date": "2026-09-17",
   "changelog": [
+    "v18.12.96: Implemented strict linear room progression and final dialogue transition in HiddenObject_Minigame.cs — Room 1 (Shop) is unlocked initially and locks upon completion while unlocking Room 2 (House); Room 2 locks upon completion while unlocking Room 3 (Market); completing Room 3 triggers the claim reward flow and transitions directly into the Cat Dialogue announcing the upcoming Cauldron Defense minigame.",
+    "v18.12.95: Fixed post-victory progression flow in HiddenObject_Minigame.cs — clicking Claim Rewards now returns the player to the Room Selection screen with unlocked subsequent rooms, status badges, and updated lock overlays instead of triggering premature Cauldron Defense dialogue transitions.",
+    "v18.12.94: Completely removed Unicode emoji characters (money bag, diamond, scroll, test tubes, sparkles) from Victory_Rewards_Text and Record mode victories in HiddenObject_Minigame.cs, eliminating all LiberationSans SDF square placeholder warnings.",
+    "v18.12.93: Fixed InvalidOperationException in HiddenObject_Minigame.cs by providing unified support for new Input System (Mouse.current.scroll) and legacy Input Manager. Removed all Unicode emoji characters causing LiberationSans SDF font warnings.",
+    "v18.12.92: Fixed CatchMouse_Game_Panel remaining visible when transitioning to Hidden Object via F9. Enforced mutual exclusivity of minigame panels in OpenMinigame and CloseMinigame. Updated 3 room buttons hierarchy guide and full screen background stretch setup.",
+    "v18.12.91: Merged duplicate Update() in AlchemyFishing_Minigame.cs resolving CS0111 compilation error. Replaced Unicode lock emoji with standard text in HiddenObject_Minigame.cs fixing LiberationSans SDF font character missing warning. Added Leonardo AI full-screen 16:9 prompt and step-by-step custom button branding guide.",
+    "v18.12.90: Implemented chained F9 minigame skip — pressing F9 the first time skips Catch Mouse and launches Fishing dialogue; pressing F9 again (or during Fishing) instantly wins Alchemy Fishing (+3000 Gold, +3 Stones, +1 Scroll, +100 XP) and transitions directly to Hidden Object dialogue.",
     "v18.12.85: Fixed Hidden Object Minigame panel activation and hierarchy synchronization from dialogue triggers. Added robust Awake/OnEnable UI initialization and safe fallback handling.",
     "v18.12.80: Fixed Alchemy Fishing horizontal beam reset — on each cast and attempt the indicator and spread variables (horizontalSpread, leftMovingBeam, rightMovingBeam) cleanly reset to the center (0.0 / 15px) instead of starting from the previous caught position.",
     "v18.12.75: Fixed CS0618 warning for TMP_Text.enableWordWrapping. Added Smart Non-Overlapping Procedural Placement with collision avoidance and optional Custom Spawn Points (Transform / Vector2 coordinates) for each of the 3 rooms (Shop, House, Market).",

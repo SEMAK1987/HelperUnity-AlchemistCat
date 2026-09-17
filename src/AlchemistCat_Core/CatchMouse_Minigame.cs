@@ -105,6 +105,7 @@ public class CatchMouse_Minigame : MonoBehaviour
     private void Awake() // Инициализация экземпляра синглтона при пробуждении объекта
     {
         Instance = this; // Инициализация синглтона при старте
+        if (gamePanel == null) gamePanel = this.gameObject; // Авто-привязка панели к текущему объекту
     }
 
     private void Start() // Стартовая инициализация обработчиков кнопок и панелей
@@ -326,8 +327,31 @@ public class CatchMouse_Minigame : MonoBehaviour
         }
     }
 
-    private void Update() // Покадровый отсчет таймера и обновление UI времени
+    private void Update() // Покадровый отсчет таймера и обработка горячей клавиши пропуска F9
     {
+        // Чит-клавиша F9: Мгновенное завершение мышек на легком уровне и переход к диалогу Рыбалки
+        bool f9Pressed = false; // Флаг нажатия F9
+        try
+        {
+            if (Input.GetKeyDown(KeyCode.F9)) f9Pressed = true; // Проверка в Legacy Input Manager
+        }
+        catch (System.Exception) { }
+
+#if ENABLE_INPUT_SYSTEM
+        try
+        {
+            var kb = UnityEngine.InputSystem.Keyboard.current; // Пакет New Input System
+            if (kb != null && kb.f9Key.wasPressedThisFrame) f9Pressed = true; // Проверка в New Input System
+        }
+        catch (System.Exception) { }
+#endif
+
+        if (f9Pressed) // Если нажата клавиша F9
+        {
+            CheatWinEasy(); // Мгновенное завершение игры с мышами
+            return; // Выход
+        }
+
         if (!isGameActive || isGameWon || isPhaseTransitioning) return; // Пропуск если игра не в активной фазе
 
         currentTimer -= Time.deltaTime; // Уменьшение времени раунда
@@ -868,6 +892,13 @@ public class CatchMouse_Minigame : MonoBehaviour
         ClearAllMice(); // Очистка мышек
         if (gamePanel != null) // Если панель игры назначена
             gamePanel.SetActive(false); // Скрытие панели игры
+        gameObject.SetActive(false); // Гарантированное отключение объекта скрипта
+        if (difficultySelectionPanel != null) difficultySelectionPanel.SetActive(false); // Скрытие выбора сложности
+
+        // Поиск и гарантированное отключение CatchMouse_Game_Panel
+        GameObject foundMousePanel = GameObject.Find("CatchMouse_Game_Panel");
+        if (foundMousePanel != null) foundMousePanel.SetActive(false);
+
         if (DialogueSystem_Manager.Instance != null) // Если менеджер диалогов доступен
             DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление видимости HUD
     }

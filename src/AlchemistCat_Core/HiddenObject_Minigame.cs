@@ -71,9 +71,15 @@ public class HiddenObject_Minigame : MonoBehaviour
 
     [Header("=== Главные панели ===")]
     public GameObject hiddenObjectPanel; // Главная панель игры поиска предметов (игровой экран)
-    public GameObject locationSelectPopup; // Попап выбора локации
-    public GameObject difficultySelectPopup; // Попап выбора сложности
+    public GameObject locationSelectPopup; // Попап выбора локации (Location_Selection_Popup)
+    public GameObject difficultySelectPopup; // Попап выбора сложности (Difficulty_Selection_Popup)
+    public GameObject topStatusBar; // Верхняя статусная панель (Top_Status_Bar)
+    public GameObject bottomTargetsBar; // Нижняя панель целей (Bottom_Targets_Bar)
     public Button closeGameButton; // Кнопка закрытия игры
+
+    [Header("=== Кнопки локаций и блокировка ===")]
+    public List<Button> locationButtons = new List<Button>(); // Кнопки 3 локаций (Location_1_Button, Location_2_Button, Location_3_Button)
+    public List<GameObject> locationLockOverlays = new List<GameObject>(); // Оверлеи/иконки замков для закрытых комнат
 
     [Header("=== Кнопки выбора сложности ===")]
     public Button buttonEasy; // Кнопка легкой сложности
@@ -83,9 +89,10 @@ public class HiddenObject_Minigame : MonoBehaviour
     public TextMeshProUGUI difficultyPopupTitleText; // Текст заголовка выбора сложности
 
     [Header("=== Viewport и Зум/Панорамирование ===")]
-    public RectTransform viewportContainer; // Окно просмотра локации (Viewport)
-    public RectTransform backgroundContentRoot; // Корневой контейнер с фоном и предметами
-    public Image backgroundLocationImage; // Спрайт фона локации
+    public RectTransform viewportContainer; // Окно просмотра локации (Fullscreen_Viewport_Container)
+    public RectTransform backgroundContentRoot; // Корневой контейнер с фоном (Background_Content_Root)
+    public RectTransform interactiveClickTargetsContainer; // Контейнер для кликабельных предметов (Interactive_Click_Targets)
+    public Image backgroundLocationImage; // Спрайт фона локации (Background_8K_Image)
     public AspectRatioFitter backgroundAspect; // Компонент сохранения пропорций
     public float minZoom = 1.0f; // Минимальный масштаб
     public float maxZoom = 2.8f; // Максимальный зум
@@ -95,9 +102,9 @@ public class HiddenObject_Minigame : MonoBehaviour
     public Button zoomResetButton; // Кнопка сброса зума [1x]
 
     [Header("=== Нижняя панель целей (Target Items Bar) ===")]
-    public RectTransform targetIconsContainer; // Контейнер иконок искомых предметов
+    public RectTransform targetIconsContainer; // Контейнер иконок искомых предметов (Target_Icons_Holder / Bottom_Targets_Bar)
     public GameObject targetItemSlotPrefab; // Префаб ячейки искомого предмета
-    public TextMeshProUGUI itemsRemainingText; // Текст "Осталось: X"
+    public TextMeshProUGUI itemsRemainingText; // Текст "Осталось: X" (ItemsRemainingText)
     public TextMeshProUGUI locationTitleText; // Текст названия локации
     public TextMeshProUGUI currentRoundText; // Текст текущего раунда
 
@@ -187,6 +194,16 @@ public class HiddenObject_Minigame : MonoBehaviour
     /// </summary>
     public void OpenMinigame()
     {
+        // 1. Гарантированно отключаем другие мини-игры (Мышей и Рыбалку)
+        if (CatchMouse_Minigame.Instance != null) CatchMouse_Minigame.Instance.CloseMinigame();
+        if (AlchemyFishing_Minigame.Instance != null && AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null)
+            AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false);
+
+        GameObject mousePanel = GameObject.Find("CatchMouse_Game_Panel");
+        if (mousePanel != null) mousePanel.SetActive(false);
+        GameObject fishingPanel = GameObject.Find("AlchemyFishing_Game_Panel");
+        if (fishingPanel != null) fishingPanel.SetActive(false);
+
         gameObject.SetActive(true); // Активация объекта игры
         Transform p = transform.parent; // Поиск родителя
         while (p != null) // Включение всех родителей
@@ -205,36 +222,57 @@ public class HiddenObject_Minigame : MonoBehaviour
     }
 
     /// <summary>
-    /// Показ стартового меню выбора локаций (3 карточки комнат)
+    /// Показ стартового меню выбора локаций (3 карточки комнат: 1-я открыта, 2-я и 3-я заблокированы до прохождения)
     /// </summary>
     public void ShowLocationSelectionScreen()
     {
         EnsureUIHierarchy(); // Гарантированная проверка ссылок перед переключением
 
+        isGameRunning = false; // Остановка таймеров геймплея
+        if (flickerCoroutine != null) StopCoroutine(flickerCoroutine); // Остановка мерцания
+
+        // 1. Скрываем все всплывающие окна и оверлеи
         if (difficultySelectPopup != null) difficultySelectPopup.SetActive(false); // Скрытие меню сложности
         if (victoryPopupPanel != null) victoryPopupPanel.SetActive(false); // Скрытие окна победы
         if (recordModeSelectPopup != null) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
         if (catRecordUnlockedDialog != null) catRecordUnlockedDialog.SetActive(false); // Скрытие диалога кота
 
-        if (locationSelectPopup != null) // Если панель выбора локаций существует
+        // 2. Скрываем элементы активного геймплея (чтобы не перекрывали меню локаций белым экраном)
+        if (viewportContainer != null) viewportContainer.gameObject.SetActive(false); // Скрытие полотна поиска
+        if (topStatusBar != null) topStatusBar.SetActive(false); // Скрытие верхнего бара
+        if (bottomTargetsBar != null) bottomTargetsBar.SetActive(false); // Скрытие нижней панели целей
+
+        // 3. Включаем попап выбора комнат
+        if (locationSelectPopup != null)
         {
-            locationSelectPopup.SetActive(true); // Открытие окна выбора локации
-            if (hiddenObjectPanel != null && hiddenObjectPanel != gameObject) hiddenObjectPanel.SetActive(false); // Скрытие игрового полотна только если это отдельный дочерний объект
+            locationSelectPopup.SetActive(true); // Включение меню локаций
+            locationSelectPopup.transform.SetAsLastSibling(); // Вывод на передний план
         }
-        else if (hiddenObjectPanel != null) // Если единая панель
+        else if (hiddenObjectPanel != null)
         {
             hiddenObjectPanel.SetActive(true); // Включение главной панели
         }
 
-        RefreshLocationCardsUI(); // Обновление плашек прогресса на карточках
+        RefreshLocationCardsUI(); // Обновление состояния блокировок 3 комнат
     }
 
     private void SetupButtons() // Назначение слушателей событий нажатия на все кнопки интерфейса
     {
-        if (closeGameButton) // Кнопка закрытия игры
+        if (closeGameButton) // Кнопка закрытия игры (в Top_Status_Bar или инспекторе)
         {
             closeGameButton.onClick.RemoveAllListeners(); // Очистка старых
             closeGameButton.onClick.AddListener(CloseGame); // Подписка
+        }
+
+        // Кнопка выхода в окне выбора локации Location_Selection_Popup
+        if (locationSelectPopup != null)
+        {
+            Button locCloseBtn = locationSelectPopup.transform.Find("Close_Button")?.GetComponent<Button>() ?? locationSelectPopup.transform.Find("Exit_Button")?.GetComponent<Button>();
+            if (locCloseBtn != null)
+            {
+                locCloseBtn.onClick.RemoveAllListeners(); // Очистка
+                locCloseBtn.onClick.AddListener(CloseGame); // Выход из мини-игры
+            }
         }
 
         if (claimRewardsAndBackButton) // Кнопка забрать награды
@@ -253,6 +291,19 @@ public class HiddenObject_Minigame : MonoBehaviour
         {
             buttonBackToLocations.onClick.RemoveAllListeners(); // Очистка
             buttonBackToLocations.onClick.AddListener(ShowLocationSelectionScreen); // Возврат к локациям
+        }
+
+        // Кнопка возврата внутри Difficulty_Selection_Popup
+        if (difficultySelectPopup != null)
+        {
+            Button diffCloseBtn = difficultySelectPopup.transform.Find("Button_Back_To_Locations")?.GetComponent<Button>() ?? 
+                                  difficultySelectPopup.transform.Find("Close_Button")?.GetComponent<Button>() ?? 
+                                  difficultySelectPopup.transform.Find("Back_Button")?.GetComponent<Button>();
+            if (diffCloseBtn != null && diffCloseBtn != buttonBackToLocations)
+            {
+                diffCloseBtn.onClick.RemoveAllListeners(); // Очистка
+                diffCloseBtn.onClick.AddListener(ShowLocationSelectionScreen); // Возврат к локациям
+            }
         }
 
         if (zoomInButton) // Кнопка зума [+]
@@ -317,16 +368,84 @@ public class HiddenObject_Minigame : MonoBehaviour
             closeRecordPopupButton.onClick.AddListener(ShowLocationSelectionScreen); // Возврат к локациям
         }
 
-        // Привязка карточек локаций
-        for (int i = 0; i < locations.Count; i++) // Перебор локаций
+        // Привязка кнопок карточек комнат
+        SetupLocationButtonsListeners(); // Настройка кликов по 3 комнатам
+    }
+
+    private void SetupLocationButtonsListeners() // Привязка событий клика к 3 кнопкам комнат
+    {
+        for (int i = 0; i < 3; i++) // Перебор 3 комнат
         {
             int locIndex = i; // Замыкание индекса
-            if (locations[i].locationCardButton != null) // Если кнопка карточки назначена
+            Button btn = null; // Переменная кнопки
+
+            if (locationButtons != null && i < locationButtons.Count && locationButtons[i] != null) // Если задано в списке
             {
-                locations[i].locationCardButton.onClick.RemoveAllListeners(); // Очистка
-                locations[i].locationCardButton.onClick.AddListener(() => OpenLocationDifficultySelect(locIndex)); // Подписка
+                btn = locationButtons[i]; // Получение из списка
+            }
+            else if (i < locations.Count && locations[i].locationCardButton != null) // Если задано в локации
+            {
+                btn = locations[i].locationCardButton; // Получение из локации
+            }
+
+            if (btn != null) // Если кнопка найдена
+            {
+                btn.onClick.RemoveAllListeners(); // Очистка старых подписчиков
+                btn.onClick.AddListener(() => OnLocationCardClicked(locIndex)); // Подписка на клик
             }
         }
+    }
+
+    /// <summary>
+    /// Обработка клика по карточке локации (проверка на блокировку)
+    /// </summary>
+    public void OnLocationCardClicked(int locationIndex)
+    {
+        if (locationIndex < 0 || locationIndex >= locations.Count) return; // Проверка диапазона
+
+        bool isUnlocked = IsLocationUnlocked(locationIndex); // Проверка доступности
+        if (!isUnlocked) // Если закрыто
+        {
+            Debug.Log($"Локация {locationIndex + 1} заблокирована! Сначала пройдите предыдущую локацию."); // Лог
+            return; // Выход
+        }
+
+        OpenLocationDifficultySelect(locationIndex); // Открытие выбора сложности
+    }
+
+    /// <summary>
+    /// Проверка, открыта ли конкретная локация:
+    /// - Комната 1 (Лавка Алхимика): открыта изначально. После завершения блокируется.
+    /// - Комната 2 (Дом Алхимика): открывается ПОСЛЕ прохождения Лавки Алхимика. После завершения блокируется.
+    /// - Комната 3 (Магический Рынок): открывается ПОСЛЕ прохождения Дома Алхимика.
+    /// </summary>
+    public bool IsLocationUnlocked(int index)
+    {
+        if (locations == null || locations.Count == 0) return index == 0; // Защита от пустых списков
+
+        bool loc0Completed = locations.Count > 0 && (locations[0].isEasyCompleted || locations[0].isNormalCompleted || locations[0].isHardCompleted || locations[0].IsFullyCompleted); // Пройдена ли Лавка
+        bool loc1Completed = locations.Count > 1 && (locations[1].isEasyCompleted || locations[1].isNormalCompleted || locations[1].isHardCompleted || locations[1].IsFullyCompleted); // Пройден ли Дом
+        bool loc2Completed = locations.Count > 2 && (locations[2].isEasyCompleted || locations[2].isNormalCompleted || locations[2].isHardCompleted || locations[2].IsFullyCompleted); // Пройден ли Рынок
+
+        if (index == 0) // Комната 1: Лавка Алхимика
+        {
+            // Открыта в самом начале, пока игрок не прошел в ней хотя бы один уровень сложности.
+            // После прохождения Лавка блокируется, уступая место Дому Алхимика.
+            return !loc0Completed;
+        }
+        else if (index == 1) // Комната 2: Дом Алхимика
+        {
+            // Разблокируется только после завершения Лавки Алхимика.
+            // Блокируется после того, как игрок завершит сам Дом Алхимика, передавая эстафету Рынку.
+            return loc0Completed && !loc1Completed;
+        }
+        else if (index == 2) // Комната 3: Магический / Антикварный Рынок
+        {
+            // Разблокируется только после завершения Дома Алхимика.
+            return loc1Completed;
+        }
+
+        return false;
     }
 
     /// <summary>
@@ -341,7 +460,11 @@ public class HiddenObject_Minigame : MonoBehaviour
             difficultyPopupTitleText.text = $"Сложность: {currentLocation.locationName}"; // Установка названия локации
 
         if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие окна локаций
-        if (difficultySelectPopup) difficultySelectPopup.SetActive(true); // Показ окна выбора сложности
+        if (difficultySelectPopup)
+        {
+            difficultySelectPopup.SetActive(true); // Показ окна выбора сложности
+            difficultySelectPopup.transform.SetAsLastSibling(); // На передний план
+        }
     }
 
     /// <summary>
@@ -360,7 +483,11 @@ public class HiddenObject_Minigame : MonoBehaviour
 
         if (difficultySelectPopup) difficultySelectPopup.SetActive(false); // Скрытие попапа сложности
         if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие попапа локаций
+
         if (hiddenObjectPanel) hiddenObjectPanel.SetActive(true); // Включение главного игрового экрана
+        if (viewportContainer) viewportContainer.gameObject.SetActive(true); // Включение Viewport
+        if (topStatusBar) topStatusBar.SetActive(true); // Включение верхнего бара
+        if (bottomTargetsBar) bottomTargetsBar.SetActive(true); // Включение нижней панели целей
 
         isRecordModeActive = false; // Отключение режима рекордов
         currentRoundIndex = 1; // Установка 1-го раунда
@@ -527,10 +654,11 @@ public class HiddenObject_Minigame : MonoBehaviour
 
     private void SpawnClickableItemOnBackground(Sprite itemSprite, GameObject slotUi, Vector2 position) // Размещение кликабельного предмета на фоне локации
     {
-        if (backgroundContentRoot == null) return; // Проверка корневого контейнера фона
+        Transform spawnParent = interactiveClickTargetsContainer != null ? interactiveClickTargetsContainer : backgroundContentRoot; // Выбор контейнера целей
+        if (spawnParent == null) return; // Проверка корневого контейнера фона
 
         GameObject clickable = new GameObject("HiddenItem_" + (itemSprite != null ? itemSprite.name : "Item"), typeof(RectTransform), typeof(Image), typeof(Button)); // Создание объекта предмета
-        clickable.transform.SetParent(backgroundContentRoot, false); // Размещение внутри контейнера фона
+        clickable.transform.SetParent(spawnParent, false); // Размещение внутри интерактивного контейнера
         activeClickableItems.Add(clickable); // Добавление в список активных предметов
 
         RectTransform rt = clickable.GetComponent<RectTransform>(); // Получение RectTransform
@@ -611,13 +739,13 @@ public class HiddenObject_Minigame : MonoBehaviour
             if (victoryRewardsText && currentDifficulty != null) // Если текстовый блок наград назначен
             {
                 string rewardsSummary = ""; // Формирование списка наград
-                if (currentDifficulty.rewardGold > 0) rewardsSummary += $"💰 Золото: +{currentDifficulty.rewardGold:N0}  "; // Золото
-                if (currentDifficulty.rewardStones > 0) rewardsSummary += $"💎 Камни: +{currentDifficulty.rewardStones}  "; // Камни
-                if (currentDifficulty.rewardScrolls > 0) rewardsSummary += $"📜 Свитки: +{currentDifficulty.rewardScrolls}\n"; // Свитки
-                if (currentDifficulty.rewardExpPotion100 > 0) rewardsSummary += $"🧪 Зелье Опыта (+100 XP): x{currentDifficulty.rewardExpPotion100}\n"; // Зелье опыта 100
-                if (currentDifficulty.rewardExpPotion500 > 0) rewardsSummary += $"🧪 Зелье Опыта (+500 XP): x{currentDifficulty.rewardExpPotion500}\n"; // Зелье опыта 500
-                if (currentDifficulty.rewardMasteryPotion100 > 0) rewardsSummary += $"✨ Зелье Мастерства (+100 XP): x{currentDifficulty.rewardMasteryPotion100}\n"; // Зелье мастерства 100
-                if (currentDifficulty.rewardMasteryPotion500 > 0) rewardsSummary += $"✨ Зелье Мастерства (+500 XP): x{currentDifficulty.rewardMasteryPotion500}\n"; // Зелье мастерства 500
+                if (currentDifficulty.rewardGold > 0) rewardsSummary += $"Золото: +{currentDifficulty.rewardGold:N0}   "; // Золото без эмодзи
+                if (currentDifficulty.rewardStones > 0) rewardsSummary += $"Камни: +{currentDifficulty.rewardStones}   "; // Камни без эмодзи
+                if (currentDifficulty.rewardScrolls > 0) rewardsSummary += $"Свитки: +{currentDifficulty.rewardScrolls}\n"; // Свитки без эмодзи
+                if (currentDifficulty.rewardExpPotion100 > 0) rewardsSummary += $"Зелье Опыта (+100 XP): x{currentDifficulty.rewardExpPotion100}\n"; // Зелье опыта 100
+                if (currentDifficulty.rewardExpPotion500 > 0) rewardsSummary += $"Зелье Опыта (+500 XP): x{currentDifficulty.rewardExpPotion500}\n"; // Зелье опыта 500
+                if (currentDifficulty.rewardMasteryPotion100 > 0) rewardsSummary += $"Зелье Мастерства (+100 XP): x{currentDifficulty.rewardMasteryPotion100}\n"; // Зелье мастерства 100
+                if (currentDifficulty.rewardMasteryPotion500 > 0) rewardsSummary += $"Зелье Мастерства (+500 XP): x{currentDifficulty.rewardMasteryPotion500}\n"; // Зелье мастерства 500
 
                 victoryRewardsText.text = rewardsSummary; // Применение текста наград
             }
@@ -648,52 +776,48 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
     }
 
-    private void OnClaimRewardsClicked() // Обработка закрытия окна победы и переход к следующему испытанию
+    private void OnClaimRewardsClicked() // Обработка закрытия окна победы и переход по цепочке локаций к Коту
     {
         if (victoryPopupPanel) victoryPopupPanel.SetActive(false); // Скрытие окна победы
         if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false); // Скрытие игрового поля
 
         string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени игрока
 
-        // Проверка: пройдены ли все 3 локации на всех сложностях?
-        bool allCompleted = true; // Флаг полной зачистки
-        foreach (var loc in locations) // Перебор локаций
-        {
-            if (!loc.IsFullyCompleted) { allCompleted = false; break; } // Если хоть одна не завершена
-        }
+        // Проверка: пройдена ли последняя локация (Магический Рынок, индекс 2)?
+        bool marketCompleted = locations != null && locations.Count > 2 && 
+                              (locations[2].isEasyCompleted || locations[2].isNormalCompleted || locations[2].isHardCompleted || locations[2].IsFullyCompleted);
 
-        if (allCompleted) // Если зачищены все локации на всех сложностях
+        // Если игрок прошел 3-ю комнату (Магический / Антикварный Рынок) — сюжетный переход к Диалогу с Котом и Защите Котлов!
+        if (marketCompleted)
         {
-            bool recordDialogShown = PlayerPrefs.GetInt("CatRecordDialogShown", 0) == 1; // Проверка показа диалога Кота
-            if (!recordDialogShown) // Если еще не показывали
+            Debug.Log($"Все 3 комнаты пройдены игроком {playerName}! Завершение поиска предметов и переход к диалогу с Котом (Защита Котлов)."); // Лог
+            
+            // Закрываем окно мини-игры полностью
+            if (locationSelectPopup != null) locationSelectPopup.SetActive(false); // Скрытие выбора комнат
+            gameObject.SetActive(false); // Отключение панели мини-игры Поиска Предметов
+
+            // Запуск диалога Кота с предложением сыграть в Защиту Котлов через DialogueSystem_Manager
+            if (DialogueSystem_Manager.Instance != null) // Если центральный менеджер диалогов доступен
             {
-                PlayerPrefs.SetInt("CatRecordDialogShown", 1); // Сохранение факта показа
-                PlayerPrefs.Save(); // Запись на диск
-                TriggerCatRecordUnlockDialog(); // Запуск диалога открытия рекордов
+                DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление интерфейса
+                DialogueSystem_Manager.Instance.StartPostHiddenObjectDialogue(); // Запуск диалога Кота о дожде и Защите Котлов
+                return; // Выход
+            }
+
+            // Фоллбэк: если назначена панель Защиты Котлов напрямую
+            if (cauldronDefenseGamePanel != null) // Если игра защиты котлов подключена
+            {
+                cauldronDefenseGamePanel.SetActive(true); // Включение игры Защиты Котлов
+                CauldronDefense_Minigame cd = cauldronDefenseGamePanel.GetComponent<CauldronDefense_Minigame>(); // Компонент игры
+                if (cd != null) cd.OpenMinigame(); // Запуск игры защиты котлов
                 return; // Выход
             }
         }
 
-        // Запуск диалога перехода в Защиту Котлов через DialogueSystem_Manager
-        if (DialogueSystem_Manager.Instance != null) // Если центральный менеджер диалогов доступен
-        {
-            if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие выбора локаций
-            DialogueSystem_Manager.Instance.StartPostHiddenObjectDialogue(); // Запуск диалога Кота и переход в Защиту Котлов
-            Debug.Log($"Поиск предметов завершен! Запущен централизованный диалог Защиты Котлов для игрока {playerName}."); // Лог перехода
-            return; // Выход
-        }
-
-        // Фоллбэк: если назначена панель Защиты Котлов напрямую
-        if (cauldronDefenseGamePanel != null) // Если игра защиты котлов подключена
-        {
-            if (locationSelectPopup) locationSelectPopup.SetActive(false); // Скрытие выбора локаций
-            cauldronDefenseGamePanel.SetActive(true); // Включение игры Защиты Котлов
-            CauldronDefense_Minigame cd = cauldronDefenseGamePanel.GetComponent<CauldronDefense_Minigame>(); // Компонент игры
-            if (cd != null) cd.OpenMinigame(); // Запуск игры защиты котлов
-            return; // Выход
-        }
-
-        ShowLocationSelectionScreen(); // Возврат к выбору локаций
+        // Если завершена только 1-я или 2-я комната — возвращаем игрока к выбору комнат:
+        // предыдущая завершенная комната блокируется, а следующая комната открывается!
+        ShowLocationSelectionScreen(); // Возврат к экрану выбора комнат с обновленными кнопками и замками
+        Debug.Log($"Награды получены игроком {playerName}! Возврат к меню комнат: следующая комната разблокирована, пройденная заблокирована."); // Лог
     }
 
     private void TriggerCatRecordUnlockDialog() // Отображение диалогового окна Кота об открытии режима рекордов
@@ -856,7 +980,7 @@ public class HiddenObject_Minigame : MonoBehaviour
             if (victoryTitleText) victoryTitleText.text = "★ ВЕЛИКИЙ РЕКОРД УСТАНОВЛЕН! ★"; // Заголовок победы рекорда
             if (victoryRewardsText) // Текст наград
             {
-                victoryRewardsText.text = $"Вы одолели тяжелейшее испытание месяца!\n💎 Получено Кристаллов: +{crystalsReward}"; // Описание полученных кристаллов
+                victoryRewardsText.text = $"Вы одолели тяжелейшее испытание месяца!\nПолучено Кристаллов: +{crystalsReward}"; // Описание полученных кристаллов без эмодзи
             }
         }
     }
@@ -870,7 +994,7 @@ public class HiddenObject_Minigame : MonoBehaviour
         {
             int min = Mathf.FloorToInt(Mathf.Max(0, roundTimer) / 60f); // Минуты
             int sec = Mathf.FloorToInt(Mathf.Max(0, roundTimer) % 60f); // Секунды
-            timerText.text = $"⏳ {min:00}:{sec:00}"; // Отображение времени раунда
+            timerText.text = $"{min:00}:{sec:00}"; // Отображение времени раунда без эмодзи
             if (roundTimer < 15f) timerText.color = new Color(1f, 0.3f, 0.3f, 1f); // Красное предупреждение
             else timerText.color = new Color(1f, 0.9f, 0.4f, 1f); // Золотисто-желтый
         }
@@ -901,7 +1025,7 @@ public class HiddenObject_Minigame : MonoBehaviour
     {
         if (availableHints <= 0 || activeClickableItems.Count == 0) return; // Проверка остатка подсказок и предметов
         availableHints--; // Уменьшение счетчика подсказок
-        if (hintCountText) hintCountText.text = $"💡 Подсказка: {availableHints}"; // Обновление счетчика на кнопке
+        if (hintCountText) hintCountText.text = $"Подсказка: {availableHints}"; // Обновление счетчика на кнопке без эмодзи
 
         GameObject itemToHighlight = activeClickableItems[0]; // Выбор первого активного предмета
         if (itemToHighlight != null) // Если предмет доступен
@@ -937,28 +1061,26 @@ public class HiddenObject_Minigame : MonoBehaviour
         ApplyZoomAndPan(); // Применение
     }
 
-    private void HandleTouchAndMouseZoomPan() // Обработка колесика мыши и мультитач-жестов для приближения сцены
+    private void HandleTouchAndMouseZoomPan() // Безопасная обработка зума для нового и старого Input System
     {
-        float scroll = Input.GetAxis("Mouse ScrollWheel"); // Колесико мыши
+        float scroll = 0f; // Величина прокрутки
+        
+#if ENABLE_INPUT_SYSTEM
+        if (UnityEngine.InputSystem.Mouse.current != null) // Новый Input System
+        {
+            scroll = UnityEngine.InputSystem.Mouse.current.scroll.ReadValue().y * 0.01f; // Чтение колесика
+        }
+#elif ENABLE_LEGACY_INPUT_MANAGER
+        try
+        {
+            scroll = Input.GetAxis("Mouse ScrollWheel"); // Старый Input Manager
+        }
+        catch { }
+#endif
+
         if (Mathf.Abs(scroll) > 0.01f) // Если колесико крутится
         {
             currentZoom = Mathf.Clamp(currentZoom + scroll * zoomSpeed * 3f, minZoom, maxZoom); // Ограничение зума
-            ApplyZoomAndPan(); // Применение зума
-        }
-
-        if (Input.touchCount == 2) // Если 2 пальца на экране (Pinch-to-zoom)
-        {
-            Touch touchZero = Input.GetTouch(0); // Первый палец
-            Touch touchOne = Input.GetTouch(1); // Второй палец
-
-            Vector2 touchZeroPrevPos = touchZero.position - touchZero.deltaPosition; // Прошлая позиция пальца 1
-            Vector2 touchOnePrevPos = touchOne.position - touchOne.deltaPosition; // Прошлая позиция пальца 2
-
-            float prevTouchDeltaMag = (touchZeroPrevPos - touchOnePrevPos).magnitude; // Прошлое расстояние
-            float touchDeltaMag = (touchZero.position - touchOne.position).magnitude; // Текущее расстояние
-
-            float deltaMagnitudeDiff = prevTouchDeltaMag - touchDeltaMag; // Разница расстояний
-            currentZoom = Mathf.Clamp(currentZoom - deltaMagnitudeDiff * 0.005f, minZoom, maxZoom); // Корректировка зума
             ApplyZoomAndPan(); // Применение зума
         }
     }
@@ -989,7 +1111,7 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
 
         if (hintCountText) // Если текст подсказок есть
-            hintCountText.text = $"💡 Подсказка: {availableHints}"; // Количество подсказок
+            hintCountText.text = $"Подсказка: {availableHints}"; // Количество подсказок без эмодзи
     }
 
     private void ClearActiveItems() // Очистка всех созданных интерактивных предметов и иконок целей
@@ -1009,21 +1131,36 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
     }
 
-    public void CloseGame() // Закрытие игрового окна и возврат к выбору локаций
+    public void CloseGame() // Закрытие игрового окна или всей мини-игры
     {
         isGameRunning = false; // Остановка игрового процесса
         if (flickerCoroutine != null) StopCoroutine(flickerCoroutine); // Остановка корутины мерцания
         ClearActiveItems(); // Удаление активных предметов
 
-        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false); // Скрытие игрового экрана
-        if (difficultySelectPopup) difficultySelectPopup.SetActive(false); // Скрытие окна сложностей
-        if (recordModeSelectPopup) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
-        if (locationSelectPopup) locationSelectPopup.SetActive(true); // Включение окна выбора локации
-
-        if (DialogueSystem_Manager.Instance != null) // Восстановление интерфейса
+        // Если вызов произошел из экрана выбора локаций — закрываем мини-игру полностью
+        if (locationSelectPopup != null && locationSelectPopup.activeSelf)
         {
-            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление кнопок и аватарки
+            locationSelectPopup.SetActive(false); // Скрытие меню локаций
+            if (hiddenObjectPanel != null && hiddenObjectPanel != gameObject) hiddenObjectPanel.SetActive(false); // Скрытие игрового экрана
+            gameObject.SetActive(false); // Отключение объекта мини-игры
+            
+            if (DialogueSystem_Manager.Instance != null) // Восстановление интерфейса
+            {
+                DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление кнопок и аватарки
+            }
+            return;
         }
+
+        // Если вызов произошел во время геймплея поиска — возвращаемся к выбору локаций
+        if (hiddenObjectPanel != null && hiddenObjectPanel != gameObject) hiddenObjectPanel.SetActive(false); // Скрытие игрового экрана
+        if (viewportContainer != null) viewportContainer.gameObject.SetActive(false); // Скрытие вьюпорта
+        if (topStatusBar != null) topStatusBar.SetActive(false); // Скрытие верхнего бара
+        if (bottomTargetsBar != null) bottomTargetsBar.SetActive(false); // Скрытие нижней панели целей
+        if (difficultySelectPopup != null) difficultySelectPopup.SetActive(false); // Скрытие окна сложностей
+        if (recordModeSelectPopup != null) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
+        if (victoryPopupPanel != null) victoryPopupPanel.SetActive(false); // Скрытие окна победы
+
+        ShowLocationSelectionScreen(); // Возврат к экрану выбора 3 комнат
     }
 
     private void SaveCompletionProgress() // Сохранение статуса прохождения 3 локаций и сложностей в PlayerPrefs
@@ -1047,20 +1184,87 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
     }
 
-    public void RefreshLocationCardsUI() // Обновление текста бейджей прохождения на карточках комнат
+    public void RefreshLocationCardsUI() // Обновление текста, интерактивности и иконок замков для 3 комнат
     {
-        for (int i = 0; i < locations.Count; i++) // Перебор комнат
+        string[] defaultNames = { "Алхимическая лавка Кота", "Старый заброшенный дом", "Антикварный рынок" }; // Названия 3 комнат по умолчанию
+
+        for (int i = 0; i < 3; i++) // Перебор 3 комнат
         {
-            if (locations[i].locationCardButton != null) // Если кнопка карточки есть
+            Button btn = null; // Ссылка на кнопку
+            if (locationButtons != null && i < locationButtons.Count && locationButtons[i] != null)
+                btn = locationButtons[i];
+            else if (i < locations.Count && locations[i].locationCardButton != null)
+                btn = locations[i].locationCardButton;
+
+            if (btn == null && locationSelectPopup != null)
             {
-                TextMeshProUGUI statusTxt = locations[i].locationCardButton.transform.Find("Status_Text")?.GetComponent<TextMeshProUGUI>(); // Текст статуса
-                if (statusTxt != null) // Если найден
+                string btnName = $"Location_{i + 1}_Button";
+                Transform t = locationSelectPopup.transform.Find(btnName) ?? locationSelectPopup.transform.Find($"Card_{i + 1}") ?? locationSelectPopup.transform.Find($"Location_{i + 1}");
+                if (t != null) btn = t.GetComponent<Button>() ?? t.GetComponentInChildren<Button>();
+            }
+
+            bool isUnlocked = IsLocationUnlocked(i); // Проверка доступности комнаты
+
+            if (btn != null)
+            {
+                btn.interactable = isUnlocked; // Включение/отключение интерактивности кнопки
+
+                // Обновление цвета кнопки/карточки
+                Image btnImg = btn.GetComponent<Image>();
+                if (btnImg != null)
                 {
-                    if (locations[i].IsFullyCompleted) statusTxt.text = "<color=#80FFDB>★ Пройдено на 100%</color>"; // Все 3 сложности
-                    else if (locations[i].isHardCompleted) statusTxt.text = "<color=#FFD166>Пройден Сложный</color>";
-                    else if (locations[i].isNormalCompleted) statusTxt.text = "<color=#A0C4FF>Пройден Нормальный</color>";
-                    else if (locations[i].isEasyCompleted) statusTxt.text = "<color=#99D98C>Пройден Легкий</color>";
-                    else statusTxt.text = "<color=#CCCCCC>Не пройдено</color>";
+                    btnImg.color = isUnlocked ? Color.white : new Color(0.45f, 0.45f, 0.48f, 0.85f); // Затемнение для закрытых комнат
+                }
+
+                // Поиск и переключение оверлея замка
+                Transform lockChild = btn.transform.Find("Lock_Icon") ?? btn.transform.Find("Lock_Overlay") ?? btn.transform.Find("Lock") ?? btn.transform.Find("Padlock");
+                if (lockChild != null)
+                {
+                    lockChild.gameObject.SetActive(!isUnlocked); // Замок отображается только при блокировке
+                }
+                else if (locationLockOverlays != null && i < locationLockOverlays.Count && locationLockOverlays[i] != null)
+                {
+                    locationLockOverlays[i].SetActive(!isUnlocked); // Переключение оверлея из инспектора
+                }
+
+                // Получение базового названия комнаты
+                string locTitle = (i < locations.Count && !string.IsNullOrEmpty(locations[i].locationName)) ? locations[i].locationName : defaultNames[i];
+
+                // Обновление текста
+                TextMeshProUGUI statusTxt = btn.transform.Find("Status_Text")?.GetComponent<TextMeshProUGUI>();
+                TextMeshProUGUI mainTmp = btn.transform.Find("Text (TMP)")?.GetComponent<TextMeshProUGUI>() ?? btn.GetComponentInChildren<TextMeshProUGUI>();
+
+                bool isCompleted = (i < locations.Count) && (locations[i].isEasyCompleted || locations[i].isNormalCompleted || locations[i].isHardCompleted || locations[i].IsFullyCompleted);
+
+                if (statusTxt != null) // Если есть отдельная строка для статуса
+                {
+                    if (isCompleted)
+                    {
+                        statusTxt.text = "<color=#99D98C>[Пройдено] Заблокировано</color>"; // Пройдена и заблокирована по сюжету
+                    }
+                    else if (!isUnlocked)
+                    {
+                        statusTxt.text = $"<color=#FF7B7B>[Закрыто] Пройдите комн. {i}</color>"; // Заблокирована до прохождения предыдущей
+                    }
+                    else
+                    {
+                        statusTxt.text = "<color=#FFE66D>[Открыто] Доступно</color>"; // Текущая активная комната
+                    }
+                }
+                else if (mainTmp != null) // Если на кнопке единый Text (TMP)
+                {
+                    if (isCompleted)
+                    {
+                        mainTmp.text = $"<b>{locTitle}</b>\n<size=65%><color=#99D98C>[Пройдено]</color></size>";
+                    }
+                    else if (!isUnlocked)
+                    {
+                        mainTmp.text = $"<b>{locTitle}</b>\n<size=65%><color=#FF7B7B>[Закрыто] Пройдите комн. {i}</color></size>";
+                    }
+                    else
+                    {
+                        mainTmp.text = $"<b>{locTitle}</b>\n<size=65%><color=#FFE66D>[Открыто]</color></size>";
+                    }
                 }
             }
         }
@@ -1070,24 +1274,24 @@ public class HiddenObject_Minigame : MonoBehaviour
     {
         if (locations.Count == 0) // Если локации еще не созданы
         {
-            // 1. Локация: Лавка Алхимика
-            LocationConfig shop = new LocationConfig { locationId = "Shop", locationName = "Лавка Алхимика", locationDescription = "Полки с древними снадобьями, ретортами и корешками" }; // Создание лавки
+            // 1. Локация: Алхимическая лавка Кота
+            LocationConfig shop = new LocationConfig { locationId = "Shop", locationName = "Алхимическая лавка Кота", locationDescription = "Полки с древними снадобьями, ретортами и корешками" }; // Создание лавки
             shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 5, roundsRequired = 3, timeLimitPerRound = 90f, rewardGold = 1000, rewardStones = 3, rewardScrolls = 1 }); // Легкая сложность
             shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 10, roundsRequired = 3, timeLimitPerRound = 90f, rewardGold = 2500, rewardStones = 6, rewardScrolls = 3, rewardExpPotion100 = 1 }); // Нормальная сложность
             shop.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardGold = 5000, rewardStones = 15, rewardScrolls = 10, rewardExpPotion500 = 1, rewardMasteryPotion100 = 1 }); // Сложная сложность
             EnsureDefaultSpritesForLocation(shop); // Создание процедурных спрайтов
             locations.Add(shop); // Добавление лавки
 
-            // 2. Локация: Дом Алхимика
-            LocationConfig house = new LocationConfig { locationId = "House", locationName = "Дом Алхимика", locationDescription = "Уютная алхимическая спальня с книгами тайн и сундуками" }; // Создание дома
+            // 2. Локация: Старый заброшенный дом
+            LocationConfig house = new LocationConfig { locationId = "House", locationName = "Старый заброшенный дом", locationDescription = "Уютные запыленные комнаты с сундуками и книгами тайн" }; // Создание дома
             house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 6, roundsRequired = 3, timeLimitPerRound = 90f, rewardGold = 1500, rewardStones = 5, rewardScrolls = 1 }); // Легкая сложность
             house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 12, roundsRequired = 3, timeLimitPerRound = 90f, rewardGold = 3500, rewardStones = 9, rewardScrolls = 3, rewardExpPotion100 = 2 }); // Нормальная сложность
             house.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardGold = 7000, rewardStones = 20, rewardScrolls = 12, rewardExpPotion500 = 2, rewardMasteryPotion100 = 1 }); // Сложная сложность
             EnsureDefaultSpritesForLocation(house); // Создание спрайтов
             locations.Add(house); // Добавление дома
 
-            // 3. Локация: Магический Рынок
-            LocationConfig market = new LocationConfig { locationId = "Market", locationName = "Магический Рынок", locationDescription = "Шумная площадь магов, полная редких артефактов и самоцветов" }; // Создание рынка
+            // 3. Локация: Антикварный рынок
+            LocationConfig market = new LocationConfig { locationId = "Market", locationName = "Антикварный рынок", locationDescription = "Шумная площадь магов, полная редких артефактов и самоцветов" }; // Создание рынка
             market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Easy, tierName = "Легкий", itemsPerRound = 6, roundsRequired = 3, timeLimitPerRound = 90f, rewardGold = 2000, rewardStones = 8, rewardScrolls = 2, rewardExpPotion100 = 3 }); // Легкая сложность
             market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Normal, tierName = "Нормальный", itemsPerRound = 12, roundsRequired = 3, timeLimitPerRound = 90f, rewardGold = 5000, rewardStones = 15, rewardScrolls = 5, rewardExpPotion100 = 6, rewardMasteryPotion100 = 3 }); // Нормальная сложность
             market.difficulties.Add(new DifficultyConfig { tier = DifficultyTier.Hard, tierName = "Сложный", itemsPerRound = 15, roundsRequired = 5, timeLimitPerRound = 90f, rewardGold = 10000, rewardStones = 30, rewardScrolls = 15, rewardExpPotion500 = 3, rewardMasteryPotion500 = 1 }); // Сложная сложность
@@ -1096,6 +1300,11 @@ public class HiddenObject_Minigame : MonoBehaviour
         }
         else
         {
+            // Синхронизация названий существующих локаций с кнопками
+            if (locations.Count > 0 && (string.IsNullOrEmpty(locations[0].locationName) || locations[0].locationName == "Shop")) locations[0].locationName = "Алхимическая лавка Кота";
+            if (locations.Count > 1 && (string.IsNullOrEmpty(locations[1].locationName) || locations[1].locationName == "House")) locations[1].locationName = "Старый заброшенный дом";
+            if (locations.Count > 2 && (string.IsNullOrEmpty(locations[2].locationName) || locations[2].locationName == "Market")) locations[2].locationName = "Антикварный рынок";
+
             foreach (var loc in locations) // Перебор существующих локаций
             {
                 if (loc.itemsPool.Count == 0) EnsureDefaultSpritesForLocation(loc); // Добавление спрайтов если пуст
@@ -1190,18 +1399,111 @@ public class HiddenObject_Minigame : MonoBehaviour
 
     private void FindExistingHierarchyElements() // Поиск ссылок среди дочерних объектов
     {
-        if (locationSelectPopup == null) locationSelectPopup = transform.Find("Location_Select_Popup")?.gameObject ?? transform.Find("LocationSelectPopup")?.gameObject ?? transform.Find("LocationSelectPanel")?.gameObject; // Попап локаций
-        if (difficultySelectPopup == null) difficultySelectPopup = transform.Find("Difficulty_Select_Popup")?.gameObject ?? transform.Find("DifficultySelectPopup")?.gameObject ?? transform.Find("Difficulty_Selection_Panel")?.gameObject; // Попап сложностей
-        if (hiddenObjectPanel == null) hiddenObjectPanel = transform.Find("HiddenObject_Panel")?.gameObject ?? transform.Find("Game_Play_Panel")?.gameObject ?? transform.Find("Active_Stage_Panel")?.gameObject; // Игровой экран
-        if (victoryPopupPanel == null) victoryPopupPanel = transform.Find("Victory_Popup_Panel")?.gameObject ?? transform.Find("VictoryPopupPanel")?.gameObject ?? transform.Find("Result_Summary_Popup_Panel")?.gameObject; // Окно победы
-        if (recordModeSelectPopup == null) recordModeSelectPopup = transform.Find("Record_Mode_Select_Popup")?.gameObject ?? transform.Find("RecordModePopup")?.gameObject; // Меню рекордов
+        if (locationSelectPopup == null) 
+            locationSelectPopup = transform.Find("Location_Selection_Popup")?.gameObject ?? transform.Find("Location_Select_Popup")?.gameObject ?? transform.Find("LocationSelectPopup")?.gameObject ?? transform.Find("LocationSelectPanel")?.gameObject;
+        
+        if (difficultySelectPopup == null) 
+            difficultySelectPopup = transform.Find("Difficulty_Selection_Popup")?.gameObject ?? transform.Find("Difficulty_Select_Popup")?.gameObject ?? transform.Find("DifficultySelectPopup")?.gameObject ?? transform.Find("Difficulty_Selection_Panel")?.gameObject;
+        
+        if (hiddenObjectPanel == null) 
+            hiddenObjectPanel = transform.Find("HiddenObject_Panel")?.gameObject ?? transform.Find("Game_Play_Panel")?.gameObject ?? transform.Find("Active_Stage_Panel")?.gameObject ?? gameObject;
+        
+        if (victoryPopupPanel == null) 
+            victoryPopupPanel = transform.Find("Victory_Location_Popup")?.gameObject ?? transform.Find("Victory_Popup_Panel")?.gameObject ?? transform.Find("VictoryPopupPanel")?.gameObject ?? transform.Find("Result_Summary_Popup_Panel")?.gameObject;
+        
+        if (recordModeSelectPopup == null) 
+            recordModeSelectPopup = transform.Find("Record_Mode_Selection_Popup")?.gameObject ?? transform.Find("Record_Mode_Select_Popup")?.gameObject ?? transform.Find("RecordModePopup")?.gameObject;
+        
+        if (catRecordUnlockedDialog == null) 
+            catRecordUnlockedDialog = transform.Find("Cat_Record_Unlocked_Dialog")?.gameObject ?? transform.Find("CatRecordDialog")?.gameObject;
 
-        if (hiddenObjectPanel != null) // Если игровой экран найден
+        if (topStatusBar == null)
+            topStatusBar = transform.Find("Top_Status_Bar")?.gameObject ?? transform.Find("Top_Bar")?.gameObject;
+
+        if (bottomTargetsBar == null)
+            bottomTargetsBar = transform.Find("Bottom_Targets_Bar")?.gameObject ?? transform.Find("Target_Icons_Bar")?.gameObject;
+
+        // Поиск кнопок комнат внутри Location_Selection_Popup
+        if (locationSelectPopup != null && (locationButtons == null || locationButtons.Count == 0))
         {
-            if (viewportContainer == null) viewportContainer = hiddenObjectPanel.transform.Find("Viewport_Container")?.GetComponent<RectTransform>(); // Viewport
-            if (backgroundContentRoot == null && viewportContainer != null) backgroundContentRoot = viewportContainer.Find("Background_Root")?.GetComponent<RectTransform>() ?? viewportContainer.Find("Content")?.GetComponent<RectTransform>(); // Фон
-            if (backgroundLocationImage == null && backgroundContentRoot != null) backgroundLocationImage = backgroundContentRoot.GetComponent<Image>(); // Image фона
-            if (targetIconsContainer == null) targetIconsContainer = hiddenObjectPanel.transform.Find("Target_Icons_Bar/Container")?.GetComponent<RectTransform>() ?? hiddenObjectPanel.transform.Find("Target_Icons_Container")?.GetComponent<RectTransform>(); // Цели
+            locationButtons = new List<Button>();
+            for (int i = 1; i <= 3; i++)
+            {
+                Transform bTrans = locationSelectPopup.transform.Find($"Location_{i}_Button") ?? locationSelectPopup.transform.Find($"Card_{i}") ?? locationSelectPopup.transform.Find($"Location_{i}");
+                if (bTrans != null)
+                {
+                    Button b = bTrans.GetComponent<Button>() ?? bTrans.GetComponentInChildren<Button>();
+                    if (b != null) locationButtons.Add(b);
+                }
+            }
+        }
+
+        // Поиск Viewport Container и Background
+        if (viewportContainer == null)
+        {
+            viewportContainer = transform.Find("Fullscreen_Viewport_Container")?.GetComponent<RectTransform>() ?? transform.Find("Viewport_Container")?.GetComponent<RectTransform>();
+            if (viewportContainer == null && hiddenObjectPanel != null && hiddenObjectPanel != gameObject)
+            {
+                viewportContainer = hiddenObjectPanel.transform.Find("Fullscreen_Viewport_Container")?.GetComponent<RectTransform>() ?? hiddenObjectPanel.transform.Find("Viewport_Container")?.GetComponent<RectTransform>();
+            }
+        }
+
+        if (viewportContainer != null)
+        {
+            if (backgroundContentRoot == null)
+                backgroundContentRoot = viewportContainer.Find("Background_Content_Root")?.GetComponent<RectTransform>() ?? viewportContainer.Find("Background_Root")?.GetComponent<RectTransform>() ?? viewportContainer.Find("Content")?.GetComponent<RectTransform>();
+
+            if (backgroundContentRoot != null)
+            {
+                if (backgroundLocationImage == null)
+                    backgroundLocationImage = backgroundContentRoot.Find("Background_8K_Image")?.GetComponent<Image>() ?? backgroundContentRoot.GetComponent<Image>();
+
+                if (interactiveClickTargetsContainer == null)
+                    interactiveClickTargetsContainer = backgroundContentRoot.Find("Interactive_Click_Targets")?.GetComponent<RectTransform>() ?? backgroundContentRoot;
+            }
+        }
+
+        // Поиск элементов Top_Status_Bar
+        if (topStatusBar != null)
+        {
+            if (timerText == null) timerText = topStatusBar.transform.Find("TimerText")?.GetComponent<TextMeshProUGUI>() ?? topStatusBar.transform.Find("Timer_Text")?.GetComponent<TextMeshProUGUI>();
+            if (hintCatButton == null) hintCatButton = topStatusBar.transform.Find("Hint_Cat_Button")?.GetComponent<Button>() ?? topStatusBar.transform.Find("Hint_Button")?.GetComponent<Button>();
+            if (closeGameButton == null) closeGameButton = topStatusBar.transform.Find("Close_Button")?.GetComponent<Button>() ?? topStatusBar.transform.Find("CloseGameButton")?.GetComponent<Button>();
+        }
+
+        // Поиск кнопки закрытия внутри Location_Selection_Popup
+        if (locationSelectPopup != null && closeGameButton == null)
+        {
+            closeGameButton = locationSelectPopup.transform.Find("Close_Button")?.GetComponent<Button>() ?? locationSelectPopup.transform.Find("Exit_Button")?.GetComponent<Button>();
+        }
+
+        // Поиск элементов Difficulty_Selection_Popup
+        if (difficultySelectPopup != null)
+        {
+            if (difficultyPopupTitleText == null)
+                difficultyPopupTitleText = difficultySelectPopup.transform.Find("Difficulty_Title_Text")?.GetComponent<TextMeshProUGUI>() ?? difficultySelectPopup.transform.Find("Title_Text")?.GetComponent<TextMeshProUGUI>();
+
+            if (buttonEasy == null)
+                buttonEasy = difficultySelectPopup.transform.Find("Button_Easy")?.GetComponent<Button>() ?? difficultySelectPopup.transform.Find("Easy_Button")?.GetComponent<Button>();
+
+            if (buttonNormal == null)
+                buttonNormal = difficultySelectPopup.transform.Find("Button_Normal")?.GetComponent<Button>() ?? difficultySelectPopup.transform.Find("Normal_Button")?.GetComponent<Button>();
+
+            if (buttonHard == null)
+                buttonHard = difficultySelectPopup.transform.Find("Button_Hard")?.GetComponent<Button>() ?? difficultySelectPopup.transform.Find("Hard_Button")?.GetComponent<Button>();
+
+            if (buttonBackToLocations == null)
+                buttonBackToLocations = difficultySelectPopup.transform.Find("Button_Back_To_Locations")?.GetComponent<Button>() ?? 
+                                         difficultySelectPopup.transform.Find("Close_Button")?.GetComponent<Button>() ?? 
+                                         difficultySelectPopup.transform.Find("Back_Button")?.GetComponent<Button>() ??
+                                         difficultySelectPopup.transform.Find("Button_Back")?.GetComponent<Button>();
+        }
+
+        // Поиск элементов Bottom_Targets_Bar
+        if (bottomTargetsBar != null)
+        {
+            if (itemsRemainingText == null) itemsRemainingText = bottomTargetsBar.transform.Find("ItemsRemainingText")?.GetComponent<TextMeshProUGUI>() ?? bottomTargetsBar.transform.Find("Remaining_Text")?.GetComponent<TextMeshProUGUI>();
+            if (targetIconsContainer == null) targetIconsContainer = bottomTargetsBar.transform.Find("Target_Icons_Holder")?.GetComponent<RectTransform>() ?? bottomTargetsBar.transform.Find("Container")?.GetComponent<RectTransform>() ?? bottomTargetsBar.GetComponent<RectTransform>();
         }
     }
 
@@ -1302,10 +1604,10 @@ public class HiddenObject_Minigame : MonoBehaviour
 
             locationTitleText = CreateTMPText(topBar.transform, "Loc_Title", "Лавка Алхимика — Легкий", new Vector2(-220f, 0f), new Vector2(380f, 50f), 20f, new Color(1f, 0.85f, 0.3f), TextAlignmentOptions.Left); // Название
             currentRoundText = CreateTMPText(topBar.transform, "Round_Text", "Этап 1 из 3", new Vector2(40f, 0f), new Vector2(180f, 50f), 18f, Color.white, TextAlignmentOptions.Center); // Раунд
-            timerText = CreateTMPText(topBar.transform, "Timer_Text", "⏳ 01:30", new Vector2(200f, 0f), new Vector2(140f, 50f), 22f, new Color(1f, 0.9f, 0.4f), TextAlignmentOptions.Center); // Таймер
+            timerText = CreateTMPText(topBar.transform, "Timer_Text", "01:30", new Vector2(200f, 0f), new Vector2(140f, 50f), 22f, new Color(1f, 0.9f, 0.4f), TextAlignmentOptions.Center); // Таймер
 
             // Кнопка подсказки Кота
-            hintCatButton = CreateSimpleButton(topBar.transform, "Hint_Button", "💡 Подсказка: 3", new Vector2(340f, 0f), new Vector2(150f, 42f), new Color(0.85f, 0.60f, 0.15f)); // Кнопка подсказки
+            hintCatButton = CreateSimpleButton(topBar.transform, "Hint_Button", "Подсказка: 3", new Vector2(340f, 0f), new Vector2(150f, 42f), new Color(0.85f, 0.60f, 0.15f)); // Кнопка подсказки
             hintCatButton.onClick.AddListener(UseHint); // Подписка
             hintCountText = hintCatButton.GetComponentInChildren<TextMeshProUGUI>(); // Текст подсказок
 

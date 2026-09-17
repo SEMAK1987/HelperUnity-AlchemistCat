@@ -608,8 +608,31 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
     }
 
-    private void Update() // Покадровое обновление движения бегунков
+    private void Update() // Покадровое обновление движения бегунков и обработка горячих клавиш
     {
+        // 1. Проверка чита F9 для мгновенного пропуска рыбалки
+        bool f9Pressed = false; // Флаг нажатия клавиши F9
+        try
+        {
+            if (Input.GetKeyDown(KeyCode.F9)) f9Pressed = true; // Legacy Input
+        }
+        catch (System.Exception) { }
+
+#if ENABLE_INPUT_SYSTEM
+        try
+        {
+            var kb = UnityEngine.InputSystem.Keyboard.current; // New Input System
+            if (kb != null && kb.f9Key.wasPressedThisFrame) f9Pressed = true;
+        }
+        catch (System.Exception) { }
+#endif
+
+        if (f9Pressed) // Если нажат F9 во время рыбалки
+        {
+            CheatWinEasy(); // Мгновенный выигрыш и переход к Поиску предметов
+            return; // Прерывание дальнейшей логики
+        }
+
         float vertSpeed = baseVerticalSpeed * (currentDifficulty == FishingDifficulty.Easy ? 1.0f : currentDifficulty == FishingDifficulty.Medium ? 1.4f : 1.9f);
         float horizSpeed = GetHorizontalSpeedForDifficulty(currentDifficulty); // Получение скорости по сложности (0.3 / 0.5 / 0.9)
 
@@ -1132,5 +1155,16 @@ public class AlchemyFishing_Minigame : MonoBehaviour
         }
 
         Debug.Log($"[РЫБАЛКА ЗАВЕРШЕНА] Улов отправлен в сундук для {playerName}. Запущен диалог Кота перед Поиском Предметов."); // Лог завершения
+    }
+
+    /// <summary>
+    /// Чит-метод для разработчика: мгновенный выигрыш на Легком уровне с начислением всех наград и переходом к диалогу Поиска Предметов.
+    /// </summary>
+    [ContextMenu("⚡ ЧИТ: Мгновенно завершить Рыбалку (Easy)")]
+    public void CheatWinEasy() // Чит мгновенного прохождения рыбалки на легком уровне
+    {
+        currentDifficulty = FishingDifficulty.Easy; // Выбор легкого уровня
+        totalSessionXpGained = 100; // Начисление 100 опыта за сессию
+        ClaimAllAndProceedToQuest(); // Выдача наград и переход к сюжетному диалогу Поиска Предметов
     }
 }

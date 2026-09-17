@@ -334,8 +334,8 @@ public class DialogueSystem_Manager : MonoBehaviour
 
     private void Update() // Безопасная обработка клавиш и кликов для быстрого пропуска диалогов и чит-теста
     {
-        // Чит-клавиша F9: Мгновенное прохождение мини-игры с мышами и запуск диалога об Алхимической Рыбалке
-        bool f9Pressed = false;
+        // Чит-клавиша F9: Мгновенный пропуск текущей мини-игры (1-е нажатие: Мыши -> диалог Рыбалки, 2-е нажатие: Рыбалка -> диалог Поиска предметов)
+        bool f9Pressed = false; // Флаг нажатия F9
         try
         {
             if (Input.GetKeyDown(KeyCode.F9)) f9Pressed = true; // Стандартный ввод Unity Legacy
@@ -346,14 +346,37 @@ public class DialogueSystem_Manager : MonoBehaviour
         try
         {
             var kb = UnityEngine.InputSystem.Keyboard.current; // Пакет New Input System
-            if (kb != null && kb.f9Key.wasPressedThisFrame) f9Pressed = true;
+            if (kb != null && kb.f9Key.wasPressedThisFrame) f9Pressed = true; // Проверка нажатия F9 в новой системе
         }
         catch (System.Exception) { }
 #endif
 
         if (f9Pressed) // Если нажата клавиша F9
         {
-            CheatPassMouseGameAndGoToFishing(); // Вызов чит-метода
+            // Проверяем: если уже открыта панель Рыбалки или мы находимся в диалоге/фазе Рыбалки — пропускаем Рыбалку!
+            bool isFishingActiveOrNext = false; // Флаг перехода к пропуску рыбалки
+
+            if (AlchemyFishing_Minigame.Instance != null && (AlchemyFishing_Minigame.Instance.gameObject.activeInHierarchy || (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null && AlchemyFishing_Minigame.Instance.rootFishingGamePanel.activeInHierarchy))) // Если панель рыбалки открыта
+            {
+                isFishingActiveOrNext = true; // Пропускаем рыбалку
+            }
+            else if (currentPhase == DialoguePhase.MinigamesCatchMouse || currentPhase == DialoguePhase.MinigamesFishing) // Если идет фаза диалога о рыбалке
+            {
+                isFishingActiveOrNext = true; // Пропускаем рыбалку
+            }
+            else if (PlayerPrefs.GetInt("Minigame_Mouse_Completed", 0) == 1 && PlayerPrefs.GetInt("Minigame_Fishing_Completed", 0) == 0) // Если мыши уже завершены, а рыбалка еще нет
+            {
+                isFishingActiveOrNext = true; // Пропускаем рыбалку
+            }
+
+            if (isFishingActiveOrNext) // Если на очереди рыбалка
+            {
+                CheatPassFishingAndGoToHiddenObject(); // Вызов чит-метода мгновенного прохождения Рыбалки
+            }
+            else // Иначе (первый шаг)
+            {
+                CheatPassMouseGameAndGoToFishing(); // Вызов чит-метода мгновенного прохождения Мышей
+            }
             return; // Выход
         }
 
@@ -2489,6 +2512,7 @@ public class DialogueSystem_Manager : MonoBehaviour
         PlayerPrefs.SetInt("Player_Stones", stones); // Сохранение камней
         PlayerPrefs.SetInt("Player_Scrolls", scrolls); // Сохранение свитков
         PlayerPrefs.SetInt("Player_Crystals", crystals); // Сохранение кристаллов
+        PlayerPrefs.SetInt("Minigame_Mouse_Completed", 1); // Отметка завершения мини-игры с мышами
         PlayerPrefs.Save(); // Запись на диск
 
         SyncPlayerPrefsResources(); // Синхронизация текста ресурсов
@@ -2511,5 +2535,77 @@ public class DialogueSystem_Manager : MonoBehaviour
         StartPostMinigameFishingDialogue(); // Запуск сюжетного анонса Алхимической Рыбалки
 
         Debug.Log("<color=#80FFDB>[ЧИТ АКТИВИРОВАН]</color> Мини-игра «Поймай мышку» пройдена на Легком уровне (+1000 Gold, +5 Stones, +20 XP), открыт диалог с Котом об Алхимической Рыбалке!");
+    }
+
+    /// <summary>
+    /// Чит-метод быстрого тестирования: засчитывает победу в «Алхимической Рыбалке» (Легкий уровень),
+    /// начисляет награды (+3000 Gold, +3 Stones, +1 Scroll, +100 XP), закрывает окно рыбалки
+    /// и запускает сюжетный диалог Кота об открытии «Поиска Предметов».
+    /// </summary>
+    [ContextMenu("⚡ ЧИТ: Мгновенно пройти Рыбалку (Easy) и открыть диалог Поиска предметов")]
+    public void CheatPassFishingAndGoToHiddenObject() // Метод мгновенного перехода к диалогу Поиска предметов
+    {
+        // 1. Установка имени игрока, если не задано
+        if (string.IsNullOrEmpty(playerName) || playerName == "Путник") // Проверка дефолтного имени
+        {
+            playerName = PlayerPrefs.GetString("Alchemist_Player_Name", PlayerPrefs.GetString("PlayerName", "Алхимик")); // Чтение сохраненного имени
+        }
+        PlayerPrefs.SetString("Alchemist_Player_Name", playerName); // Сохранение имени
+
+        // 2. Активация верхнего интерфейса
+        if (topPanel != null) topPanel.SetActive(true); // Включение верхней панели ресурсов
+        if (slotGold != null) slotGold.SetActive(true); // Отображение золота
+        if (slotStones != null) slotStones.SetActive(true); // Отображение камней
+        if (slotScrolls != null) slotScrolls.SetActive(true); // Отображение свитков
+        if (slotCrystals != null) slotCrystals.SetActive(true); // Отображение кристаллов
+
+        // 3. Активация функциональных иконок
+        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(true); // Включение аватара
+        if (calendarIconButton != null) calendarIconButton.SetActive(true); // Включение календаря
+        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(true); // Включение свитка
+        if (chestIconButton != null) chestIconButton.SetActive(true); // Включение сундука
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(true); // Включение знаний
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(true); // Включение колеса игр
+
+        // 4. Начисление стартовых ресурсов и наград за Рыбалку (+3000 Gold, +3 Stones, +1 Scroll, +100 XP)
+        int gold = PlayerPrefs.GetInt("Player_Gold", 6000) + 3000; // Расчет золота с наградой рыбалки
+        int stones = PlayerPrefs.GetInt("Player_Stones", 15) + 3; // Расчет камней
+        int scrolls = PlayerPrefs.GetInt("Player_Scrolls", 3) + 1; // Расчет свитков
+        int crystals = PlayerPrefs.GetInt("Player_Crystals", 0); // Кристаллы
+
+        PlayerPrefs.SetInt("Player_Gold", gold); // Сохранение золота
+        PlayerPrefs.SetInt("Player_Stones", stones); // Сохранение камней
+        PlayerPrefs.SetInt("Player_Scrolls", scrolls); // Сохранение свитков
+        PlayerPrefs.SetInt("Player_Crystals", crystals); // Сохранение кристаллов
+        PlayerPrefs.SetInt("Minigame_Mouse_Completed", 1); // Отметка прохождения мышей
+        PlayerPrefs.SetInt("Minigame_Fishing_Completed", 1); // Отметка прохождения рыбалки
+        PlayerPrefs.Save(); // Запись на диск
+
+        SyncPlayerPrefsResources(); // Синхронизация текста ресурсов в шапке
+
+        if (Avatar_Manager.Instance != null) // Если менеджер аватарок активен
+        {
+            Avatar_Manager.Instance.GainPlayerExperience(100); // Начисление 100 опыта за рыбалку
+        }
+
+        // 5. Закрытие окон мини-игр и рыбалки
+        if (AlchemyFishing_Minigame.Instance != null) // Если синглтон рыбалки существует
+        {
+            if (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null)
+                AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false); // Закрытие корневой панели
+            AlchemyFishing_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта рыбалки
+        }
+        if (CatchMouse_Minigame.Instance != null) // Если открыта панель мышек
+        {
+            CatchMouse_Minigame.Instance.CloseMinigame(); // Закрытие мышек
+        }
+        if (minigamesPanel != null) minigamesPanel.SetActive(false); // Закрытие колеса мини-игр
+
+        // 6. Блокировка кнопки колеса и немедленный запуск диалога Кота про Поиск Предметов
+        SetMinigamesButtonInteractable(false); // Блокировка кнопки колеса на время диалога
+        currentPhase = DialoguePhase.MinigamesHiddenObject; // Установка фазы диалога Поиска Предметов
+        StartPostFishingDialogue(); // Запуск сюжетного анонса Поиска Предметов
+
+        Debug.Log("<color=#80FFDB>[ЧИТ АКТИВИРОВАН]</color> Мини-игра «Алхимическая Рыбалка» пройдена на Легком уровне (+3000 Gold, +3 Stones, +1 Scroll, +100 XP), открыт диалог с Котом о Поиске Предметов!");
     }
 }
