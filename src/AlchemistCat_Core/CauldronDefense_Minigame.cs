@@ -1,38 +1,46 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
-using UnityEngine.UI;
-using TMPro;
+using System.Collections; // Подключение пространств имен коллекций
+using System.Collections.Generic; // Подключение обобщенных коллекций
+using UnityEngine; // Подключение базового функционала Unity
+using UnityEngine.UI; // Подключение стандартных компонентов UI
+using TMPro; // Подключение расширенного текста TextMeshPro
 
 /// <summary>
+/// Разработчик: Алхимический Кот (Alchemist Cat Core v18.12.98)
 /// Мини-игра «Защита Алхимических Котлов» (Cauldron Rain Defense).
-/// Игрок спасает горящие котлы от дождевых туч, вовремя раскрывая магические силовые зонтики.
+/// Игрок спасает бурлящие котлы от налетающих грозовых туч, вовремя раскрывая защитные силовые зонтики.
 /// </summary>
-public class CauldronDefense_Minigame : MonoBehaviour
+public class CauldronDefense_Minigame : MonoBehaviour // Основной класс мини-игры защиты котлов
 {
-    public static CauldronDefense_Minigame Instance { get; private set; } // Статический синглтон мини-игры защиты котлов
+    public static CauldronDefense_Minigame Instance { get; private set; } // Статический синглтон мини-игры
 
-    [Header("=== Основные панели игры ===")]
-    [SerializeField] private GameObject gameRootPanel; // Корневой объект всей мини-игры
-    [SerializeField] private GameObject difficultyPanel; // Окно выбора уровня сложности
-    [SerializeField] private GameObject activeStagePanel; // Игровое поле с котлами и тучами
-    [SerializeField] private GameObject resultSummaryPanel; // Итоговое окно победы / поражения
-    [SerializeField] private Button closeGameButton; // Кнопка закрытия мини-игры
+    [Header("=== Основные корневые панели ===")]
+    [SerializeField] private GameObject gameRootPanel; // Корневой объект всей мини-игры (CauldronDefense_Game_Panel)
+    [SerializeField] private GameObject difficultyPanel; // Окно выбора уровня сложности (Difficulty_Select_Panel)
+    [SerializeField] private GameObject activeStagePanel; // Игровое поле с котлами и тучами (Active_Defense_Stage_Panel)
+    [SerializeField] private GameObject resultSummaryPanel; // Итоговое окно победы / поражения (Result_Summary_Panel)
+    [SerializeField] private GameObject topBar; // Верхняя панель заголовка и индикаторов (Top_Bar)
+    [SerializeField] private Button closeGameButton; // Кнопка закрытия мини-игры (Close_Button)
+
+    [Header("=== Кнопки выбора сложности ===")]
+    [SerializeField] private Button easyButton; // Кнопка легкой сложности (Easy_Button)
+    [SerializeField] private Button mediumButton; // Кнопка средней сложности (Medium_Button)
+    [SerializeField] private Button hardButton; // Кнопка сложной сложности (Hard_Button)
 
     [Header("=== Справочник / Подсказка игры ===")]
     [SerializeField] private Button guideButton; // Кнопка вызова значка подсказки (?)
     [SerializeField] private GameObject guidePopupPanel; // Всплывающее окно со справочником игры
     [SerializeField] private Button guideCloseButton; // Крестик закрытия окна подсказки
 
-    [Header("=== Жизни и Счетчики ===")]
+    [Header("=== Жизни и Счетчики (Геймплейные индикаторы) ===")]
+    [SerializeField] private GameObject heartsContainer; // Контейнер 3 сердечек (Hearts_Container)
     [SerializeField] private Image[] heartIcons; // 3 сердечка жизней игрока
-    [SerializeField] private TextMeshProUGUI defenseCounterText; // Счетчик успешных защит (например, Защищено: 4 / 10)
+    [SerializeField] private TextMeshProUGUI defenseCounterText; // Счетчик успешных защит (Защищено: 0 / 10)
     [SerializeField] private TextMeshProUGUI levelDifficultyText; // Текст текущей сложности
 
     [Header("=== Котлы и Защитные Зонтики ===")]
-    [SerializeField] private GameObject[] cauldronRoots; // 5 слотов для котлов (активируются 3, 4 или 5 в зависимости от сложности)
+    [SerializeField] private GameObject[] cauldronRoots; // Слоты для котлов (3, 4 или 5 в зависимости от сложности)
     [SerializeField] private Button[] cauldronButtons; // Кнопки под котлами для активации зонтиков
-    [SerializeField] private GameObject[] umbrellaVisuals; // Анимированные магические зонтики над каждым котлом
+    [SerializeField] private GameObject[] umbrellaVisuals; // Магические зонтики над каждым котлом
     [SerializeField] private GameObject[] cloudVisuals; // Грозовые тучки над каждым котлом
     [SerializeField] private ParticleSystem[] rainParticles; // Частицы дождя под каждой тучкой
 
@@ -44,73 +52,260 @@ public class CauldronDefense_Minigame : MonoBehaviour
     [SerializeField] private Button claimRewardsButton; // Кнопка «Забрать все в рюкзак»
 
     [Header("=== Интеграция с диалогами и переход в Лабораторию ===")]
-    [SerializeField] private GameObject laboratoryGamePanel; // Ссылка на панель «Laboratory_Minigame»
+    [SerializeField] private GameObject laboratoryGamePanel; // Панель «Laboratory_Mixer»
     [SerializeField] private GameObject dialogueContainer; // Контейнер окна диалога с Котом
     [SerializeField] private TextMeshProUGUI dialogueText; // Текст диалога Кота
 
-    public enum DefenseDifficulty { Easy, Medium, Hard }
-    private DefenseDifficulty currentDifficulty = DefenseDifficulty.Easy;
+    public enum DefenseDifficulty { Easy, Medium, Hard } // Перечисление уровней сложности
+    private DefenseDifficulty currentDifficulty = DefenseDifficulty.Easy; // Выбранная сложность
 
-    private int maxLives = 3; // Количество жизней
+    private int maxLives = 3; // Максимальное количество жизней
     private int currentLives = 3; // Текущие жизни
     private int targetDefenses = 10; // Целевое число отраженных туч (10, 15, 20)
     private int currentDefenses = 0; // Текущее число защит
-    private bool isPlaying = false; // Флаг активного раунда
+    private bool isPlaying = false; // Флаг активного геймплея
     private bool isPausedByGuide = false; // Флаг паузы при открытом справочнике
 
     private float cloudInterval = 2.2f; // Интервал между тучами
     private int activeCloudIndex = -1; // Индекс котла с активной тучей
+    private Coroutine gameLoopCoroutine; // Ссылка на корутину игрового цикла
 
-    private void Awake()
+    private void Awake() // Инициализация ссылок и обработчиков событий
     {
-        if (Instance == null) Instance = this; // Инициализация синглтона
-        else Destroy(gameObject); // Уничтожение дубликата
+        if (Instance == null) Instance = this; // Назначение синглтона
+        else if (Instance != this) { Destroy(gameObject); return; } // Защита от дубликатов
 
-        if (guideButton) guideButton.onClick.AddListener(OpenGuide); // Привязка кнопки подсказки
-        if (guideCloseButton) guideCloseButton.onClick.AddListener(CloseGuide); // Привязка крестика
-        if (closeGameButton) closeGameButton.onClick.AddListener(CloseGame); // Привязка выхода
-        if (claimRewardsButton) claimRewardsButton.onClick.AddListener(ClaimAllRewards); // Привязка сбора
+        EnsureUIHierarchy(); // Автоматический поиск и привязка компонентов UI
 
-        if (cauldronButtons != null)
+        if (guideButton != null) guideButton.onClick.AddListener(OpenGuide); // Привязка кнопки подсказки
+        if (guideCloseButton != null) guideCloseButton.onClick.AddListener(CloseGuide); // Привязка закрытия подсказки
+        if (closeGameButton != null) closeGameButton.onClick.AddListener(CloseGame); // Привязка выхода из игры
+        if (claimRewardsButton != null) claimRewardsButton.onClick.AddListener(ClaimAllRewards); // Привязка кнопки сбора наград
+
+        if (easyButton != null) easyButton.onClick.AddListener(StartEasyMode); // Привязка легкого режима
+        if (mediumButton != null) mediumButton.onClick.AddListener(StartMediumMode); // Привязка среднего режима
+        if (hardButton != null) hardButton.onClick.AddListener(StartHardMode); // Привязка сложного режима
+
+        if (cauldronButtons != null) // Привязка кликов по котлам
         {
             for (int i = 0; i < cauldronButtons.Length; i++)
             {
-                int index = i;
+                int index = i; // Локальная копия индекса для замыкания
                 if (cauldronButtons[i] != null)
                 {
-                    cauldronButtons[i].onClick.AddListener(() => OnCauldronShieldClicked(index)); // Клик по зонтику
+                    cauldronButtons[i].onClick.AddListener(() => OnCauldronShieldClicked(index)); // Активация зонтика
                 }
             }
         }
     }
 
-    /// <summary>
-    /// Открытие окна мини-игры «Защита Котлов» с включением меню сложности
-    /// </summary>
-    public void OpenMinigame()
+    private void OnEnable() // Событие включения объекта
     {
-        gameObject.SetActive(true); // Активация игрового объекта
-        Transform p = transform.parent;
-        while (p != null)
+        EnsureUIHierarchy(); // Повторная валидация иерархии
+        if (!isPlaying) // Если игра еще не запущена
         {
-            p.gameObject.SetActive(true); // Включение всех родительских панелей
-            p = p.parent;
+            ShowDifficultySelection(); // Гарантированный показ только окна выбора сложности
         }
+    }
 
-        if (gameRootPanel != null) gameRootPanel.SetActive(true); // Активация корневой панели
-        ShowDifficultySelection(); // Показ выбора сложности
+    private void OnDisable() // Событие отключения объекта
+    {
+        isPlaying = false; // Сброс состояния игры
+        if (gameLoopCoroutine != null) StopCoroutine(gameLoopCoroutine); // Остановка игрового цикла
     }
 
     /// <summary>
-    /// Показ экрана выбора сложности
+    /// Автоматический поиск и инициализация всех компонентов интерфейса
     /// </summary>
-    public void ShowDifficultySelection()
+    public void EnsureUIHierarchy() // Поиск и привязка UI элементов
     {
-        isPlaying = false; // Остановка игры
-        if (difficultyPanel) difficultyPanel.SetActive(true); // Включение меню сложности
-        if (activeStagePanel) activeStagePanel.SetActive(false); // Выключение игрового поля
-        if (resultSummaryPanel) resultSummaryPanel.SetActive(false); // Выключение окна наград
-        if (guidePopupPanel) guidePopupPanel.SetActive(false); // Выключение справочника
+        if (gameRootPanel == null) gameRootPanel = gameObject; // Корневой контейнер
+
+        // 1. Поиск панели выбора сложности
+        if (difficultyPanel == null)
+        {
+            Transform t = transform.Find("Difficulty_Select_Panel");
+            if (t == null) t = transform.Find("Difficulty_Selection_Panel");
+            if (t == null) t = transform.Find("DifficultyPanel");
+            if (t != null) difficultyPanel = t.gameObject;
+        }
+
+        // 2. Поиск игрового поля
+        if (activeStagePanel == null)
+        {
+            Transform t = transform.Find("Active_Defense_Stage_Panel");
+            if (t == null) t = transform.Find("Active_Stage_Panel");
+            if (t == null) t = transform.Find("ActiveStagePanel");
+            if (t != null) activeStagePanel = t.gameObject;
+        }
+
+        // 3. Поиск итоговой панели наград
+        if (resultSummaryPanel == null)
+        {
+            Transform t = transform.Find("Result_Summary_Panel");
+            if (t == null) t = transform.Find("ResultSummaryPanel");
+            if (t != null) resultSummaryPanel = t.gameObject;
+        }
+
+        // 4. Поиск справочника
+        if (guidePopupPanel == null)
+        {
+            Transform t = transform.Find("Guide_Popup_Panel");
+            if (t == null) t = transform.Find("GuidePopupPanel");
+            if (t != null) guidePopupPanel = t.gameObject;
+        }
+
+        // 5. Поиск верхней панели
+        if (topBar == null)
+        {
+            Transform t = transform.Find("Top_Bar");
+            if (t == null) t = transform.Find("TopBar");
+            if (t != null) topBar = t.gameObject;
+        }
+
+        // 6. Поиск кнопок сложности внутри панели сложности
+        if (difficultyPanel != null)
+        {
+            if (easyButton == null) easyButton = FindChildButton(difficultyPanel.transform, "Easy_Button", "EasyButton", "Button_Easy");
+            if (mediumButton == null) mediumButton = FindChildButton(difficultyPanel.transform, "Medium_Button", "MediumButton", "Button_Medium");
+            if (hardButton == null) hardButton = FindChildButton(difficultyPanel.transform, "Hard_Button", "HardButton", "Button_Hard");
+        }
+
+        // 7. Поиск кнопок управления
+        if (closeGameButton == null && topBar != null)
+        {
+            closeGameButton = FindChildButton(topBar.transform, "Close_Button", "CloseButton", "Exit_Button");
+        }
+        if (closeGameButton == null)
+        {
+            closeGameButton = FindChildButton(transform, "Close_Button", "CloseButton", "Exit_Button");
+        }
+
+        if (guideButton == null && topBar != null)
+        {
+            guideButton = FindChildButton(topBar.transform, "Guide_Button", "GuideButton", "Help_Button");
+        }
+
+        // 8. Поиск счетчиков и жизней
+        if (defenseCounterText == null)
+        {
+            Transform t = (topBar != null) ? topBar.transform.Find("Wave_Counter_Text") : null;
+            if (t == null && topBar != null) t = topBar.transform.Find("Defense_Counter_Text");
+            if (t == null) t = transform.Find("Top_Bar/Wave_Counter_Text");
+            if (t != null) defenseCounterText = t.GetComponent<TextMeshProUGUI>();
+        }
+
+        if (heartsContainer == null)
+        {
+            Transform t = (topBar != null) ? topBar.transform.Find("Hearts_Container") : null;
+            if (t == null && topBar != null) t = topBar.transform.Find("Hearts");
+            if (t == null) t = transform.Find("Top_Bar/Hearts_Container");
+            if (t != null) heartsContainer = t.gameObject;
+        }
+
+        if (heartsContainer != null && (heartIcons == null || heartIcons.Length == 0))
+        {
+            heartIcons = heartsContainer.GetComponentsInChildren<Image>(true);
+        }
+
+        // 9. Поиск элементов итогового окна
+        if (resultSummaryPanel != null)
+        {
+            if (claimRewardsButton == null)
+                claimRewardsButton = FindChildButton(resultSummaryPanel.transform, "Claim_Rewards_Button", "ClaimButton", "Claim_All_Button");
+
+            if (resultTitleText == null)
+            {
+                Transform t = resultSummaryPanel.transform.Find("Result_Title_Text");
+                if (t != null) resultTitleText = t.GetComponent<TextMeshProUGUI>();
+            }
+            if (rewardGoldText == null)
+            {
+                Transform t = resultSummaryPanel.transform.Find("Reward_Gold_Text");
+                if (t != null) rewardGoldText = t.GetComponent<TextMeshProUGUI>();
+            }
+            if (rewardPlayerXpText == null)
+            {
+                Transform t = resultSummaryPanel.transform.Find("Reward_Player_XP_Text");
+                if (t != null) rewardPlayerXpText = t.GetComponent<TextMeshProUGUI>();
+            }
+            if (rewardMasteryXpText == null)
+            {
+                Transform t = resultSummaryPanel.transform.Find("Reward_Mastery_XP_Text");
+                if (t != null) rewardMasteryXpText = t.GetComponent<TextMeshProUGUI>();
+            }
+        }
+    }
+
+    private Button FindChildButton(Transform parent, params string[] possibleNames) // Утилита безопасного поиска кнопки
+    {
+        if (parent == null) return null;
+        foreach (var n in possibleNames)
+        {
+            Transform child = parent.Find(n);
+            if (child != null)
+            {
+                Button btn = child.GetComponent<Button>();
+                if (btn != null) return btn;
+            }
+        }
+        foreach (Button b in parent.GetComponentsInChildren<Button>(true))
+        {
+            foreach (var n in possibleNames)
+            {
+                if (b.gameObject.name.Equals(n, System.StringComparison.OrdinalIgnoreCase)) return b;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Открытие окна мини-игры «Защита Котлов» с показом только меню сложности
+    /// </summary>
+    public void OpenMinigame() // Открытие мини-игры
+    {
+        EnsureUIHierarchy(); // Проверка привязок
+        gameObject.SetActive(true); // Активация объекта
+        Transform p = transform.parent;
+        while (p != null)
+        {
+            p.gameObject.SetActive(true); // Включение родителей
+            p = p.parent;
+        }
+
+        if (gameRootPanel != null) gameRootPanel.SetActive(true); // Включение корневой панели
+        ShowDifficultySelection(); // Включение исключительно меню выбора сложности
+    }
+
+    /// <summary>
+    /// Показ экрана выбора сложности с полным скрытием геймплейных счетчиков и полей
+    /// </summary>
+    public void ShowDifficultySelection() // Показ меню сложности
+    {
+        isPlaying = false; // Остановка игрового процесса
+        if (gameLoopCoroutine != null) StopCoroutine(gameLoopCoroutine); // Остановка корутины
+
+        // 1. Активация панели выбора сложности на переднем плане
+        if (difficultyPanel != null)
+        {
+            difficultyPanel.SetActive(true); // Включение окна сложности
+            difficultyPanel.transform.SetAsLastSibling(); // Вынос на передний план
+        }
+
+        // 2. Скрытие игрового поля и окон результатов
+        if (activeStagePanel != null) activeStagePanel.SetActive(false); // Скрытие поля с котлами
+        if (resultSummaryPanel != null) resultSummaryPanel.SetActive(false); // Скрытие наград
+        if (guidePopupPanel != null) guidePopupPanel.SetActive(false); // Скрытие подсказки
+
+        // 3. Скрытие элементов активного геймплея из верхней панели (жизни и счетчик защит)
+        if (heartsContainer != null) heartsContainer.SetActive(false); // Скрытие 3 сердечек
+        if (defenseCounterText != null) defenseCounterText.gameObject.SetActive(false); // Скрытие счетчика "Защищено"
+        if (levelDifficultyText != null) levelDifficultyText.gameObject.SetActive(false); // Скрытие текста сложности
+
+        // 4. Гарантия активности верхней полосы с кнопками выхода и справки
+        if (topBar != null) topBar.SetActive(true); // Включение полосы заголовка
+        if (closeGameButton != null) closeGameButton.gameObject.SetActive(true); // Включение крестика закрытия
+        if (guideButton != null) guideButton.gameObject.SetActive(true); // Включение знака вопроса
     }
 
     public void StartEasyMode() // Запуск легкого режима (3 котла, 10 защит)
@@ -128,27 +323,43 @@ public class CauldronDefense_Minigame : MonoBehaviour
         StartGameWithDifficulty(DefenseDifficulty.Hard, 5, 20, 1.4f);
     }
 
-    private void StartGameWithDifficulty(DefenseDifficulty difficulty, int activeCauldrons, int targetCount, float spawnInterval)
+    private void StartGameWithDifficulty(DefenseDifficulty difficulty, int activeCauldrons, int targetCount, float spawnInterval) // Старт раунда
     {
-        currentDifficulty = difficulty;
-        targetDefenses = targetCount;
-        currentDefenses = 0;
-        currentLives = maxLives;
-        cloudInterval = spawnInterval;
-        isPlaying = true;
-        isPausedByGuide = false;
+        EnsureUIHierarchy(); // Проверка ссылок
+        currentDifficulty = difficulty; // Присвоение сложности
+        targetDefenses = targetCount; // Количество отражений
+        currentDefenses = 0; // Сброс счетчика
+        currentLives = maxLives; // Восстановление жизней
+        cloudInterval = spawnInterval; // Интервал туч
+        isPlaying = true; // Активация флага игры
+        isPausedByGuide = false; // Снятие паузы
 
-        if (difficultyPanel) difficultyPanel.SetActive(false); // Скрытие выбора сложности
-        if (activeStagePanel) activeStagePanel.SetActive(true); // Открытие игрового поля
-        if (resultSummaryPanel) resultSummaryPanel.SetActive(false); // Скрытие итогов
+        // 1. Скрытие окна сложности и открытие поля геймплея
+        if (difficultyPanel != null) difficultyPanel.SetActive(false); // Скрытие меню сложности
+        if (activeStagePanel != null)
+        {
+            activeStagePanel.SetActive(true); // Включение поля с котлами
+            activeStagePanel.transform.SetAsLastSibling(); // Вынос на передний план
+        }
+        if (resultSummaryPanel != null) resultSummaryPanel.SetActive(false); // Скрытие наград
 
+        // 2. Включение геймплейных счетчиков в верхней панели
+        if (heartsContainer != null) heartsContainer.SetActive(true); // Отображение жизней
+        if (defenseCounterText != null) defenseCounterText.gameObject.SetActive(true); // Отображение счетчика
+        if (levelDifficultyText != null)
+        {
+            levelDifficultyText.gameObject.SetActive(true); // Отображение текста
+            levelDifficultyText.text = difficulty == DefenseDifficulty.Easy ? "Легкий" : (difficulty == DefenseDifficulty.Medium ? "Средний" : "Сложный");
+        }
+
+        // 3. Активация котлов в соответствии с уровнем сложности
         if (cauldronRoots != null)
         {
             for (int i = 0; i < cauldronRoots.Length; i++)
             {
                 if (cauldronRoots[i] != null)
                 {
-                    cauldronRoots[i].SetActive(i < activeCauldrons);
+                    cauldronRoots[i].SetActive(i < activeCauldrons); // Включение нужного числа котлов
                 }
                 if (umbrellaVisuals != null && umbrellaVisuals.Length > i && umbrellaVisuals[i] != null) umbrellaVisuals[i].SetActive(false);
                 if (cloudVisuals != null && cloudVisuals.Length > i && cloudVisuals[i] != null) cloudVisuals[i].SetActive(false);
@@ -156,11 +367,13 @@ public class CauldronDefense_Minigame : MonoBehaviour
         }
 
         UpdateLivesUI(); // Обновление сердечек
-        UpdateCounterUI(); // Обновление счетчика
-        StartCoroutine(DefenseGameLoop(activeCauldrons)); // Запуск игрового цикла
+        UpdateCounterUI(); // Обновление текста защит
+
+        if (gameLoopCoroutine != null) StopCoroutine(gameLoopCoroutine); // Остановка старого цикла
+        gameLoopCoroutine = StartCoroutine(DefenseGameLoop(activeCauldrons)); // Запуск игрового цикла
     }
 
-    private IEnumerator DefenseGameLoop(int activeCauldrons)
+    private IEnumerator DefenseGameLoop(int activeCauldrons) // Игровой цикл появления туч
     {
         while (isPlaying && currentLives > 0 && currentDefenses < targetDefenses)
         {
@@ -170,11 +383,11 @@ public class CauldronDefense_Minigame : MonoBehaviour
                 continue;
             }
 
-            yield return new WaitForSeconds(cloudInterval);
+            yield return new WaitForSeconds(cloudInterval); // Ожидание интервала спавна
 
-            if (!isPlaying || isPausedByGuide) continue;
+            if (!isPlaying || isPausedByGuide) continue; // Проверка состояния
 
-            activeCloudIndex = Random.Range(0, activeCauldrons);
+            activeCloudIndex = Random.Range(0, activeCauldrons); // Случайный выбор атакуемого котла
             if (cloudVisuals != null && cloudVisuals.Length > activeCloudIndex && cloudVisuals[activeCloudIndex] != null)
             {
                 cloudVisuals[activeCloudIndex].SetActive(true); // Появление тучки
@@ -184,62 +397,62 @@ public class CauldronDefense_Minigame : MonoBehaviour
                 rainParticles[activeCloudIndex].Play(); // Начало дождя
             }
 
-            float reactionTime = currentDifficulty == DefenseDifficulty.Easy ? 1.8f : (currentDifficulty == DefenseDifficulty.Medium ? 1.4f : 1.0f);
+            float reactionTime = currentDifficulty == DefenseDifficulty.Easy ? 1.8f : (currentDifficulty == DefenseDifficulty.Medium ? 1.4f : 1.0f); // Время реакции
             float elapsed = 0f;
             bool protectedInTime = false;
 
-            while (elapsed < reactionTime)
+            while (elapsed < reactionTime) // Окно времени для нажатия зонтика
             {
                 if (!isPausedByGuide) elapsed += Time.deltaTime;
                 if (umbrellaVisuals != null && umbrellaVisuals.Length > activeCloudIndex && umbrellaVisuals[activeCloudIndex] != null && umbrellaVisuals[activeCloudIndex].activeSelf)
                 {
-                    protectedInTime = true;
+                    protectedInTime = true; // Успешная защита
                     break;
                 }
                 yield return null;
             }
 
-            if (protectedInTime)
+            if (protectedInTime) // Если игрок успел спасти котел
             {
-                currentDefenses++;
-                UpdateCounterUI();
+                currentDefenses++; // Увеличение числа отраженных туч
+                UpdateCounterUI(); // Обновление счетчика
             }
-            else
+            else // Если дождь залил котел
             {
-                currentLives--;
-                UpdateLivesUI();
+                currentLives--; // Потеря жизни
+                UpdateLivesUI(); // Обновление сердечек
             }
 
-            yield return new WaitForSeconds(0.4f);
+            yield return new WaitForSeconds(0.4f); // Пауза после атаки
             if (cloudVisuals != null && cloudVisuals.Length > activeCloudIndex && cloudVisuals[activeCloudIndex] != null)
-                cloudVisuals[activeCloudIndex].SetActive(false);
+                cloudVisuals[activeCloudIndex].SetActive(false); // Скрытие тучи
             if (umbrellaVisuals != null && umbrellaVisuals.Length > activeCloudIndex && umbrellaVisuals[activeCloudIndex] != null)
-                umbrellaVisuals[activeCloudIndex].SetActive(false);
+                umbrellaVisuals[activeCloudIndex].SetActive(false); // Скрытие зонтика
             if (rainParticles != null && rainParticles.Length > activeCloudIndex && rainParticles[activeCloudIndex] != null)
-                rainParticles[activeCloudIndex].Stop();
+                rainParticles[activeCloudIndex].Stop(); // Остановка дождя
 
-            activeCloudIndex = -1;
+            activeCloudIndex = -1; // Сброс индекса
         }
 
-        EndGame();
+        EndGame(); // Завершение игры
     }
 
-    private void OnCauldronShieldClicked(int index) // Клик по защите котла
+    private void OnCauldronShieldClicked(int index) // Клик по зонтику котла
     {
-        if (!isPlaying || isPausedByGuide) return;
+        if (!isPlaying || isPausedByGuide) return; // Игнорирование при паузе
         if (umbrellaVisuals != null && umbrellaVisuals.Length > index && umbrellaVisuals[index] != null)
         {
-            umbrellaVisuals[index].SetActive(true);
-            StartCoroutine(AutoHideUmbrella(index, 0.9f));
+            umbrellaVisuals[index].SetActive(true); // Раскрытие зонтика
+            StartCoroutine(AutoHideUmbrella(index, 0.9f)); // Авто-скрытие зонтика через 0.9 сек
         }
     }
 
-    private IEnumerator AutoHideUmbrella(int index, float delay)
+    private IEnumerator AutoHideUmbrella(int index, float delay) // Корутина авто-скрытия зонтика
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSeconds(delay); // Ожидание
         if (umbrellaVisuals != null && umbrellaVisuals.Length > index && umbrellaVisuals[index] != null)
         {
-            umbrellaVisuals[index].SetActive(false);
+            umbrellaVisuals[index].SetActive(false); // Скрытие зонтика
         }
     }
 
@@ -250,70 +463,88 @@ public class CauldronDefense_Minigame : MonoBehaviour
         {
             if (heartIcons[i] != null)
             {
-                heartIcons[i].color = (i < currentLives) ? Color.white : new Color(0.25f, 0.25f, 0.25f, 0.5f);
+                heartIcons[i].color = (i < currentLives) ? Color.white : new Color(0.25f, 0.25f, 0.25f, 0.5f); // Затемнение при потере жизни
             }
         }
     }
 
-    private void UpdateCounterUI() // Обновление счетчика побед
+    private void UpdateCounterUI() // Обновление счетчика защит
     {
-        if (defenseCounterText)
+        if (defenseCounterText != null)
         {
-            defenseCounterText.text = $"Защищено: {currentDefenses} / {targetDefenses}";
+            defenseCounterText.text = $"Защищено: {currentDefenses} / {targetDefenses}"; // Отображение прогресса
         }
     }
 
     private void EndGame() // Завершение игры
     {
-        isPlaying = false;
-        if (activeStagePanel) activeStagePanel.SetActive(false);
-        if (resultSummaryPanel) resultSummaryPanel.SetActive(true);
-
-        bool won = currentLives > 0;
-        string playerName = PlayerPrefs.GetString("PlayerName", "Алхимик"); // Запоминаем имя игрока
-
-        if (resultTitleText)
+        isPlaying = false; // Остановка
+        if (activeStagePanel != null) activeStagePanel.SetActive(false); // Скрытие поля
+        if (resultSummaryPanel != null)
         {
-            resultTitleText.text = won ? $"Блестяще, {playerName}! Котлы спасены!" : $"Огонь погас! Попробуй снова, {playerName}!";
+            resultSummaryPanel.SetActive(true); // Показ окна результатов
+            resultSummaryPanel.transform.SetAsLastSibling(); // Вынос вперед
         }
 
-        int gold = won ? (currentDifficulty == DefenseDifficulty.Easy ? 5000 : (currentDifficulty == DefenseDifficulty.Medium ? 8000 : 15000)) : 500;
-        int playerXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 500 : 2000)) : 50;
-        int masteryXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 300 : 1000)) : 25;
+        bool won = currentLives > 0; // Флаг победы
+        string playerName = PlayerPrefs.GetString("Player_Name", PlayerPrefs.GetString("Alchemist_Player_Name", "Алхимик")); // Чтение имени
 
-        if (rewardGoldText) rewardGoldText.text = $"+{gold:N0} Золота";
-        if (rewardPlayerXpText) rewardPlayerXpText.text = $"+1 Зелье Опыта Игрока (+{playerXp} XP)";
-        if (rewardMasteryXpText) rewardMasteryXpText.text = $"+1 Зелье Мастерства (+{masteryXp} XP)";
+        if (resultTitleText != null)
+        {
+            resultTitleText.text = won ? $"Блестяще, {playerName}! Котлы спасены!" : $"Огонь погас! Попробуй снова, {playerName}!"; // Заголовок
+        }
+
+        int gold = won ? (currentDifficulty == DefenseDifficulty.Easy ? 5000 : (currentDifficulty == DefenseDifficulty.Medium ? 8000 : 15000)) : 500; // Награда золотом
+        int playerXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 500 : 2000)) : 50; // Опыт игрока
+        int masteryXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 300 : 1000)) : 25; // Опыт мастерства
+
+        if (rewardGoldText != null) rewardGoldText.text = $"+{gold:N0} Золота";
+        if (rewardPlayerXpText != null) rewardPlayerXpText.text = $"+{playerXp} XP (Опыт Игрока)";
+        if (rewardMasteryXpText != null) rewardMasteryXpText.text = $"+{masteryXp} XP (Опыт Мастерства)";
     }
 
     public void OpenGuide() // Открытие справочника
     {
-        isPausedByGuide = true;
-        if (guidePopupPanel) guidePopupPanel.SetActive(true);
-        if (closeGameButton) closeGameButton.interactable = false;
+        isPausedByGuide = true; // Установка паузы
+        if (guidePopupPanel != null)
+        {
+            guidePopupPanel.SetActive(true); // Показ подсказки
+            guidePopupPanel.transform.SetAsLastSibling(); // Вынос вперед
+        }
+        if (closeGameButton != null) closeGameButton.interactable = false; // Блокировка выхода
     }
 
     public void CloseGuide() // Закрытие справочника
     {
-        isPausedByGuide = false;
-        if (guidePopupPanel) guidePopupPanel.SetActive(false);
-        if (closeGameButton) closeGameButton.interactable = true;
+        isPausedByGuide = false; // Снятие паузы
+        if (guidePopupPanel != null) guidePopupPanel.SetActive(false); // Скрытие подсказки
+        if (closeGameButton != null) closeGameButton.interactable = true; // Разблокировка выхода
     }
 
-    public void ClaimAllRewards() // Сбор наград и запуск Лаборатории с диалогом Кота
+    public void ClaimAllRewards() // Сбор наград и переход к диалогу о Лаборатории
     {
         bool won = currentLives > 0; // Флаг победы
-        int gold = won ? (currentDifficulty == DefenseDifficulty.Easy ? 5000 : (currentDifficulty == DefenseDifficulty.Medium ? 8000 : 15000)) : 500; // Расчет золота
-        int playerXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 500 : 2000)) : 50; // Расчет опыта игрока
-        int masteryXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 300 : 1000)) : 25; // Расчет опыта мастерства
+        int gold = won ? (currentDifficulty == DefenseDifficulty.Easy ? 5000 : (currentDifficulty == DefenseDifficulty.Medium ? 8000 : 15000)) : 500; // Золото
+        int playerXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 500 : 2000)) : 50; // Опыт игрока
+        int masteryXp = won ? (currentDifficulty == DefenseDifficulty.Easy ? 100 : (currentDifficulty == DefenseDifficulty.Medium ? 300 : 1000)) : 25; // Опыт мастерства
 
-        if (Avatar_Manager.Instance != null) // Если менеджер аватара активен
+        if (Avatar_Manager.Instance != null) // Начисление в профиль
         {
-            Avatar_Manager.Instance.AddGold(gold); // Начисление золота
-            Avatar_Manager.Instance.AddExperience(playerXp); // Начисление опыта
+            Avatar_Manager.Instance.GainPlayerExperience(playerXp); // Начисление опыта
         }
 
-        // Отправка наград за спасение котлов в единый сундук Алхимика
+        // Сохранение золота в PlayerPrefs
+        int currentGold = PlayerPrefs.GetInt("Player_Gold", 0) + gold;
+        PlayerPrefs.SetInt("Player_Gold", currentGold);
+        PlayerPrefs.SetInt("Minigame_CauldronDefense_Completed", 1); // Отметка прохождения
+        PlayerPrefs.Save(); // Сохранение
+
+        if (DialogueSystem_Manager.Instance != null)
+        {
+            DialogueSystem_Manager.Instance.SyncPlayerPrefsResources(); // Синхронизация интерфейса
+        }
+
+        // Отправка зелий в инвентарь
         if (Inventory_Manager.Instance != null && won)
         {
             int savedCauldronsCount = currentDifficulty == DefenseDifficulty.Easy ? 3 : (currentDifficulty == DefenseDifficulty.Medium ? 4 : 5);
@@ -321,42 +552,42 @@ public class CauldronDefense_Minigame : MonoBehaviour
             Inventory_Manager.Instance.AddItem("cauldron_essence_charge", "Очищенная Эссенция Котла", savedCauldronsCount, 25, null, new Color(0.9f, 0.4f, 0.8f)); // Эссенция в сундук
         }
 
-        if (resultSummaryPanel) resultSummaryPanel.SetActive(false); // Скрытие окна итогов
-        if (gameRootPanel) gameRootPanel.SetActive(false); // Скрытие игры защиты котлов
+        if (resultSummaryPanel != null) resultSummaryPanel.SetActive(false); // Скрытие итогов
+        if (gameRootPanel != null) gameRootPanel.SetActive(false); // Скрытие игры
         else gameObject.SetActive(false); // Запасное скрытие
 
-        string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени игрока
+        string playerName = PlayerPrefs.GetString("Player_Name", PlayerPrefs.GetString("Alchemist_Player_Name", "Алхимик")); // Чтение имени
 
-        // Запуск централизованного диалога Кота и переход в «Алхимическую Лабораторию»
-        if (DialogueSystem_Manager.Instance != null) // Если центральный менеджер диалогов доступен
+        // Запуск диалога Кота об Алхимической Лаборатории
+        if (DialogueSystem_Manager.Instance != null)
         {
-            DialogueSystem_Manager.Instance.StartPostCauldronDefenseDialogue(); // Запуск диалога Кота и презентации Лаборатории
-            Debug.Log($"Защита котлов завершена! Запущен централизованный диалог Кота о Лаборатории для игрока {playerName}."); // Лог
-            return; // Выход
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление HUD
+            DialogueSystem_Manager.Instance.StartPostCauldronDefenseDialogue(); // Запуск диалога Кота
+            Debug.Log($"Защита котлов завершена! Запущен диалог Кота о Лаборатории для игрока {playerName}.");
+            return;
         }
 
-        // Фоллбэк: если диалог настроен локально
-        if (dialogueContainer != null && dialogueText != null) // Если диалог настроен
+        // Фоллбэк: открытие Лаборатории напрямую
+        if (laboratoryGamePanel != null)
         {
-            dialogueContainer.SetActive(true); // Включение окна диалога
-            dialogueText.text = $"Мурр-мяу, {playerName}! Все котлы спасены от грозы, а награды уже в твоем рюкзаке!\n\nА теперь добро пожаловать в нашу святыню — «Алхимическую Лабораторию»!\nЗдесь 5 рабочих колб и 10 дозаторов магических эссенций. Смешивай пропорции, открывай 40 тайных рецептов и выгодно продавай готовые зелья на Мировом Рынке!"; // Реплика Кота
+            laboratoryGamePanel.SetActive(true);
         }
-
-        // Открытие Лаборатории напрямую
-        if (laboratoryGamePanel != null) // Если ссылка на лабораторию подключена
+        else if (Laboratory_Mixer.Instance != null)
         {
-            laboratoryGamePanel.SetActive(true); // Включение панели Лаборатории
-            Debug.Log($"Защита котлов завершена! Открыта панель Лаборатории для игрока {playerName}."); // Лог
-        }
-        else if (Laboratory_Mixer.Instance != null) // Запасной запуск через синглтон
-        {
-            Laboratory_Mixer.Instance.gameObject.SetActive(true); // Включение
+            Laboratory_Mixer.Instance.gameObject.SetActive(true);
         }
     }
 
-    public void CloseGame() // Закрытие окна
+    public void CloseGame() // Закрытие мини-игры
     {
-        isPlaying = false;
-        if (gameRootPanel) gameRootPanel.SetActive(false);
+        isPlaying = false; // Остановка игры
+        if (gameLoopCoroutine != null) StopCoroutine(gameLoopCoroutine); // Остановка корутины
+        if (gameRootPanel != null) gameRootPanel.SetActive(false); // Скрытие корневой панели
+        else gameObject.SetActive(false); // Скрытие объекта
+
+        if (DialogueSystem_Manager.Instance != null)
+        {
+            DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление HUD
+        }
     }
 }

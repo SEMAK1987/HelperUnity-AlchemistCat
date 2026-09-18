@@ -334,7 +334,10 @@ public class DialogueSystem_Manager : MonoBehaviour
 
     private void Update() // Безопасная обработка клавиш и кликов для быстрого пропуска диалогов и чит-теста
     {
-        // Чит-клавиша F9: Мгновенный пропуск текущей мини-игры (1-е нажатие: Мыши -> диалог Рыбалки, 2-е нажатие: Рыбалка -> диалог Поиска предметов)
+        // Чит-клавиша F9: Мгновенный пропуск текущей мини-игры в цепочке:
+        // 1-е нажатие: Мыши -> диалог «Алхимической Рыбалки»
+        // 2-е нажатие: Рыбалка -> диалог «Поиска Предметов»
+        // 3-е нажатие: Поиск Предметов (все 3 комнаты) -> диалог «Защиты Котлов»
         bool f9Pressed = false; // Флаг нажатия F9
         try
         {
@@ -353,31 +356,54 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (f9Pressed) // Если нажата клавиша F9
         {
-            // Проверяем: если уже открыта панель Рыбалки или мы находимся в диалоге/фазе Рыбалки — пропускаем Рыбалку!
-            bool isFishingActiveOrNext = false; // Флаг перехода к пропуску рыбалки
+            // Проверяем текущее состояние и определяем следующий этап цепочки (1=Мыши, 2=Рыбалка, 3=Поиск предметов -> Защита котлов)
+            bool isHiddenObjectActiveOrNext = false; // Флаг пропуска Поиска Предметов (3-й шаг)
+            bool isFishingActiveOrNext = false; // Флаг пропуска Рыбалки (2-й шаг)
 
-            if (AlchemyFishing_Minigame.Instance != null && (AlchemyFishing_Minigame.Instance.gameObject.activeInHierarchy || (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null && AlchemyFishing_Minigame.Instance.rootFishingGamePanel.activeInHierarchy))) // Если панель рыбалки открыта
+            // Проверка 3-го шага: если открыт Поиск Предметов или идет диалог о нем, либо Рыбалка уже пройдена
+            if (HiddenObject_Minigame.Instance != null && HiddenObject_Minigame.Instance.gameObject.activeInHierarchy)
             {
-                isFishingActiveOrNext = true; // Пропускаем рыбалку
+                isHiddenObjectActiveOrNext = true; // На очереди пропуск Поиска Предметов
             }
-            else if (currentPhase == DialoguePhase.MinigamesCatchMouse || currentPhase == DialoguePhase.MinigamesFishing) // Если идет фаза диалога о рыбалке
+            else if (currentPhase == DialoguePhase.MinigamesHiddenObject)
             {
-                isFishingActiveOrNext = true; // Пропускаем рыбалку
+                isHiddenObjectActiveOrNext = true; // На очереди пропуск Поиска Предметов
             }
-            else if (PlayerPrefs.GetInt("Minigame_Mouse_Completed", 0) == 1 && PlayerPrefs.GetInt("Minigame_Fishing_Completed", 0) == 0) // Если мыши уже завершены, а рыбалка еще нет
+            else if (PlayerPrefs.GetInt("Minigame_Fishing_Completed", 0) == 1 && PlayerPrefs.GetInt("Minigame_HiddenObject_Completed", 0) == 0)
             {
-                isFishingActiveOrNext = true; // Пропускаем рыбалку
+                isHiddenObjectActiveOrNext = true; // На очереди пропуск Поиска Предметов
             }
 
-            if (isFishingActiveOrNext) // Если на очереди рыбалка
+            // Проверка 2-го шага: если 3-й шаг не активен, проверяем Рыбалку
+            if (!isHiddenObjectActiveOrNext)
             {
-                CheatPassFishingAndGoToHiddenObject(); // Вызов чит-метода мгновенного прохождения Рыбалки
+                if (AlchemyFishing_Minigame.Instance != null && (AlchemyFishing_Minigame.Instance.gameObject.activeInHierarchy || (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null && AlchemyFishing_Minigame.Instance.rootFishingGamePanel.activeInHierarchy)))
+                {
+                    isFishingActiveOrNext = true; // На очереди пропуск Рыбалки
+                }
+                else if (currentPhase == DialoguePhase.MinigamesCatchMouse || currentPhase == DialoguePhase.MinigamesFishing)
+                {
+                    isFishingActiveOrNext = true; // На очереди пропуск Рыбалки
+                }
+                else if (PlayerPrefs.GetInt("Minigame_Mouse_Completed", 0) == 1 && PlayerPrefs.GetInt("Minigame_Fishing_Completed", 0) == 0)
+                {
+                    isFishingActiveOrNext = true; // На очереди пропуск Рыбалки
+                }
             }
-            else // Иначе (первый шаг)
+
+            if (isHiddenObjectActiveOrNext) // 3-й шаг по F9
             {
-                CheatPassMouseGameAndGoToFishing(); // Вызов чит-метода мгновенного прохождения Мышей
+                CheatPassHiddenObjectAndGoToCauldronDefense(); // Мгновенное завершение Поиска Предметов и переход к Защите Котлов
             }
-            return; // Выход
+            else if (isFishingActiveOrNext) // 2-й шаг по F9
+            {
+                CheatPassFishingAndGoToHiddenObject(); // Мгновенное завершение Рыбалки и переход к Поиску Предметов
+            }
+            else // 1-й шаг по F9
+            {
+                CheatPassMouseGameAndGoToFishing(); // Мгновенное завершение Мышек и переход к Рыбалке
+            }
+            return; // Выход после обработки чита
         }
 
         if (!isTyping) return; // Если текст в данный момент не печатается, прерываем
@@ -2607,5 +2633,85 @@ public class DialogueSystem_Manager : MonoBehaviour
         StartPostFishingDialogue(); // Запуск сюжетного анонса Поиска Предметов
 
         Debug.Log("<color=#80FFDB>[ЧИТ АКТИВИРОВАН]</color> Мини-игра «Алхимическая Рыбалка» пройдена на Легком уровне (+3000 Gold, +3 Stones, +1 Scroll, +100 XP), открыт диалог с Котом о Поиске Предметов!");
+    }
+
+    /// <summary>
+    /// Чит-метод быстрого тестирования: засчитывает полное прохождение всех 3 локаций «Поиска Предметов»
+    /// (Лавка Алхимика, Дом Алхимика, Магический Рынок), начисляет богатые награды (+10 000 Gold, +10 Stones, +3 Scrolls, +5 Crystals, +500 XP),
+    /// закрывает все панели поиска предметов и запускает сюжетный диалог Кота об открытии «Защиты Котлов».
+    /// </summary>
+    [ContextMenu("⚡ ЧИТ: Мгновенно пройти Поиск Предметов (3 комнаты) и открыть диалог Защиты Котлов")]
+    public void CheatPassHiddenObjectAndGoToCauldronDefense() // Метод мгновенного перехода к диалогу Защиты Котлов
+    {
+        // 1. Установка имени игрока, если не задано
+        if (string.IsNullOrEmpty(playerName) || playerName == "Путник") // Проверка дефолтного имени
+        {
+            playerName = PlayerPrefs.GetString("Alchemist_Player_Name", PlayerPrefs.GetString("PlayerName", "Алхимик")); // Чтение сохраненного имени
+        }
+        PlayerPrefs.SetString("Alchemist_Player_Name", playerName); // Сохранение имени
+
+        // 2. Активация верхнего интерфейса
+        if (topPanel != null) topPanel.SetActive(true); // Включение верхней панели ресурсов
+        if (slotGold != null) slotGold.SetActive(true); // Отображение золота
+        if (slotStones != null) slotStones.SetActive(true); // Отображение камней
+        if (slotScrolls != null) slotScrolls.SetActive(true); // Отображение свитков
+        if (slotCrystals != null) slotCrystals.SetActive(true); // Отображение кристаллов
+
+        // 3. Активация функциональных иконок
+        if (playerAvatarContainer != null) playerAvatarContainer.SetActive(true); // Включение аватара
+        if (calendarIconButton != null) calendarIconButton.SetActive(true); // Включение календаря
+        if (smallScrollIconButton != null) smallScrollIconButton.SetActive(true); // Включение свитка
+        if (chestIconButton != null) chestIconButton.SetActive(true); // Включение сундука
+        if (knowledgeIconButton != null) knowledgeIconButton.SetActive(true); // Включение знаний
+        if (minigamesWheelIconButton != null) minigamesWheelIconButton.SetActive(true); // Включение колеса игр
+
+        // 4. Начисление суммарных ресурсов и наград за все 3 комнаты Поиска Предметов (+10000 Gold, +10 Stones, +3 Scrolls, +5 Crystals, +500 XP)
+        int gold = PlayerPrefs.GetInt("Player_Gold", 9000) + 10000; // Расчет золота с наградой поиска
+        int stones = PlayerPrefs.GetInt("Player_Stones", 18) + 10; // Расчет камней
+        int scrolls = PlayerPrefs.GetInt("Player_Scrolls", 4) + 3; // Расчет свитков
+        int crystals = PlayerPrefs.GetInt("Player_Crystals", 0) + 5; // Расчет кристаллов
+
+        PlayerPrefs.SetInt("Player_Gold", gold); // Сохранение золота
+        PlayerPrefs.SetInt("Player_Stones", stones); // Сохранение камней
+        PlayerPrefs.SetInt("Player_Scrolls", scrolls); // Сохранение свитков
+        PlayerPrefs.SetInt("Player_Crystals", crystals); // Сохранение кристаллов
+        PlayerPrefs.SetInt("Minigame_Mouse_Completed", 1); // Отметка прохождения мышей
+        PlayerPrefs.SetInt("Minigame_Fishing_Completed", 1); // Отметка прохождения рыбалки
+        PlayerPrefs.SetInt("Minigame_HiddenObject_Completed", 1); // Отметка завершения поиска предметов
+        PlayerPrefs.SetInt("HO_Shop_Completed", 1); // Отметка Лавки
+        PlayerPrefs.SetInt("HO_House_Completed", 1); // Отметка Дома
+        PlayerPrefs.SetInt("HO_Market_Completed", 1); // Отметка Рынка
+        PlayerPrefs.Save(); // Запись на диск
+
+        SyncPlayerPrefsResources(); // Синхронизация текста ресурсов в шапке
+
+        if (Avatar_Manager.Instance != null) // Если менеджер аватарок активен
+        {
+            Avatar_Manager.Instance.GainPlayerExperience(500); // Начисление 500 опыта за все 3 комнаты
+        }
+
+        // 5. Закрытие окон мини-игр и Поиска Предметов
+        if (HiddenObject_Minigame.Instance != null) // Если синглтон поиска предметов существует
+        {
+            HiddenObject_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта поиска предметов
+        }
+        if (AlchemyFishing_Minigame.Instance != null) // Если открыта рыбалка
+        {
+            if (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null)
+                AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false); // Закрытие корневой панели
+            AlchemyFishing_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта рыбалки
+        }
+        if (CatchMouse_Minigame.Instance != null) // Если открыта панель мышек
+        {
+            CatchMouse_Minigame.Instance.CloseMinigame(); // Закрытие мышек
+        }
+        if (minigamesPanel != null) minigamesPanel.SetActive(false); // Закрытие колеса мини-игр
+
+        // 6. Блокировка кнопки колеса и немедленный запуск диалога Кота про Защиту Котлов
+        SetMinigamesButtonInteractable(false); // Блокировка кнопки колеса на время диалога
+        currentPhase = DialoguePhase.MinigamesCauldronDefense; // Установка фазы диалога Защиты Котлов
+        StartPostHiddenObjectDialogue(); // Запуск сюжетного анонса Защиты Котлов
+
+        Debug.Log("<color=#80FFDB>[ЧИТ АКТИВИРОВАН]</color> Поиск Предметов (все 3 локации) пройден (+10000 Gold, +10 Stones, +3 Scrolls, +5 Crystals, +500 XP), открыт диалог с Котом о Защите Котлов!");
     }
 }

@@ -1,7 +1,9 @@
 {
-  "version": "18.12.96",
-  "release_date": "2026-09-17",
+  "version": "18.12.98",
+  "release_date": "2026-09-18",
   "changelog": [
+    "v18.12.98: Fixed UI overlap in CauldronDefense_Minigame.cs — ensured ShowDifficultySelection() cleanly deactivates activeStagePanel, resultSummaryPanel, guidePopupPanel, and hides heartsContainer, defenseCounterText, and levelDifficultyText from Top_Bar so ONLY the Difficulty Selection panel is displayed. Added full 3-step F9 shortcut chain in DialogueSystem_Manager.cs (1st F9: Mouse -> Fishing, 2nd F9: Fishing -> Hidden Object, 3rd F9: Hidden Object all 3 rooms -> Cauldron Defense dialogue) with CheatPassHiddenObjectAndGoToCauldronDefense.",
+    "v18.12.97: Fixed return to 3-room selection screen upon claiming rewards in HiddenObject_Minigame.cs. Removed inappropriate hiddenObjectPanel.SetActive(false) call that caused inactive hierarchy / empty room view; guaranteed activation of root object, parents, and Location_Selection_Popup with front sorting. Enhanced RefreshLocationCardsUI to support multi-layer image alphas, CanvasGroup dimming, and exact button matching (ЛАВКА АЛХИМИКА -> ДОМ АЛХИМИКА -> МАГИЧЕСКИЙ РЫНОК) with transition to Cat Cauldron Defense dialogue upon completing Room 3.",
     "v18.12.96: Implemented strict linear room progression and final dialogue transition in HiddenObject_Minigame.cs — Room 1 (Shop) is unlocked initially and locks upon completion while unlocking Room 2 (House); Room 2 locks upon completion while unlocking Room 3 (Market); completing Room 3 triggers the claim reward flow and transitions directly into the Cat Dialogue announcing the upcoming Cauldron Defense minigame.",
     "v18.12.95: Fixed post-victory progression flow in HiddenObject_Minigame.cs — clicking Claim Rewards now returns the player to the Room Selection screen with unlocked subsequent rooms, status badges, and updated lock overlays instead of triggering premature Cauldron Defense dialogue transitions.",
     "v18.12.94: Completely removed Unicode emoji characters (money bag, diamond, scroll, test tubes, sparkles) from Victory_Rewards_Text and Record mode victories in HiddenObject_Minigame.cs, eliminating all LiberationSans SDF square placeholder warnings.",

@@ -226,34 +226,46 @@ public class HiddenObject_Minigame : MonoBehaviour
     /// </summary>
     public void ShowLocationSelectionScreen()
     {
+        // 1. Гарантируем активность корневого объекта и всех его родителей
+        gameObject.SetActive(true); // Включение самого скрипта / объекта
+        Transform p = transform.parent; // Поиск родительского узла
+        while (p != null) // Обход всех родителей вверх по иерархии
+        {
+            p.gameObject.SetActive(true); // Включение родителя
+            p = p.parent; // Переход выше
+        }
+
         EnsureUIHierarchy(); // Гарантированная проверка ссылок перед переключением
 
         isGameRunning = false; // Остановка таймеров геймплея
         if (flickerCoroutine != null) StopCoroutine(flickerCoroutine); // Остановка мерцания
 
-        // 1. Скрываем все всплывающие окна и оверлеи
+        // 2. Скрываем все всплывающие окна и оверлеи геймплея
         if (difficultySelectPopup != null) difficultySelectPopup.SetActive(false); // Скрытие меню сложности
         if (victoryPopupPanel != null) victoryPopupPanel.SetActive(false); // Скрытие окна победы
         if (recordModeSelectPopup != null) recordModeSelectPopup.SetActive(false); // Скрытие окна рекордов
         if (catRecordUnlockedDialog != null) catRecordUnlockedDialog.SetActive(false); // Скрытие диалога кота
 
-        // 2. Скрываем элементы активного геймплея (чтобы не перекрывали меню локаций белым экраном)
+        // 3. Скрываем элементы активного поиска предметов (чтобы не оставалось пустого фона или игрового экрана)
         if (viewportContainer != null) viewportContainer.gameObject.SetActive(false); // Скрытие полотна поиска
         if (topStatusBar != null) topStatusBar.SetActive(false); // Скрытие верхнего бара
         if (bottomTargetsBar != null) bottomTargetsBar.SetActive(false); // Скрытие нижней панели целей
+        ClearActiveItems(); // Очистка найденных и оставшихся предметов
 
-        // 3. Включаем попап выбора комнат
+        // 4. Включаем главную панель игры (если она является родителем для меню)
+        if (hiddenObjectPanel != null)
+        {
+            hiddenObjectPanel.SetActive(true); // Включение главной панели
+        }
+
+        // 5. Включаем и выводим на передний план попап выбора 3 комнат
         if (locationSelectPopup != null)
         {
             locationSelectPopup.SetActive(true); // Включение меню локаций
             locationSelectPopup.transform.SetAsLastSibling(); // Вывод на передний план
         }
-        else if (hiddenObjectPanel != null)
-        {
-            hiddenObjectPanel.SetActive(true); // Включение главной панели
-        }
 
-        RefreshLocationCardsUI(); // Обновление состояния блокировок 3 комнат
+        RefreshLocationCardsUI(); // Обновление состояния блокировок и подсветки 3 комнат
     }
 
     private void SetupButtons() // Назначение слушателей событий нажатия на все кнопки интерфейса
@@ -779,7 +791,6 @@ public class HiddenObject_Minigame : MonoBehaviour
     private void OnClaimRewardsClicked() // Обработка закрытия окна победы и переход по цепочке локаций к Коту
     {
         if (victoryPopupPanel) victoryPopupPanel.SetActive(false); // Скрытие окна победы
-        if (hiddenObjectPanel) hiddenObjectPanel.SetActive(false); // Скрытие игрового поля
 
         string playerName = PlayerPrefs.GetString("PlayerName", PlayerPrefs.GetString("Player_Name", "Алхимик")); // Чтение имени игрока
 
@@ -1186,7 +1197,7 @@ public class HiddenObject_Minigame : MonoBehaviour
 
     public void RefreshLocationCardsUI() // Обновление текста, интерактивности и иконок замков для 3 комнат
     {
-        string[] defaultNames = { "Алхимическая лавка Кота", "Старый заброшенный дом", "Антикварный рынок" }; // Названия 3 комнат по умолчанию
+        string[] defaultNames = { "ЛАВКА АЛХИМИКА", "ДОМ АЛХИМИКА", "МАГИЧЕСКИЙ РЫНОК" }; // Названия 3 комнат в соответствии с визуальным стилем
 
         for (int i = 0; i < 3; i++) // Перебор 3 комнат
         {
@@ -1199,30 +1210,57 @@ public class HiddenObject_Minigame : MonoBehaviour
             if (btn == null && locationSelectPopup != null)
             {
                 string btnName = $"Location_{i + 1}_Button";
-                Transform t = locationSelectPopup.transform.Find(btnName) ?? locationSelectPopup.transform.Find($"Card_{i + 1}") ?? locationSelectPopup.transform.Find($"Location_{i + 1}");
-                if (t != null) btn = t.GetComponent<Button>() ?? t.GetComponentInChildren<Button>();
+                string[] possibleNames = { 
+                    $"Location_{i + 1}_Button", $"Card_{i + 1}", $"Location_{i + 1}", $"Btn_Loc_{i + 1}",
+                    i == 0 ? "Shop_Button" : (i == 1 ? "House_Button" : "Market_Button"),
+                    i == 0 ? "Button_Shop" : (i == 1 ? "Button_House" : "Button_Market"),
+                    i == 0 ? "Лавка Алхимика" : (i == 1 ? "Дом Алхимика" : "Магический Рынок")
+                };
+
+                foreach (var name in possibleNames)
+                {
+                    Transform t = locationSelectPopup.transform.Find(name);
+                    if (t != null)
+                    {
+                        btn = t.GetComponent<Button>() ?? t.GetComponentInChildren<Button>();
+                        if (btn != null) break;
+                    }
+                }
             }
 
-            bool isUnlocked = IsLocationUnlocked(i); // Проверка доступности комнаты
+            bool isUnlocked = IsLocationUnlocked(i); // Проверка доступности комнаты: Лавка (0) -> Дом (1) -> Рынок (2)
 
             if (btn != null)
             {
                 btn.interactable = isUnlocked; // Включение/отключение интерактивности кнопки
 
-                // Обновление цвета кнопки/карточки
-                Image btnImg = btn.GetComponent<Image>();
-                if (btnImg != null)
+                // Поддержка CanvasGroup для плавного затемнения заблокированных комнат
+                CanvasGroup cg = btn.GetComponent<CanvasGroup>();
+                if (cg != null)
                 {
-                    btnImg.color = isUnlocked ? Color.white : new Color(0.45f, 0.45f, 0.48f, 0.85f); // Затемнение для закрытых комнат
+                    cg.alpha = isUnlocked ? 1.0f : 0.45f; // Полноценная яркость для открытой комнаты, приглушенная для закрытых
+                    cg.interactable = isUnlocked; // Разрешение кликов
+                    cg.blocksRaycasts = isUnlocked; // Блокировка лучей
                 }
 
-                // Поиск и переключение оверлея замка
-                Transform lockChild = btn.transform.Find("Lock_Icon") ?? btn.transform.Find("Lock_Overlay") ?? btn.transform.Find("Lock") ?? btn.transform.Find("Padlock");
-                if (lockChild != null)
+                // Обновление всех графических элементов кнопки (рамок, кристаллов, фона)
+                Image[] allImages = btn.GetComponentsInChildren<Image>(true);
+                foreach (var img in allImages)
                 {
-                    lockChild.gameObject.SetActive(!isUnlocked); // Замок отображается только при блокировке
+                    if (img == null) continue;
+                    string imgLower = img.gameObject.name.ToLower();
+                    if (imgLower.Contains("lock") || imgLower.Contains("padlock") || imgLower.Contains("замок"))
+                    {
+                        img.gameObject.SetActive(!isUnlocked); // Замок отображается только при блокировке
+                    }
+                    else
+                    {
+                        img.color = isUnlocked ? Color.white : new Color(0.48f, 0.48f, 0.52f, 0.75f); // Затемнение для закрытых комнат
+                    }
                 }
-                else if (locationLockOverlays != null && i < locationLockOverlays.Count && locationLockOverlays[i] != null)
+
+                // Поиск и переключение оверлея замка в списке инспектора
+                if (locationLockOverlays != null && i < locationLockOverlays.Count && locationLockOverlays[i] != null)
                 {
                     locationLockOverlays[i].SetActive(!isUnlocked); // Переключение оверлея из инспектора
                 }
@@ -1253,18 +1291,8 @@ public class HiddenObject_Minigame : MonoBehaviour
                 }
                 else if (mainTmp != null) // Если на кнопке единый Text (TMP)
                 {
-                    if (isCompleted)
-                    {
-                        mainTmp.text = $"<b>{locTitle}</b>\n<size=65%><color=#99D98C>[Пройдено]</color></size>";
-                    }
-                    else if (!isUnlocked)
-                    {
-                        mainTmp.text = $"<b>{locTitle}</b>\n<size=65%><color=#FF7B7B>[Закрыто] Пройдите комн. {i}</color></size>";
-                    }
-                    else
-                    {
-                        mainTmp.text = $"<b>{locTitle}</b>\n<size=65%><color=#FFE66D>[Открыто]</color></size>";
-                    }
+                    // Сохраняем дизайнерский текст и регулируем прозрачность
+                    mainTmp.alpha = isUnlocked ? 1.0f : 0.5f; // Яркость шрифта
                 }
             }
         }
