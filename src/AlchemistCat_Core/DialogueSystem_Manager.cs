@@ -1275,7 +1275,10 @@ public class DialogueSystem_Manager : MonoBehaviour
 
         if (dialoguePanel != null) dialoguePanel.SetActive(false);
 
-        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время окна мини-игр
+        HideHUDForMinigame(); // Скрытие аватарки и правых кнопок на время окна мини-игры
+
+        // Гарантированно отключаем активные под-панели мини-игр
+        DeactivateAllMinigameSubPanels();
 
         if (minigamesPanel != null)
         {
@@ -1322,6 +1325,74 @@ public class DialogueSystem_Manager : MonoBehaviour
         if (avatarManager != null) avatarManager.SetAvatarButtonInteractable(true);
     }
 
+    /// <summary>
+    /// Полное отключение всех дочерних окон и скриптов мини-игр (Поймай Мышь, Рыбалка, Поиск Предметов, Защита Котлов, Лаборатория)
+    /// с целью исключить одновременное наложение элементов геймплея друг на друга.
+    /// </summary>
+    public void DeactivateAllMinigameSubPanels(GameObject exceptPanel = null)
+    {
+        // 1. Отключение известных синглтонов
+        if (CatchMouse_Minigame.Instance != null && (exceptPanel == null || CatchMouse_Minigame.Instance.gameObject != exceptPanel))
+        {
+            CatchMouse_Minigame.Instance.CloseMinigame(); // Остановка таймера и мышек
+            CatchMouse_Minigame.Instance.gameObject.SetActive(false); // Скрытие объекта
+        }
+        if (AlchemyFishing_Minigame.Instance != null && (exceptPanel == null || AlchemyFishing_Minigame.Instance.gameObject != exceptPanel))
+        {
+            if (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null && AlchemyFishing_Minigame.Instance.rootFishingGamePanel != exceptPanel)
+                AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false); // Скрытие панели рыбалки
+            AlchemyFishing_Minigame.Instance.gameObject.SetActive(false); // Отключение синглтона рыбалки
+        }
+        if (HiddenObject_Minigame.Instance != null && (exceptPanel == null || HiddenObject_Minigame.Instance.gameObject != exceptPanel))
+        {
+            HiddenObject_Minigame.Instance.gameObject.SetActive(false); // Отключение поиска предметов
+        }
+        if (CauldronDefense_Minigame.Instance != null && (exceptPanel == null || CauldronDefense_Minigame.Instance.gameObject != exceptPanel))
+        {
+            if (CauldronDefense_Minigame.Instance.gameRootPanel != null && CauldronDefense_Minigame.Instance.gameRootPanel != exceptPanel)
+                CauldronDefense_Minigame.Instance.gameRootPanel.SetActive(false); // Скрытие панели защиты котлов
+            CauldronDefense_Minigame.Instance.gameObject.SetActive(false); // Отключение защиты котлов
+        }
+        if (Laboratory_Mixer.Instance != null && (exceptPanel == null || Laboratory_Mixer.Instance.gameObject != exceptPanel))
+        {
+            if (Laboratory_Mixer.Instance.laboratoryRootPanel != null && Laboratory_Mixer.Instance.laboratoryRootPanel != exceptPanel)
+                Laboratory_Mixer.Instance.laboratoryRootPanel.SetActive(false); // Скрытие панели лаборатории
+            Laboratory_Mixer.Instance.gameObject.SetActive(false); // Отключение лаборатории
+        }
+
+        // 2. Отключение всех дочерних объектов внутри MinigamesPanel
+        if (minigamesPanel != null)
+        {
+            for (int i = 0; i < minigamesPanel.transform.childCount; i++)
+            {
+                Transform child = minigamesPanel.transform.GetChild(i);
+                if (child != null && (exceptPanel == null || child.gameObject != exceptPanel))
+                {
+                    child.gameObject.SetActive(false); // Выключение дочерней панели
+                }
+            }
+        }
+
+        // 3. Запасной поиск по всем именам панелей сцены
+        string[] allPanelNames = {
+            "CatchMouse_Game_Panel", "CatchMouse_Panel", "CatchMousePanel",
+            "AlchemyFishing_Game_Panel", "AlchemyFishing_Panel", "Fishing_Minigame_Panel",
+            "HiddenObject_Game_Panel", "HiddenObject_Panel", "HiddenObjectPanel",
+            "CauldronDefense_Game_Panel", "CauldronDefense_Panel", "CauldronDefensePanel",
+            "Laboratory_Game_Panel", "Laboratory_Panel", "LaboratoryPanel", "Laboratory_Minigame"
+        };
+        foreach (var name in allPanelNames)
+        {
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go.name == name && (exceptPanel == null || go != exceptPanel) && go.scene.isLoaded)
+                {
+                    go.SetActive(false); // Принудительное скрытие
+                }
+            }
+        }
+    }
+
     public void OpenFishingUI()
     {
         if (buttonClickSound != null && SettingsManager.Instance != null)
@@ -1335,46 +1406,19 @@ public class DialogueSystem_Manager : MonoBehaviour
         PlayerPrefs.Save(); // Сохранение факта завершения
 
         // 1. Активируем главное родительское окно MinigamesPanel
-        if (minigamesPanel != null)
-        {
-            minigamesPanel.SetActive(true);
-        }
-        else
-        {
-            GameObject mp = GameObject.Find("MinigamesPanel");
-            if (mp != null) mp.SetActive(true);
-            else
-            {
-                foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
-                {
-                    if (go.name == "MinigamesPanel" && go.scene.isLoaded)
-                    {
-                        go.SetActive(true);
-                        break;
-                    }
-                }
-            }
-        }
+        if (minigamesPanel != null) minigamesPanel.SetActive(true);
 
-        // 2. Выключаем панель мышек, если была открыта
-        if (CatchMouse_Minigame.Instance != null)
-        {
-            CatchMouse_Minigame.Instance.gameObject.SetActive(false);
-        }
-
-        // 3. Ищем и открываем панель рыбалки
+        // 2. Ищем панель рыбалки
         AlchemyFishing_Minigame fishing = null;
-        if (AlchemyFishing_Minigame.Instance != null)
-        {
-            fishing = AlchemyFishing_Minigame.Instance;
-        }
-        else
-        {
-            fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
-        }
+        if (AlchemyFishing_Minigame.Instance != null) fishing = AlchemyFishing_Minigame.Instance;
+        else fishing = FindAnyObjectByType<AlchemyFishing_Minigame>(FindObjectsInactive.Include);
+
+        // 3. Выключаем все остальные мини-игры
+        DeactivateAllMinigameSubPanels(fishing != null ? fishing.gameObject : null);
 
         if (fishing != null)
         {
+            fishing.gameObject.SetActive(true);
             fishing.OpenMinigame();
             return;
         }
@@ -1388,18 +1432,11 @@ public class DialogueSystem_Manager : MonoBehaviour
                 if (go.name == name && go.scene.isLoaded)
                 {
                     Transform p = go.transform.parent;
-                    while (p != null)
-                    {
-                        p.gameObject.SetActive(true);
-                        p = p.parent;
-                    }
-
+                    while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    DeactivateAllMinigameSubPanels(go);
                     go.SetActive(true);
                     AlchemyFishing_Minigame comp = go.GetComponent<AlchemyFishing_Minigame>();
-                    if (comp != null)
-                    {
-                        comp.OpenMinigame();
-                    }
+                    if (comp != null) comp.OpenMinigame();
                     return;
                 }
             }
@@ -1421,10 +1458,13 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Активируем главное родительское окно MinigamesPanel
         if (minigamesPanel != null) minigamesPanel.SetActive(true);
 
-        // 2. Ищем и открываем панель поиска предметов
+        // 2. Ищем панель поиска предметов
         HiddenObject_Minigame ho = null;
         if (HiddenObject_Minigame.Instance != null) ho = HiddenObject_Minigame.Instance;
         else ho = FindAnyObjectByType<HiddenObject_Minigame>(FindObjectsInactive.Include);
+
+        // 3. Гарантированно отключаем ВСЕ другие панели мини-игр перед открытием Поиска Предметов
+        DeactivateAllMinigameSubPanels(ho != null ? ho.gameObject : null);
 
         if (ho != null)
         {
@@ -1443,6 +1483,7 @@ public class DialogueSystem_Manager : MonoBehaviour
                 {
                     Transform p = go.transform.parent;
                     while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    DeactivateAllMinigameSubPanels(go);
                     go.SetActive(true);
                     HiddenObject_Minigame comp = go.GetComponent<HiddenObject_Minigame>();
                     if (comp == null) comp = go.AddComponent<HiddenObject_Minigame>();
@@ -1474,10 +1515,13 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Активируем главное родительское окно MinigamesPanel
         if (minigamesPanel != null) minigamesPanel.SetActive(true);
 
-        // 2. Ищем и открываем панель защиты котлов
+        // 2. Ищем панель защиты котлов
         CauldronDefense_Minigame cd = null;
         if (CauldronDefense_Minigame.Instance != null) cd = CauldronDefense_Minigame.Instance;
         else cd = FindAnyObjectByType<CauldronDefense_Minigame>(FindObjectsInactive.Include);
+
+        // 3. Гарантированно отключаем ВСЕ другие панели мини-игр (мышей, рыбалку, поиск) перед открытием Защиты Котлов
+        DeactivateAllMinigameSubPanels(cd != null ? cd.gameObject : null);
 
         if (cd != null)
         {
@@ -1496,6 +1540,7 @@ public class DialogueSystem_Manager : MonoBehaviour
                 {
                     Transform p = go.transform.parent;
                     while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    DeactivateAllMinigameSubPanels(go);
                     go.SetActive(true);
                     CauldronDefense_Minigame comp = go.GetComponent<CauldronDefense_Minigame>();
                     if (comp != null) comp.OpenMinigame();
@@ -1520,10 +1565,13 @@ public class DialogueSystem_Manager : MonoBehaviour
         // 1. Активируем главное родительское окно MinigamesPanel
         if (minigamesPanel != null) minigamesPanel.SetActive(true);
 
-        // 2. Ищем и открываем панель лаборатории
+        // 2. Ищем панель лаборатории
         Laboratory_Mixer lab = null;
         if (Laboratory_Mixer.Instance != null) lab = Laboratory_Mixer.Instance;
         else lab = FindAnyObjectByType<Laboratory_Mixer>(FindObjectsInactive.Include);
+
+        // 3. Гарантированно отключаем ВСЕ другие панели мини-игр перед открытием Лаборатории
+        DeactivateAllMinigameSubPanels(lab != null ? lab.gameObject : null);
 
         if (lab != null)
         {
@@ -1542,6 +1590,7 @@ public class DialogueSystem_Manager : MonoBehaviour
                 {
                     Transform p = go.transform.parent;
                     while (p != null) { p.gameObject.SetActive(true); p = p.parent; }
+                    DeactivateAllMinigameSubPanels(go);
                     go.SetActive(true);
                     return;
                 }
@@ -2549,10 +2598,7 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
 
         // 5. Закрытие окон мини-игр и мышек
-        if (CatchMouse_Minigame.Instance != null) // Если синглтон мышек существует
-        {
-            CatchMouse_Minigame.Instance.CloseMinigame(); // Закрытие окна мышек
-        }
+        DeactivateAllMinigameSubPanels();
         if (minigamesPanel != null) minigamesPanel.SetActive(false); // Закрытие колеса мини-игр
 
         // 6. Блокировка кнопки колеса и немедленный запуск диалога Кота про Алхимическую Рыбалку
@@ -2615,16 +2661,7 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
 
         // 5. Закрытие окон мини-игр и рыбалки
-        if (AlchemyFishing_Minigame.Instance != null) // Если синглтон рыбалки существует
-        {
-            if (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null)
-                AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false); // Закрытие корневой панели
-            AlchemyFishing_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта рыбалки
-        }
-        if (CatchMouse_Minigame.Instance != null) // Если открыта панель мышек
-        {
-            CatchMouse_Minigame.Instance.CloseMinigame(); // Закрытие мышек
-        }
+        DeactivateAllMinigameSubPanels();
         if (minigamesPanel != null) minigamesPanel.SetActive(false); // Закрытие колеса мини-игр
 
         // 6. Блокировка кнопки колеса и немедленный запуск диалога Кота про Поиск Предметов
@@ -2691,20 +2728,7 @@ public class DialogueSystem_Manager : MonoBehaviour
         }
 
         // 5. Закрытие окон мини-игр и Поиска Предметов
-        if (HiddenObject_Minigame.Instance != null) // Если синглтон поиска предметов существует
-        {
-            HiddenObject_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта поиска предметов
-        }
-        if (AlchemyFishing_Minigame.Instance != null) // Если открыта рыбалка
-        {
-            if (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null)
-                AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false); // Закрытие корневой панели
-            AlchemyFishing_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта рыбалки
-        }
-        if (CatchMouse_Minigame.Instance != null) // Если открыта панель мышек
-        {
-            CatchMouse_Minigame.Instance.CloseMinigame(); // Закрытие мышек
-        }
+        DeactivateAllMinigameSubPanels();
         if (minigamesPanel != null) minigamesPanel.SetActive(false); // Закрытие колеса мини-игр
 
         // 6. Блокировка кнопки колеса и немедленный запуск диалога Кота про Защиту Котлов

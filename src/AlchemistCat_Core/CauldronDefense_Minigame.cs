@@ -14,12 +14,12 @@ public class CauldronDefense_Minigame : MonoBehaviour // Основной кла
     public static CauldronDefense_Minigame Instance { get; private set; } // Статический синглтон мини-игры
 
     [Header("=== Основные корневые панели ===")]
-    [SerializeField] private GameObject gameRootPanel; // Корневой объект всей мини-игры (CauldronDefense_Game_Panel)
-    [SerializeField] private GameObject difficultyPanel; // Окно выбора уровня сложности (Difficulty_Select_Panel)
-    [SerializeField] private GameObject activeStagePanel; // Игровое поле с котлами и тучами (Active_Defense_Stage_Panel)
-    [SerializeField] private GameObject resultSummaryPanel; // Итоговое окно победы / поражения (Result_Summary_Panel)
-    [SerializeField] private GameObject topBar; // Верхняя панель заголовка и индикаторов (Top_Bar)
-    [SerializeField] private Button closeGameButton; // Кнопка закрытия мини-игры (Close_Button)
+    public GameObject gameRootPanel; // Корневой объект всей мини-игры (CauldronDefense_Game_Panel)
+    public GameObject difficultyPanel; // Окно выбора уровня сложности (Difficulty_Select_Panel)
+    public GameObject activeStagePanel; // Игровое поле с котлами и тучами (Active_Defense_Stage_Panel)
+    public GameObject resultSummaryPanel; // Итоговое окно победы / поражения (Result_Summary_Panel)
+    public GameObject topBar; // Верхняя панель заголовка и индикаторов (Top_Bar)
+    public Button closeGameButton; // Кнопка закрытия мини-игры (Close_Button)
 
     [Header("=== Кнопки выбора сложности ===")]
     [SerializeField] private Button easyButton; // Кнопка легкой сложности (Easy_Button)
@@ -102,6 +102,7 @@ public class CauldronDefense_Minigame : MonoBehaviour // Основной кла
     private void OnEnable() // Событие включения объекта
     {
         EnsureUIHierarchy(); // Повторная валидация иерархии
+        DeactivateOtherMinigames(); // Отключение всех соседних мини-игр (мышей, рыбалки, поиска)
         if (!isPlaying) // Если игра еще не запущена
         {
             ShowDifficultySelection(); // Гарантированный показ только окна выбора сложности
@@ -112,6 +113,67 @@ public class CauldronDefense_Minigame : MonoBehaviour // Основной кла
     {
         isPlaying = false; // Сброс состояния игры
         if (gameLoopCoroutine != null) StopCoroutine(gameLoopCoroutine); // Остановка игрового цикла
+    }
+
+    /// <summary>
+    /// Полное отключение всех посторонних панелей и скриптов мини-игр (Поймай Мышь, Рыбалка, Поиск Предметов, Лаборатория)
+    /// для исключения наложения чужих элементов интерфейса.
+    /// </summary>
+    public void DeactivateOtherMinigames() // Полная очистка соседних мини-игр
+    {
+        // 1. Отключение синглтонов других мини-игр
+        if (CatchMouse_Minigame.Instance != null && CatchMouse_Minigame.Instance.gameObject != gameObject)
+        {
+            CatchMouse_Minigame.Instance.CloseMinigame(); // Закрытие мышек
+            CatchMouse_Minigame.Instance.gameObject.SetActive(false); // Деактивация объекта мышей
+        }
+        if (AlchemyFishing_Minigame.Instance != null && AlchemyFishing_Minigame.Instance.gameObject != gameObject)
+        {
+            if (AlchemyFishing_Minigame.Instance.rootFishingGamePanel != null)
+                AlchemyFishing_Minigame.Instance.rootFishingGamePanel.SetActive(false); // Скрытие панели рыбалки
+            AlchemyFishing_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта рыбалки
+        }
+        if (HiddenObject_Minigame.Instance != null && HiddenObject_Minigame.Instance.gameObject != gameObject)
+        {
+            HiddenObject_Minigame.Instance.gameObject.SetActive(false); // Отключение объекта поиска предметов
+        }
+        if (Laboratory_Mixer.Instance != null && Laboratory_Mixer.Instance.gameObject != gameObject)
+        {
+            if (Laboratory_Mixer.Instance.laboratoryRootPanel != null)
+                Laboratory_Mixer.Instance.laboratoryRootPanel.SetActive(false); // Скрытие панели лаборатории
+            Laboratory_Mixer.Instance.gameObject.SetActive(false); // Отключение лаборатории
+        }
+
+        // 2. Отключение всех соседних дочерних объектов внутри родительской панели (MinigamesPanel)
+        if (transform.parent != null)
+        {
+            for (int i = 0; i < transform.parent.childCount; i++)
+            {
+                Transform sibling = transform.parent.GetChild(i);
+                if (sibling != null && sibling.gameObject != gameObject)
+                {
+                    sibling.gameObject.SetActive(false); // Деактивация соседних панелей
+                }
+            }
+        }
+
+        // 3. Запасной поиск по именам игровых объектов в сцене
+        string[] otherPanelNames = {
+            "CatchMouse_Game_Panel", "CatchMouse_Panel", "CatchMousePanel",
+            "AlchemyFishing_Game_Panel", "AlchemyFishing_Panel", "Fishing_Minigame_Panel",
+            "HiddenObject_Game_Panel", "HiddenObject_Panel", "HiddenObjectPanel",
+            "Laboratory_Game_Panel", "Laboratory_Panel", "LaboratoryPanel", "Laboratory_Minigame"
+        };
+        foreach (var name in otherPanelNames)
+        {
+            foreach (var go in Resources.FindObjectsOfTypeAll<GameObject>())
+            {
+                if (go.name == name && go != gameObject && go.scene.isLoaded)
+                {
+                    go.SetActive(false); // Гарантированное выключение постороннего окна
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -265,6 +327,7 @@ public class CauldronDefense_Minigame : MonoBehaviour // Основной кла
     public void OpenMinigame() // Открытие мини-игры
     {
         EnsureUIHierarchy(); // Проверка привязок
+        DeactivateOtherMinigames(); // Гарантированное отключение мышей и других игр
         gameObject.SetActive(true); // Активация объекта
         Transform p = transform.parent;
         while (p != null)
@@ -284,6 +347,7 @@ public class CauldronDefense_Minigame : MonoBehaviour // Основной кла
     {
         isPlaying = false; // Остановка игрового процесса
         if (gameLoopCoroutine != null) StopCoroutine(gameLoopCoroutine); // Остановка корутины
+        DeactivateOtherMinigames(); // Гарантированное выключение посторонних панелей (мышей и рыбалки)
 
         // 1. Активация панели выбора сложности на переднем плане
         if (difficultyPanel != null)
@@ -589,5 +653,10 @@ public class CauldronDefense_Minigame : MonoBehaviour // Основной кла
         {
             DialogueSystem_Manager.Instance.RestoreHUDAfterMinigame(); // Восстановление HUD
         }
+    }
+
+    public void CloseMinigame() // Унифицированный метод закрытия мини-игры
+    {
+        CloseGame(); // Вызов основного метода закрытия
     }
 }

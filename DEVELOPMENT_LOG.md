@@ -1,10 +1,10 @@
 # DEVELOPMENT LOG
 
-## [2026-09-18]
-- **Версия 18.12.98**:
-  - Устранено наложение интерфейсов в мини-игре «Защита Котлов» (`CauldronDefense_Minigame.cs`): метод `ShowDifficultySelection()` теперь чисто скрывает `activeStagePanel`, `resultSummaryPanel`, `guidePopupPanel`, а также прячет геймплейные индикаторы из `Top_Bar` (`heartsContainer` с 3 сердечками, счетчик `defenseCounterText` «Защищено: 0/10» и `levelDifficultyText`). На экране выбора сложности отображаются только заголовок и кнопки выбора сложности (Легкий, Средний, Сложный).
-  - При старте игры по кнопке сложности (`StartGameWithDifficulty`) панель выбора сложности скрывается, включается игровое поле `activeStagePanel`, и активируются счетчики жизней и защит в `Top_Bar`.
-  - Реализован полный 3-шаговый цикл быстрой чит-клавиши `F9` в `DialogueSystem_Manager.cs`:
-    - 1-е нажатие: пропуск Мышей -> диалог об Алхимической Рыбалке;
-    - 2-е нажатие: пропуск Рыбалки -> диалог о Поиске Предметов;
-    - 3-е нажатие: пропуск всех 3 комнат Поиска Предметов (начисление +10 000 золота, +10 камней, +3 свитка, +5 кристаллов, +500 XP) -> запуск сюжетного диалога Кота о «Защите Котлов» и переход к ней.
+## [2026-09-18] - Версия 18.12.99
+- **Устранена ошибка компиляции CS0122 (Protection Level in CauldronDefense_Minigame.gameRootPanel)**:
+  - В `CauldronDefense_Minigame.cs` поле `gameRootPanel` (а также `difficultyPanel`, `activeStagePanel`, `resultSummaryPanel`, `topBar`, `closeGameButton`) переведено в `public`, что обеспечивает безопасный доступ для `DialogueSystem_Manager.cs` и других систем.
+  - Добавлен метод `CloseMinigame()` как публичный алиас к `CloseGame()`.
+  - В `DialogueSystem_Manager.cs` метод `DeactivateAllMinigameSubPanels()` теперь корректно и без ошибок компиляции выключает корневые панели мини-игры `CauldronDefense_Minigame` и соседних игр при их смене.
+
+## [2026-05-14]
+- Версия 18.5.8: Zenith Multi-Tool Synergy & Settings Fix.
